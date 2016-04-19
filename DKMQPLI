@@ -1,0 +1,6 @@
+//PLILNKED        EXEC PROC=MQPLBLK,LIBUSER=KONSTAN                     00010001
+//PLI.SYSIN       DD  DISP=SHR,DSN=CBG.TEST.SOURCE(DKREADDT)            00030001
+//PLI.SYSPRINT    DD  SYSOUT=*                                          00040000
+//LKED.SYSPRINT   DD  SYSOUT=*                                          00050000
+//LKED.SYSLMOD    DD  DISP=SHR,DSN=CBG.TEST.LOAD(DKREADDT)              00060002
+

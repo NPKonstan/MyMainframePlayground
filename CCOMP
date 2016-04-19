@@ -1,0 +1,7 @@
+//DKNIK JOB (COMPLINK),KONSTAN,CLASS=T,MSGCLASS=X,                      00010000
+//          MSGLEVEL=(1,1),NOTIFY=KONSTAN                               00020000
+//PROCLIB JCLLIB ORDER=KONSTAN.PRIVATE.SRC                              00030005
+//MYC  EXEC PROC=EDCCBG,                                                00047009
+//          INFILE='KONSTAN.PRIVATE.SRC(DT)',                           00060011
+//          OUTFILE='CBG.TEST.LOAD(DT),DISP=SHR'                        00061011
+

@@ -1,0 +1,283 @@
+ /* PLAIN PLI PROGRAMM                                             */
+ /*********************************************************************/
+ /* ауто то пяоцяалла епистяежеи та епитойиа поу исвуоум              */
+ /* паиямеи сам INPUT/оYTPUT паяалетяоус                             */
+ /*                                                                   */
+ /*                           = 6-ьгжио йахокийо         INPUT        */
+ /*                           = глеяолгмиа циа тг опоиа емдиажеяоласте*/
+ /*                           = посом  пяосгласлемо      INPUT        */
+ /*                           = посом  OVERDRAFT         INPUT        */
+ /*                           = пистытийо епитойио       OUTPUT       */
+ /*                           = вяеыстийо епитойио 1     OUTPUT       */
+ /*                           = вяеыстийо епитойио 2     OUTPUT       */
+ /*                                                                   */
+ /* йаи епистяежеи           0 AN EINAI сысто 1 ам еимаи  кахос       */
+ /*                                                                   */
+ /**** ****************************************************************/
+ /* мпй 26-01-2004                                                    */
+ /* мпй 31-03-2004 пяосхгйг меым йахокийым 5114 йаи 5150              */
+ /* мпй 26-04-2004 аккацг сто DK495PEP , апкыс COMPLILE               */
+ /* мпй 15-10-2004 аккацг сто DK495PEP , апкыс COMPLILE               */
+ /* мпй 27-12-2004 пяосхгйг      йахокийым 511430 ,506086             */
+ /* мпй 22-02-2004 пяосхгйг      йахокийOY 511402                     */
+ /* мпй 08-01-07 аккац╧ тоу лец╦хоус тоу пимайа  MYPINAX  апо 40 се 90*/
+ /*              коцы аккац╧с сто COPYBOOK    DK495PEP                */
+ /* мпй 02-01-08 пяосхгйг  йахокийым 511431 ,511432,511433            */
+ /*********************************************************************/
+ DKR002 : PROC(KATHOL,INDATE,POSON,OVERDRAFT,EPITOKIO,EPIT_X1,EPIT_X2)
+           OPTIONS(FETCHABLE)  RETURNS( FIXED (1));
+ /*********************************************************/
+
+ DCL KATHOL  FIXED(7,0);/*йахокийо 6 ьгжиа*/
+ DCL INDATE  PICTURE'9999999' ; /*глеяолгмиа аYYMMDD опоу а=1*/
+ DCL POSON  DECIMAL FIXED (13,2);/*посом*/
+ DCL OVERDRAFT DECIMAL FIXED (11,2); /*ояио оVERDRAFT коцаяиаслоу*/
+ DCL EPITOKIO  FIXED (5,2)          ;/*пистытийо епитойио*/
+ DCL EPIT_X1   PIC'999V.99'        ;/*вяеыстийо епитойио 1 */
+ DCL EPIT_X2   PIC'999V.99'        ;/*вяеыстийо епитойио 2 */
+ DCL ERR_COD   FIXED (1)    INIT(1);/*йыдийос кахоус 1=кахос 0=сысто*/
+
+ /*********************************************************/
+
+ DCL MYPINAXPTR POINTER;
+ %INCLUDE DK495PEP;
+
+ DCL 1  MYPINAX (00090)   BASED(MYPINAXPTR)    ,
+        2 EPVALEP   PIC'(7)9'    INIT(0),/*VALEUR исвуос епитойиоу */
+        2 EPFIL0    CHAR(1)             ,
+        2 EPKATOL   PIC'(6)9'    INIT(0),/*йахокийо      епитойиоу */
+        2 EPFIL1    CHAR(1)             ,
+        2 EPPIEP1   PIC'(2)9V99' INIT(0),/*% пистытийоу епитойиоу 1*/
+        2 EPFIL2    CHAR(1)             ,
+        2 EPPPOS1   PIC'(7)9'    INIT(0),/*ояио исвуос пист.епит 1 */
+        2 EPFIL3    CHAR(1)             ,
+        2 EPPIEP2   PIC'(2)9V99' INIT(0),/*% пистытийоу епитойиоу 2*/
+        2 EPFIL4    CHAR(1)             ,
+        2 EPPPOS2   PIC'(7)9'    INIT(0),/*ояио исвуос пист.епит 2 */
+        2 EPFIL5    CHAR(1)             ,
+        2 EPPIEP3   PIC'(2)9V99' INIT(0),/*% пистытийоу епитойиоу 3*/
+        2 EPFIL6    CHAR(1)             ,
+        2 EPPPOS3   PIC'(7)9'    INIT(0),/*ояио исвуос пист.епит 3 */
+        2 EPFIL7    CHAR(1)             ,
+        2 EPPIEP4   PIC'(2)9V99' INIT(0),/*% пистытийоу епитойиоу 4*/
+        2 EPFIL8    CHAR(1)             ,
+        2 EPPPOS4   PIC'(7)9'    INIT(0),/*ояио исвуос пист.епит 4 */
+        2 EPFIL9    CHAR(1)             ,
+        2 EPPIEP5   PIC'(2)9V99' INIT(0),/*% пистытийоу епитойиоу 5*/
+        2 EPFILA    CHAR(1)             ,
+        2 EPPPOS5   PIC'(7)9'    INIT(0),/*ояио исвуос пист.епит 5 */
+        2 EPFILB    CHAR(1)             ,
+        2 EPPIEP6   PIC'(2)9V99' INIT(0),/*% пистытийоу епитойиоу 6*/
+        2 EPFILC    CHAR(1)             ,
+        2 EPXREP1   PIC'(2)9V99' INIT(0),/*% вяеыстийоу епитойиоу 1*/
+        2 EPFILD    CHAR(1)             ,
+        2 EPXREP2   PIC'(2)9V99' INIT(0),/*% вяеыстийоу епитойиоу 2*/
+        2 EPFILE    CHAR(1)             ,
+        2 EPXPOS2   PIC'(7)9'    INIT(0),/*ояио исвуос вя.епит. 2  */
+        2 EPFILF    CHAR(1)             ,
+        2 EPEIDFR   PIC'(2)9V99' INIT(0);/*% е.ж.т.е.              */
+
+
+ DCL ADDR   BUILTIN ;
+ DCL ONCODE BUILTIN ;
+
+      ON ERROR BEGIN;
+        ON ERROR SYSTEM;
+        PUT SKIP LIST( 'ERROR IN DKR002');
+        PUT SKIP LIST( 'MYDATE ',MYDATE);
+        PUT SKIP LIST( 'KATHOL ',KATHOL);
+      END;
+
+ DCL MYDATE  CHAR   (7)  ;/* A YYMMDD A=1-->2000 A=0-->1900  */
+ DCL I       FIXED  (3)  ;
+
+ MYDATE = INDATE;
+ SELECT (KATHOL) ;
+     WHEN ( 506099 ) MYPINAXPTR = ADDR(P506001 );/*CONV FROM99 TO 01*/
+     WHEN ( 506001 ) MYPINAXPTR = ADDR(P506001 );
+     WHEN ( 506002 ) MYPINAXPTR = ADDR(P506002 );
+     WHEN ( 506003 ) MYPINAXPTR = ADDR(P506003 );
+     WHEN ( 506004 ) MYPINAXPTR = ADDR(P506004 );
+     WHEN ( 506005 ) MYPINAXPTR = ADDR(P506005 );
+     WHEN ( 506006 ) MYPINAXPTR = ADDR(P506006 );
+     WHEN ( 506007 ) MYPINAXPTR = ADDR(P506007 );
+     WHEN ( 506008 ) MYPINAXPTR = ADDR(P506008 );
+     WHEN ( 506009 ) MYPINAXPTR = ADDR(P506009 );
+     WHEN ( 506086 ) MYPINAXPTR = ADDR(P506086 );
+     WHEN ( 506801 ) MYPINAXPTR = ADDR(P506801 );
+     WHEN ( 506899 ) MYPINAXPTR = ADDR(P506801 );
+     WHEN ( 507801 ) MYPINAXPTR = ADDR(P507801 );
+     WHEN ( 507899 ) MYPINAXPTR = ADDR(P507801 );
+     WHEN ( 508001 ) MYPINAXPTR = ADDR(P508001 );
+     WHEN ( 508099 ) MYPINAXPTR = ADDR(P508001 );
+     WHEN ( 508002 ) MYPINAXPTR = ADDR(P508002 );
+     WHEN ( 508003 ) MYPINAXPTR = ADDR(P508003 );
+     WHEN ( 508004 ) MYPINAXPTR = ADDR(P508004 );
+     WHEN ( 508005 ) MYPINAXPTR = ADDR(P508005 );
+     WHEN ( 508006 ) MYPINAXPTR = ADDR(P508006 );
+     WHEN ( 508007 ) MYPINAXPTR = ADDR(P508007 );
+     WHEN ( 509005 ) MYPINAXPTR = ADDR(P509005 );
+     WHEN ( 509006 ) MYPINAXPTR = ADDR(P509006 );
+     WHEN ( 510001 ) MYPINAXPTR = ADDR(P510001 );
+     WHEN ( 510099 ) MYPINAXPTR = ADDR(P510001 );
+     WHEN ( 510002 ) MYPINAXPTR = ADDR(P510002 );
+     WHEN ( 511401 ) MYPINAXPTR = ADDR(P511401 );
+     WHEN ( 511402 ) MYPINAXPTR = ADDR(P511402 );
+     WHEN ( 511430 ) MYPINAXPTR = ADDR(P511430 );
+     WHEN ( 511431 ) MYPINAXPTR = ADDR(P511431 );
+     WHEN ( 511432 ) MYPINAXPTR = ADDR(P511432 );
+     WHEN ( 511433 ) MYPINAXPTR = ADDR(P511433 );
+     WHEN ( 511499 ) MYPINAXPTR = ADDR(P511401 );
+     WHEN ( 511501 ) MYPINAXPTR = ADDR(P511501 );
+     WHEN ( 511599 ) MYPINAXPTR = ADDR(P511501 );
+     WHEN ( 511601 ) MYPINAXPTR = ADDR(P511601 );
+     WHEN ( 511699 ) MYPINAXPTR = ADDR(P511601 );
+     WHEN ( 511602 ) MYPINAXPTR = ADDR(P511602 );
+     WHEN ( 511603 ) MYPINAXPTR = ADDR(P511603 );
+     WHEN ( 511604 ) MYPINAXPTR = ADDR(P511604 );
+     WHEN ( 511605 ) MYPINAXPTR = ADDR(P511605 );
+     WHEN ( 511701 ) MYPINAXPTR = ADDR(P511701 );
+     WHEN ( 511799 ) MYPINAXPTR = ADDR(P511701 );
+     WHEN ( 512001 ) MYPINAXPTR = ADDR(P512001 );
+     WHEN ( 512099 ) MYPINAXPTR = ADDR(P512001 );
+     WHEN ( 512002 ) MYPINAXPTR = ADDR(P512002 );
+     WHEN ( 512003 ) MYPINAXPTR = ADDR(P512003 );
+     WHEN ( 512004 ) MYPINAXPTR = ADDR(P512004 );
+     WHEN ( 512101 ) MYPINAXPTR = ADDR(P512101 );
+     WHEN ( 512199 ) MYPINAXPTR = ADDR(P512101 );
+     WHEN ( 512102 ) MYPINAXPTR = ADDR(P512102 );
+     WHEN ( 512103 ) MYPINAXPTR = ADDR(P512103 );
+     WHEN ( 512104 ) MYPINAXPTR = ADDR(P512104 );
+     WHEN ( 512201 ) MYPINAXPTR = ADDR(P512201 );
+     WHEN ( 512299 ) MYPINAXPTR = ADDR(P512201 );
+     WHEN ( 515001 ) MYPINAXPTR = ADDR(P515001 );
+     WHEN ( 515099 ) MYPINAXPTR = ADDR(P515001 );
+     WHEN ( 515002 ) MYPINAXPTR = ADDR(P515002 );
+     WHEN ( 515003 ) MYPINAXPTR = ADDR(P515003 );
+     WHEN ( 515004 ) MYPINAXPTR = ADDR(P515004 );
+     WHEN ( 515005 ) MYPINAXPTR = ADDR(P515005 );
+
+     OTHERWISE RETURN (1);/* ERROR */
+     END;
+
+   DO  I=2 TO    90 ;
+
+       IF( MYDATE >= MYPINAX(I-1).EPVALEP      ) &
+         ( MYDATE <    MYPINAX(I  ).EPVALEP      ) THEN DO;
+
+        GOTO EPITOKIA_FOUND;
+       END;
+
+       IF(MYPINAX(I).EPVALEP =1991231)  THEN DO; /*NOT FOUND*/
+           RETURN (1);/*ERROR*/
+       END;
+   END;
+
+   EPITOKIA_FOUND  :    ;
+
+        /*аямгтийо посо,тоте вяеыстийо епитойио*/
+        IF POSON < 0 THEN DO;
+
+               EPITOKIO = 0 ;
+               EPIT_X1  = MYPINAX(I-1).EPXREP1; /*XREOSTIKO 1*/
+               EPIT_X2  = MYPINAX(I-1).EPXREP2;/*XREOSTIKO 2*/
+               ERR_COD  = 0;
+           RETURN (ERR_COD);
+        END;
+
+         EPITOKIO = 0 ;
+         EPIT_X1  = 0.0                 ; /*XREOSTIKO 1*/
+         EPIT_X2  = 0.0                 ;/*XREOSTIKO 2*/
+         ERR_COD  = 0;
+
+        /*пяосовг диажояетийг диавеиягсг ста лецака поса */
+        IF POSON >= 9999999 THEN DO ;
+          IF MYPINAX(I-1).EPPPOS1 = 9999999 THEN  DO;
+              EPITOKIO =  MYPINAX(I-1).EPPIEP1 ;
+          END;
+          IF MYPINAX(I-1).EPPPOS2 = 9999999 THEN  DO;
+             EPITOKIO = MYPINAX(I-1).EPPIEP2;
+          END;
+          IF MYPINAX(I-1).EPPPOS3 = 9999999 THEN  DO;
+             EPITOKIO = MYPINAX(I-1).EPPIEP3;
+          END;
+          IF MYPINAX(I-1).EPPPOS4 = 9999999 THEN  DO;
+             EPITOKIO = MYPINAX(I-1).EPPIEP4 ;
+          END;
+          IF MYPINAX(I-1).EPPPOS5 = 9999999 THEN  DO;
+             EPITOKIO = MYPINAX(I-1).EPPIEP5;
+          END;
+           RETURN (ERR_COD);
+        END;
+
+
+         EPITOKIO = 0 ;
+         EPIT_X1  = 0.0                 ; /*XREOSTIKO 1*/
+         EPIT_X2  = 0.0                 ;/*XREOSTIKO 2*/
+         ERR_COD  = 0;
+
+        IF POSON <= MYPINAX(I-1).EPPPOS1  THEN DO ;
+              EPITOKIO = MYPINAX(I-1).EPPIEP1;
+    /*  CALL PRINT_LINE    ; */
+           RETURN (ERR_COD);
+        END;
+
+        IF (POSON >  MYPINAX(I-1).EPPPOS1) &
+           (POSON <= MYPINAX(I-1).EPPPOS2) THEN DO;
+              EPITOKIO = MYPINAX(I-1).EPPIEP2;
+           RETURN (ERR_COD);
+        END;
+
+        IF (POSON >  MYPINAX(I-1).EPPPOS2) &
+           (POSON <= MYPINAX(I-1).EPPPOS3) THEN DO;
+              EPITOKIO = MYPINAX(I-1).EPPIEP3;
+    /*  CALL PRINT_LINE    ; */
+
+           RETURN (ERR_COD);
+        END;
+
+        IF (POSON >  MYPINAX(I-1).EPPPOS3) &
+           (POSON <= MYPINAX(I-1).EPPPOS4) THEN DO;
+              EPITOKIO = MYPINAX(I-1).EPPIEP4;
+    /*  CALL PRINT_LINE    ; */
+              RETURN (ERR_COD);
+        END;
+
+        IF (POSON >  MYPINAX(I-1).EPPPOS4) &
+           (POSON <= MYPINAX(I-1).EPPPOS5) THEN DO;
+              EPITOKIO = MYPINAX(I-1).EPPIEP5;
+    /*  CALL PRINT_LINE    ; */
+              RETURN (ERR_COD);
+        END;
+
+        IF POSON >  MYPINAX(I-1).EPPPOS5  THEN DO ;
+              EPITOKIO = MYPINAX(I-1).EPPIEP5;
+    /*  CALL PRINT_LINE    ;  */
+              RETURN (ERR_COD);
+        END;
+
+       RETURN (1); /*ERROR*/
+
+
+    PRINT_LINE :PROC;
+         /*
+        PUT SKIP LIST ('*************     аявг           ***********');
+        PUT SKIP LIST ('------------------------------');
+        PUT SKIP LIST ('то йахокийо  EINAI : ',KATHOL);
+        PUT SKIP LIST ('г глеяолгмиа EINAI : ',MYDATE);
+        PUT SKIP LIST ('г VALEUR еимаи     : ',MYPINAX(I-1).EPVALEP);
+        PUT SKIP LIST ('TO посом еимаи     : ',POSON);
+        PUT SKIP LIST ('TO OVERDAFT EINAI  : ',OVERDRAFT);
+        PUT SKIP LIST ('Eпитойио пистытийо : ',EPITOKIO);
+        PUT SKIP LIST ('епитойио вяеыстийо1: ',EPIT_X1);
+        PUT SKIP LIST ('епитойио вяеыстийо2: ',EPIT_X2);
+        PUT SKIP LIST ('------------------------------');
+
+        */
+
+    END  PRINT_LINE    ;
+
+ /*RETURN ( EPITOKIA );*/
+
+ END  DKR002           ;
+

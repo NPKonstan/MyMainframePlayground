@@ -1,0 +1,372 @@
+*PROCESS GOSTMT;
+ DKREADT : PROC OPTIONS (MAIN);
+ % INCLUDE  CMQEPP;
+ % INCLUDE  CMQP;
+
+ DCL  DISKTRM   FILE RECORD INPUT ENV(
+                 FB RECSIZE(200)                       );
+
+     DCL  DT_REC       CHAR(200)      INIT('');
+     DCL  EOF          FIXED(1)       INIT(0)  ;
+     DCL  ONLY_ONCE    FIXED(1)       INIT(0)  ;
+
+ /******************************************************************/
+ /***** Variables for MQ calls *************************************/
+ /******************************************************************/
+
+ DCL CompCodeOUT     fixed binary(31) init(0);
+ DCL ReasonOUT       fixed binary(31) init(0);
+
+ dcl 1 ObjDescOUT      like MQOD; /* Object descriptor for PUT */
+
+ DCL OpenOptionsOUT  fixed binary(31) init(0);
+
+ DCL HobjOUT         fixed binary(31) init(0); /*HANDLER FOR PUT  */
+
+
+ dcl  QueueManager  char(MQ_Q_MGR_NAME_LENGTH) init('');
+ dcl  Out_Queue     char(MQ_Q_NAME_LENGTH)     init('');
+
+ dcl Hconn    fixed binary(31) init(0);    /* Connection handle */
+ dcl CompCode fixed binary(31) init(0);    /* Completion code   */
+ dcl Reason   fixed binary(31) init(0);    /* Qualifying reason */
+
+
+ dcl O_options fixed binary(31) init (0);/* MQOPEN options   */
+ dcl 1 gmo like MQGMO;              /* get message options     */
+ dcl 1 pmo like MQPMO;              /* put message options     */
+ dcl 1 mdG  like MQMD;    /* Message descriptor MQGET   */
+ dcl 1 mdP  like MQMD;   /* Message descriptor  MQPUT   */
+ dcl Out_BuffLength fixed binary(31) init(200);/*Length of Output */
+ dcl Out_Buffer char(Out_BuffLength) init(''); /* Area of Output data */
+
+ QueueManager='MQST';
+ Out_Queue     ='CO.T.LQ.DISCTERM';
+
+
+     /****************************/
+     /*SOME VARIABLES FOR TESTING*/
+     /****************************/
+     /*IF IT IS TEST IS_TEST HAS VALUE YES*/
+     /*IN PRODUCTION YOU HAVE TO PUT NO  */
+
+     DCL  IS_TEST          CHAR(3)   INIT('YES');
+     DCL  REC_COUNTER      FIXED(15) INIT(0);
+     DCL  MAX_REC_COUNTER  FIXED(2)  INIT(99); /*MAXIMUM NUMBER OF*/
+                                               /*RECORDS FOR TESTING*/
+     /***************************/
+     /*SOME VARIABLES FOR TOTALS*/
+     /***************************/
+
+   DCL 1 COUNTERS ,
+      2 CNT_REC_READ               PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_DSK_READ               PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_PROCCED            PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_PROCCED_RIGHT      PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_WRITTEN            PIC 'ZZZ.ZZZ.ZZ9' ;
+
+
+ DCL PRT   FILE RECORD OUTPUT ENV(                    FB
+           RECSIZE(133)            CTLASA);
+
+
+ DCL 1 ERLINE  ,
+       2 ERLIN1    CHAR(1)  INIT(' ')       ,
+       2 ERLIN2    CHAR(132);
+
+ DCL TODAY      CHAR(17);
+ DCL MY_CHAR    CHAR(1 );
+ DCL MY_LINE    CHAR(200);
+ DCL  1 SYSDATE  BASED(ADDR(TODAY)),
+             2 SYSYY  CHAR(4),
+             2 SYSMM  CHAR(2),
+             2 SYSDD  CHAR(2);
+
+ DCL (ONFILE,ONCODE,ONKEY,PRIORITY,TIME,ONCHAR) BUILTIN;
+ DCL (DATETIME,SUBSTR,NULL,ADDR,UNSPEC,TRANSLATE) BUILTIN;
+ DCL  ONSOURCE BUILTIN;
+
+  /*******************************************************************/
+  /***********    M A I N   P R O G R A M    *************************/
+  /*******************************************************************/
+
+ ARXH :;
+
+   CNT_REC_READ              = 0 ;
+   CNT_DSK_READ              = 0 ;
+   CNT_REC_PROCCED           = 0 ;
+   CNT_REC_PROCCED_RIGHT     = 0 ;
+   CNT_REC_WRITTEN           = 0 ;
+
+   ON ENDFILE(DISKTRM)
+        BEGIN ;
+         CLOSE FILE(DISKTRM);
+         CLOSE FILE(PRT);
+         CALL DISCONECT_MQ  ;
+         GO TO TELOS;
+        END;
+  /*
+  ON CONVERSION  BEGIN;
+        MY_LINE= ONSOURCE() ;
+              ERLIN='CONVERCION LINE= '!! MY_LINE;
+              WRITE FILE(PRT) FROM(ERLIN);
+
+         CLOSE FILE(DISKTRM);
+         CLOSE FILE(PRT);
+         CALL DISCONECT_MQ  ;
+         GOTO TELOS ;
+  END;
+   */
+
+   OPEN FILE(DISKTRM);
+   CALL CONNECT_MQ  ;
+   CALL OPEN_QUEUE ;
+
+
+
+ /***********************************************************/
+
+ READ_FILE:;
+
+     CALL CLEAR_REC;
+     READ  FILE(DISKTRM) INTO(DT_REC);
+
+     CNT_REC_READ  = CNT_REC_READ  + 1;
+     IF IS_TEST  = 'YES' THEN  DO;
+         CALL PRINT_FOR_TEST ;
+     END;
+ /***********************************************************/
+  /*SKIP LINES OF  DISK TERMINAL CONTAINING
+    CESN PS=DSKTERM,USERID=DSKTERM\   31
+    PRIT\   5
+    CESF GOODNIGHT\  15                      */
+ /***********************************************************/
+
+     IF SUBSTR(DT_REC,31,1) ^='\'  &
+        SUBSTR(DT_REC,5, 1) ^='\'  &
+        SUBSTR(DT_REC,15,1) ^='\'  THEN DO;
+        CALL PUT_MSG ;
+     END;
+     ELSE  DO;
+        CNT_REC_PROCCED = CNT_REC_PROCCED  +1;
+     END;
+
+     GO TO READ_FILE;   /*READ AGAIN*/
+
+
+  /**********************************/
+  /* CLEAR_REC                START */
+  /**********************************/
+  CLEAR_REC           : PROC;
+  DCL I FIXED(3);
+  DO I = 1 TO 200;
+      SUBSTR(DT_REC,I,1) = ' ';
+  END ;
+  END CLEAR_REC;
+  /**********************************/
+  /* CLEAR_REC                END   */
+  /**********************************/
+
+  /**********************************/
+  /* CONNECT_MQ               START */
+  /**********************************/
+  CONNECT_MQ          : PROC;
+
+   call MQCONN (QueueManager,
+                Hconn,
+                CompCode,
+                Reason);
+
+   if ((CompCode ^= MQCC_OK) ! (Reason ^= MQRC_NONE))
+      then do;
+           ERLIN2  ='CONNECT ER '!!Out_Queue !!
+              ' Code= '!!CompcodeOUT !!
+              ' Reason= '!!ReasonOUT;
+              WRITE FILE(PRT) FROM(ERLINE) ;
+           GOTO TELOS ;
+           end;
+
+  END      CONNECT_MQ  ;
+
+  /**********************************/
+  /* CONNECT_MQ               END   */
+  /**********************************/
+  /**********************************/
+  /* DISCONECT_MQ             START */
+  /**********************************/
+  DISCONECT_MQ        : PROC;
+
+   call MQDISC(Hconn,
+               CompCode,
+               Reason);
+   if ((CompCode ^= MQCC_OK) ! (Reason ^= MQRC_NONE))
+      then do;
+            ERLIN2 ='DISCON  ER '!!Out_Queue !!
+              ' Code= '!!CompcodeOUT !!
+              ' Reason= '!!ReasonOUT;
+              WRITE FILE(PRT) FROM(ERLINE) ;
+           end;
+
+  END   DISCONECT_MQ  ;
+
+  /**********************************/
+  /* DISCONECT_MQ             END   */
+  /**********************************/
+  /**********************************/
+  /* OPEN_QUEUE               START */
+  /**********************************/
+  OPEN_QUEUE          : PROC;
+
+
+  /*OPEN OUTPUT QUEUE FOR MQPUT*/
+
+      ObjDescOUT.ObjectQMgrName = QueueManager;/* GIVE QUEUE MANAGER */
+      ObjDescOUT.ObjectName = Out_Queue; /*GIVE QUEUE NAME*/
+
+      OpenOptionsOUT  = MQOO_OUTPUT + MQOO_FAIL_IF_QUIESCING;
+
+      CALL MQOPEN(Hconn        ,
+                  ObjDescOUT,
+                  OpenOptionsOUT,
+                  HobjOUT,
+                  CompCodeOUT,
+                  ReasonOUT);
+
+      if ((CompCodeOUT ^= MQCC_OK) ! (ReasonOUT ^= MQRC_NONE))
+         THEN DO;
+           ERLIN2  ='OPEN ER.IN '!!Out_Queue !!
+              ' Code= '!!CompcodeOUT !!
+              ' Reason= '!!ReasonOUT;
+              WRITE FILE(PRT) FROM(ERLINE) ;
+              GO TO TELOS;
+             END;
+     END OPEN_QUEUE          ;
+  /**********************************/
+  /* OPEN_QUEUE               END   */
+  /**********************************/
+
+  /**********************************/
+  /* CLOSE_QUEUE             START  */
+  /**********************************/
+  CLOSE_QUEUE         : PROC;
+
+
+  /*CLOSE OUTPUT QUEUE*/
+    call MQCLOSE(Hconn    ,
+                 HobjOUT ,
+                 MQCO_NONE,
+                 CompCode,
+                 Reason);
+
+    if ((CompCode ^= MQCC_OK) ! (Reason ^= MQRC_NONE)) then do;
+     ERLIN2 ='Error on MQCLOSE Output queue, Compcode= '
+              !!compcode!!' Reason='!!Reason;
+              WRITE FILE(PRT) FROM(ERLINE) ;
+    end;
+
+   END CLOSE_QUEUE         ;
+  /**********************************/
+  /* CLOSE_QUEUES            END    */
+  /**********************************/
+
+  /**********************************/
+  /* PUT_MSG                 START  */
+  /**********************************/
+  PUT_MSG             : PROC;
+
+      pmo.Options =  MQPMO_SYNCPOINT         +
+                     MQPMO_FAIL_IF_QUIESCING;
+
+
+       mdP.MsgId    = MQMI_NONE;
+       mdP.CorrelId = MQMI_NONE;
+       mdP.Format = MQFMT_STRING;
+       mdP.CodedCharSetId = MQCCSI_Q_MGR;
+
+       call MQPUT(Hconn        ,
+                  HobjOUT ,
+                  mdP,
+                  pmo,
+                  200      ,
+                  DT_REC   ,
+                  CompCode,
+                  Reason);
+
+    if ((CompCode ^= MQCC_OK) ! (Reason ^= MQRC_NONE)) then do;
+        ERLIN2 ='Error on MQPUT   Output queue, Compcode= '
+                 !!compcode!!' Reason='!!Reason;
+                 WRITE FILE(PRT) FROM(ERLINE) ;
+                 GO TO TELOS;
+       END;
+
+   END PUT_MSG             ;
+  /**********************************/
+  /* PUT_MSG                 END    */
+  /**********************************/
+
+  /**********************************/
+  /* CONVERT_MSG           START    */
+  /**********************************/
+   CONVERT_MSG :PROC ;
+      DCL I FIXED(3) INIT(0);
+      DCL CHAR BUILTIN     ;
+     /*
+      DO I = 1 TO  200 ;
+         IF ( SUBSTR(DT_REC,I,1) ='\' ) THEN DO;
+              PUT SKIP LIST(DT_REC);
+              SUBSTR(DT_REC,I,1) = CHAR('1F'X,1);
+              LEAVE;
+         END;
+      END;
+       */
+   END CONVERT_MSG;
+
+  /**********************************/
+  /* CONVERT_MSG           END      */
+  /**********************************/
+
+
+  /**************************************************************
+  *  PRINT_FOR_TEST                                             *
+  *                                                             *
+  **************************************************************/
+     PRINT_FOR_TEST        : PROC;
+
+      REC_COUNTER = REC_COUNTER +1 ;
+
+      IF REC_COUNTER < MAX_REC_COUNTER THEN DO ;
+       ERLIN2  = SUBSTR(DT_REC,1,130) ;
+         WRITE FILE(PRT) FROM(ERLINE) ;
+
+     END;
+     END  PRINT_FOR_TEST ;
+
+  /**************************************************************
+  *  WRITE_ALM                   END                            *
+  **************************************************************/
+
+  TELOS:
+
+  /***********************************************/
+  /**   PRINT TOTALS     *************************/
+  /***********************************************/
+
+   ERLIN2= '   ейтупысг сумокым тоу пяоцяаллатос *DKREADT*   ';
+   WRITE FILE(PRT) FROM(ERLINE) ;
+
+   ERLIN2= ' глеяолгмиа KAI ыяа яогс :  ' !!DATETIME ;
+   WRITE FILE(PRT) FROM(ERLINE) ;
+
+   CNT_DSK_READ  =   CNT_REC_PROCCED  / 3 ;
+
+   ERLIN2= 'сумоко диабаслемым аявеиым       DISK_TERMINAL        :'!!
+   CNT_DSK_READ                  ;
+   WRITE FILE(PRT) FROM(ERLINE) ;
+
+   ERLIN2= 'сумоко еццяажым поу упаявоум сто DISK_TERMINAL        :'!!
+   CNT_REC_READ                  ;
+   WRITE FILE(PRT) FROM(ERLINE) ;
+
+
+ END DKREADT;
+

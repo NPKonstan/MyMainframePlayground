@@ -1,0 +1,61 @@
+  #include <stdio.h>                                                    00010010
+  #include <string.h>                                                   00011010
+  #include <errno.h>                                                    00020010
+                                                                        00021041
+  #pragma linkage(MYC, PLI)                                             00022509
+  long int MYC( char **parm     ) {                                     00022638
+    FILE *fp;                                                           00022810
+    char MyFile[44];                                                    00022942
+    long int pos;                                                       00023110
+    /* npk this is the write way to pass strings from pli*/             00023239
+    /* npk 06-04-2006  lOOK AT CBG.TEST.SOURCE(PLITOC)   */             00023339
+    printf("*parm = %s \n",*parm);                                      00023438
+                                                                        00023539
+    /*****************************************                          00023639
+    printf("parm = %s \n", parm);                                       00023739
+    printf("**parm = %s \n",**parm);                                    00023838
+    printf("&parm = %s \n", &parm);                                     00023938
+    */                                                                  00024039
+                                                                        00024138
+                                                                        00024238
+       return 66 ;                                                      00024338
+    /*                                                                  00024438
+    strcpy(MyFile,"\"DD:");                                             00024538
+    strcat(MyFile,parm);                                                00024638
+    strcat ( MyFile,"\"" );                                             00024738
+    printf("MyFile = %s \n",MyFile); */                                 00024838
+                                                                        00024938
+    fp = fopen("DK.P.XS.TRLOIPSN(0)","r");                              00025038
+    if (fp == NULL)                                                     00025138
+    {                                                                   00025238
+    printf("Error...Unable to open file\n");                            00025338
+  /*  printf("errno ... %d\n",errno);                                   00025438
+    perror("perror ... "); */                                           00025538
+    return -1;                                                          00025638
+    }                                                                   00025738
+    else                                                                00025838
+    {                                                                   00025938
+       fseek(fp, 0L, SEEK_END);                                         00026038
+       pos =ftell(fp);                                                  00026138
+       fclose(fp);                                                      00026238
+       return pos;                                                      00026338
+    }                                                                   00026638
+  }                                                                     00027025
+/*                                                                      00028040
+  PLIPROG: Proc options(main, reentrant);                               00028140
+     * NPK 06-04-2006                                 *                 00028240
+     * here i call a c function passing String                          00028340
+       the source of c is in konstan.private.src(myc) *                 00028440
+    DCL  ARG  char     (20) ;                                           00028540
+    Dcl MYC external entry ( POINTER )                                  00028640
+    returns(fixed bin(31));                                             00028740
+    DCL PTR POINTER;                                                    00028840
+    Dcl a fixed bin(31) INIT(5);                                        00028940
+    DCL ADDR BUILTIN ;                                                  00029040
+    PUT SKIP LIST('Before Calling C    ');                              00029140
+    ARG   = 'I came from Legacy ' !!'00'x ;                             00029340
+    PUT SKIP LIST('my arg is : ',ARG   );                               00029440
+    CALL MYC( ADDR(ARG) );                                              00029540
+  End;                                                                  00029640
+*/                                                                      00030040
+

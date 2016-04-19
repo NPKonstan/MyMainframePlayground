@@ -1,0 +1,169 @@
+* PROCESS XOPTS(CICS);
+  /* ****************************************************************/
+  /*   to be done                                                   */
+  /*   Κλοπυ Πάστε    npk 08-03-2010                                */
+  /******************************************************************/
+  /*   Θα το φτιάξω να στέλνει μαιλ απο το cics                     */
+  /*   Κλοπυ Πάστε    npk 08-03-2010                                */
+  /******************************************************************/
+  /*   Το πιο κάτω είναι αντιγραφή απο το Internet                  */
+  /******************************************************************/
+  /*   EXEC CICS SPOOLOPEN                                          */
+  /*   EXEC CICS SPOOLWRITE                                         */
+  /*   EXEC CICS SPOOLCLOSE                                         */
+  /*   You tell CICS to submit the JCL by coding USERID('INTRDR')   */
+  /*   on the SPOOLOPEN command.                                    */
+  /*   In addition, you should not code NODE('*'),                  */
+  /*   but include a specific node or NODE('LOCAL')                 */
+  /*   if the job is to run local system.                           */
+  /*   You must also be sure you specify the correct output         */
+  /*   class for the standards at your shop.                        */
+  /*   You must always be sure to put a slash-star card ("/*")      */
+  /*   at the end of the job so it will be automatically submitted. */
+  /* ****************************************************************/
+  /******************************************************************/
+  /*   Το πιο κάτω είναι αντιγραφή IBM manuals for spool            */
+  /******************************************************************/
+  /*  DCL                                                           */
+  /*    RESP FIXED BIN(31),                                         */
+  /*    RESP2 FIXED BIN(31),                                        */
+  /*    TOKEN CHAR(8),                                              */
+  /*    OUTLEN FIXED BIN(31) INIT(80),                              */
+  /*    OUTPRT CHAR(80) INIT('SPOOLOPEN FUNCTIONING'),              */
+  /*    PARMADDR POINTER,                                           */
+  /*    PARMSPTR POINTER;                                           */
+  /*  DCL                                                           */
+  /*    1 PARMS,                                                    */
+  /*      2 PARMSLEN FIXED BIN(31) INIT(14),                        */
+  /*      2 PARMSINF CHAR(14) INIT('WRITER(MYPROG)')                */
+  /*        ALIGNED;                                                */
+  /*  PARMADDR=ADDR(PARMS);                                         */
+  /*  PARMSPTR=ADDR(PARMADDR);                                      */
+  /*  EXEC CICS SPOOLOPEN OUTPUT NODE('*') USERID('*')              */
+  /*       TOKEN(TOKEN) OUTDESCR(PARMSPTR) RESP(RESP)               */
+  /*       RESP2(RESP2);                                            */
+  /*  EXEC CICS SPOOLWRITE FROM(OUTPRT) FLENGTH(OUTLEN)             */
+  /*       RESP(RESP) RESP2(RESP2) TOKEN(TOKEN);                    */
+  /*  EXEC CICS SPOOLCLOSE TOKEN(TOKEN) RESP(RESP)                  */
+  /*       RESP2(RESP2);                                            */
+  /*                                                                */
+  /*                                                                */
+  /*                                                                */
+  /*                                                                */
+  /*                                                                */
+  /*                                                                */
+  /*                                                                */
+  /*                                                                */
+  /*                                                                */
+  /* THIS IS A SAMPLE OF SUBMITTING JOBS VIA THE MVS SPOOL          */
+  /* Y E A R   2000  O.K.                                      A.M. */
+  /* ****************************************************************/
+
+ AFROTES:  PROC(COM_PTR)  OPTIONS(MAIN,REENTRANT);
+ /* npk out
+ % INCLUDE DFHBMSCA;
+ % INCLUDE DFHAID;
+  npk out */
+    DCL COM_PTR    PTR;
+    DCL 1   COM_REC BASED(COM_PTR),
+          2 COM_PIN(20)           ,
+          3 COM_HMK     CHAR(7)   ,                     /* C2000 */
+          3 COM_REFNUM  CHAR(23)  ,
+          2 COM_CHOISE  CHAR(01)  ;
+    DCL 1   OUTPUT_FIELDS     ,
+            3 TOKEN     CHAR(8) INIT('INPUT   '),
+            3 NODE      CHAR(8) INIT('CBGPROD ' ),
+            3 USERID    CHAR(8) INIT('INTRDR  '  ),
+            3 CLASS     CHAR(1) INIT('I'       );
+
+    DCL  APPLID         CHAR(8) INIT('');
+    DCL  COM_LENGTH   FIXED BIN(15) INIT(601);           /* C2000 */
+
+    DCL     J   FIXED BIN(15) INIT(0);
+    DCL     K   FIXED BIN(15) INIT(36);
+
+    DCL 1   LINE(36)  CHAR(80) INIT
+           ('//AUPCICS  JOB (VISA),',
+            '// CLASS=P,MSGCLASS=Z,MSGLEVEL=(1,1),REGION=1M,',
+            '// USER=VISD0201',
+            '/*JOBPARM SYSAFF=*',
+ '//JOBLIB   DD  DSN=CBG.PROD.LOAD,DISP=SHR       PROD PROGRAMS',
+ '//         DD  DSN=MVSMS12.LINKLIB,DISP=SHR FOR    MVS-MS ROUTINES',
+            '//AUTCA0A0 EXEC PGM=AUK182',
+            '//SYSPRINT DD SYSOUT=*',
+            '//CEEDUMP  DD SYSOUT=*',
+            '//EUMCRN   DD DSN=AU.P.SS.AU61(0),DISP=SHR',               00002637
+            '//INCMCRN  DD DSN=AU.P.SS.AU84(0),DISP=SHR',               00002637
+            '//UROINQFL DD DSN=AU.P.DM.UROINQFL,DISP=SHR',              00003211
+            '//UROEXFL  DD DSN=AU.P.DM.UROEXFL,DISP=SHR',               00003211
+            '//LIST1    DD SYSOUT=(6,VISD0201),UCS=CBG WAS RIZO',       00003811
+            '//FCARD    DD *',                                          00003811
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '/*EOF');
+ /*-------------------------------------------------------------------*/
+
+    DCL     LEN FIXED BIN(15) INIT(80);
+    DCL     OPNAME    CHAR(8) INIT('        ');
+ /*********************************************************************/
+ /***********   M  A  I  N      P  R  O  C  E  D  U  R  E   ***********/
+ /*********************************************************************/
+
+     EXEC CICS ASSIGN USERID(OPNAME);
+     EXEC CICS ASSIGN APPLID(APPLID);
+
+     LINE(3)  = '// USER=' !! OPNAME;
+     IF COM_CHOISE = '2' !                            /*  CHARGEBACK  */
+        COM_CHOISE = '3' THEN                     /* RETRIEVAL REQUEST*/
+        LINE(7) = '//AUTCA0A0 EXEC PGM=AUK192';
+     LINE(14) ='//LIST1    DD SYSOUT=(6,'!!SUBSTR(APPLID,1,4)!!         00003811
+               SUBSTR(OPNAME,1,4)!!')';                                 00003811
+  /* LINE(14) ='//LIST1    DD SYSOUT=(6,'!!SUBSTR(APPLID,1,4)!!         00003811
+               SUBSTR(OPNAME,4,1)!!SUBSTR(OPNAME,6,3)!!')';  */         00003811
+     DO J = 1 TO 20;
+        LINE(15+J) = 'C'!!COM_HMK(J)!!COM_REFNUM(J)!!'0';
+     END;
+
+     EXEC CICS SPOOLOPEN OUTPUT                                         COM00480
+               TOKEN(TOKEN)                                             COM00480
+               USERID(USERID)                                           COM00480
+               NODE(NODE)                                               COM00480
+               CLASS(CLASS)                                             COM00480
+               NOCC                                                     COM00480
+               PRINT                                                    COM00480
+               NOHANDLE ;                                               COM00480
+
+     DO I = 1 TO K  ;
+
+       EXEC CICS SPOOLWRITE                                               COM004
+                 TOKEN(TOKEN)                                             COM004
+                 FLENGTH(LEN)                                             COM004
+                 LINE NOHANDLE                                            COM004
+                 FROM(LINE(I));                                           COM004
+    END;
+
+     EXEC CICS SPOOLCLOSE                                               COM00480
+               TOKEN(TOKEN) NOHANDLE;                                   COM00480
+
+      EXEC CICS RETURN TRANSID('T735');
+
+ END AFROTES;
+

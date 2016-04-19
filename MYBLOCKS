@@ -1,0 +1,474 @@
+*process macro langlvl(os,sprog) test(all,sym);
+ %dcl filler entry;
+ %filler: proc returns(char);
+ dcl str char;
+
+ dcl counter builtin;
+ str = 'Z' !! counter;
+ return(str);
+ %end filler;
+ steps:proc(param) options(main) reorder;
+ dcl param char(100) var;
+
+ /*********************************************************************
+ * STEPS - Entry's, builtins & files
+ **********************************************************************/
+ dcl (addr,
+      index,
+      length,
+      plidump,
+      ptradd,
+      ptrvalue,
+      substr,
+      translate,
+      unspec,
+      verify) builtin;
+
+ dcl sysprint file;
+
+ %include plitabs;
+
+ dcl p1               ptr init (ptrvalue(16)) static;
+
+ dcl 1 s1 based(p1),
+       2 p2           ptr;
+
+ dcl 1 s2 based(p2),
+       2 p3           ptr;
+
+ dcl 1 s3 based(p3),
+       2 filler       ptr,
+       2 tcb_ptr      ptr;
+
+ dcl 1 tcb based(tcb_ptr),
+       2 filler(3)    ptr,
+       2 tiot_ptr     ptr,
+       2 filler(41)   ptr,
+       2 jscb_ptr     ptr;
+
+ dcl 1 tiot based(tiot_ptr),
+       2 jobname      char (8),
+       2 stepname     char (8);
+
+ dcl 1 jscb based(jscb_ptr),
+       2 filler(65)   ptr,
+       2 jscbjct      ptr,
+       2 filler(13)   ptr,
+       2 jscbssib     ptr;
+
+ dcl 1 jct based(jscbjct),
+       2 filler(5)    ptr,
+       2 filler       char,
+       2 jctjstat     bit  (8),
+       2 filler       char (2),
+       2 jctjname     char (8),      /* job name */
+       2 filler(4)    ptr,
+       2 jctsdkad     char (3),      /* sva of first sct */
+       2 filler       char,
+       2 jctjctx      char (3),      /* sva of jctx */
+       2 filler       char,
+       2 jctactad     char (3),      /* sva of first act */
+       2 filler       char,
+       2 filler(26)   ptr,
+       2 filler       char,
+       2 jmrjmrjd     fixed dec(5,3),   /* job start date (julian) */
+       2 filler(2)    ptr,
+       2 jctuser      char (7),      /* job user id */
+       2 filler       char,
+       2 jctacode     char (4);      /* job abend code */
+
+ dcl 1 ssib based(jscbssib),
+       2 filler(3)    ptr,
+       2 ssibjbid     char (8);      /* subsystem job id */
+
+ dcl act_ptr ptr;
+ dcl 1 act based(act_ptr),
+       2 filler       char  (24),
+       2 actprgnm     char  (20),
+       2 filler       char   (3),
+       2 actjnfld     char,
+       2 actaccnt     char(144);
+
+ dcl sct_ptr ptr;
+ dcl 1 sct based(sct_ptr),
+       2 filler(6)    ptr,
+       2 sctsexec     fixed bin (15),
+       2 filler(2)    char,
+       2 filler(2)    ptr,
+       2 sctansct     char(3), /* sva of next sct */
+       2 filler       char,
+       2 filler(5)    ptr,
+       2 sctsclpc     char(8), /* name of step that called procedure */
+       2 sctsname     char(8), /* step name */
+       2 filler(2)    ptr,
+       2 sctx_pch     char(3),
+       2 filler       char,
+       2 filler(9)    ptr,
+       2 sctpgmnm     char(8), /* program name */
+       2 filler       char(2),
+       2 sctcdent(8)  char(6),
+       2 filler       char(6),
+       2 sctstend     bit (8);  /* bits and pieces */
+
+ dcl sctx_ptr ptr;
+ dcl 1 sctx based(sctx_ptr),
+       2 filler(5)    ptr,
+       2 sctxparm     char     (100);
+
+ dcl jctx_ptr         ptr;
+ dcl sctxparm_v       char     (100) var;
+ dcl have_had_current bit        (1) init ('0'b);
+ dcl have_had_title   bit        (1) init ('0'b);
+ dcl max_cc           fixed bin (15) init (0);
+ dcl flag_after       bit        (1) init ('0'b);     /* A */
+ dcl flag_before      bit        (1) init ('0'b);     /* B */
+ dcl flag_current     bit        (1) init ('0'b);     /* C */
+ dcl flag_desc        bit        (1) init ('0'b);     /* D */
+ dcl flag_flush       bit        (1) init ('0'b);     /* F */
+ dcl flag_nonzero     bit        (1) init ('0'b);     /* N */
+ dcl flag_parm        bit        (1) init ('0'b);     /* P */
+ dcl flag_zero        bit        (1) init ('0'b);     /* Z */
+
+ dcl desc_max         fixed bin (31) static init (255);
+ dcl desc_used        fixed bin (31) init (0);
+ dcl 1 desc_array(desc_max) ctl,
+       2 stepname     char       (8),
+       2 text         char      (64) var;
+
+ flag_after   = (index(param, 'A') ^= 0);
+ flag_before  = (index(param, 'B') ^= 0);
+ flag_current = (index(param, 'C') ^= 0);
+ flag_desc    = (index(param, 'D') ^= 0);
+ flag_flush   = (index(param, 'F') ^= 0);
+ flag_nonzero = (index(param, 'N') ^= 0);
+ flag_parm    = (index(param, 'P') ^= 0);
+ flag_zero    = (index(param, 'Z') ^= 0);
+
+ if ^flag_after  &
+    ^flag_before &
+    ^flag_current then
+   flag_before = '1'b;
+
+ if flag_desc then
+   call load_desc_array();
+
+ jctx_ptr = char3_to_ptr(jct.jctjctx);
+ act_ptr  = char3_to_ptr(jct.jctactad);
+
+ put skip edit(ssib.ssibjbid, jct.jctjname, 'run on',
+               jct.jmrjmrjd, 'by', jct.jctuser)
+              (a, x(1), a, x(1), a, x(1), p'99v.999', x(1), a, x(1), a);
+
+ call print_accounting();
+
+ sct_ptr = char3_to_ptr(jct.jctsdkad);
+
+ do while(sct_ptr ^= ptrvalue(0));
+   sctx_ptr = char3_to_ptr(sct.sctx_pch);
+   if unspec(substr(sctcdent(8), 1, 1)) & '04'bx then
+     do;
+       if ^have_had_title then
+         call print_title();
+
+       put skip edit(sctsclpc, sctsname, sctpgmnm)
+                    (a, x(1), a, x(1), a);
+       put edit('ABENDed')(x(1), a, x(1));
+
+       if flag_desc then
+         call print_desc();
+
+       if flag_parm then
+         call print_parm();
+     end;
+   else
+     if sctstend & '80'bx then      /* started */
+       if sctstend & '40'bx then   /* ended */
+         do;
+           if flag_before then
+             if (flag_zero    & sctsexec  = 0) !
+                (flag_nonzero & sctsexec ^= 0) then
+               do;
+                 if ^have_had_title then
+                    call print_title();
+
+                 put skip edit(sctsclpc, sctsname, sctpgmnm)
+                              (a, x(1), a, x(1), a);
+                 put edit(sctsexec)
+                         (x(3), p'zzzz9');
+
+                 if flag_desc then
+                    call print_desc();
+
+                 if flag_parm then
+                    call print_parm();
+               end;
+
+           if sctsexec > max_cc then
+             max_cc = sctsexec;
+         end;
+       else
+         do;
+           if flag_current then
+             do;
+               if ^have_had_title then
+                 call print_title();
+
+               put skip edit(sctsclpc, sctsname, sctpgmnm)
+                            (a, x(1), a, x(1), a, x(9));
+
+               if flag_desc then
+                 call print_desc();
+
+               if flag_parm then
+                 call print_parm();
+             end;
+
+           have_had_current = '1'b;
+         end;
+     else      /* not started */
+       if have_had_current then
+         if flag_after then
+           do;
+             if ^have_had_title then
+               call print_title();
+
+             put skip edit(sctsclpc, sctsname, sctpgmnm)
+                          (a, x(1), a, x(1), a, x(9));
+             if flag_desc then
+               call print_desc();
+
+             if flag_parm then
+               call print_parm();
+           end;
+         else
+           do;
+           end;
+       else
+         if flag_flush then
+           do;
+             if ^have_had_title then
+               call print_title();
+
+             put skip edit(sctsclpc, sctsname, sctpgmnm)
+                          (a, x(1), a, x(1), a);
+             put edit('Flushed') (x(1), a, x(1));
+
+             if flag_desc then
+               call print_desc();
+
+             if flag_parm then
+               call print_parm();
+           end;
+
+   sct_ptr = char3_to_ptr(sct.sctansct);
+ end;
+
+ if have_had_title then
+   put skip edit((69)'-')(a);
+
+ put skip edit('Maximum completion code was', max_cc)
+              (a, x(2), p'zzzz9');
+
+ if jctjstat & '08'bx then
+   do;
+     put skip edit('The job ABENDed', abend_code(jctacode))
+                  (a, x(1), a);
+   end;
+
+ print_parm: proc;
+ dcl ix fixed bin (31);
+
+ ix = index(sctxparm, '00'x);
+ if ix = 0 then
+   sctxparm_v = sctxparm;
+ else
+   sctxparm_v = substr(sctxparm, 1, ix);
+
+ put skip list('PARM=' !! sctxparm_v);
+ end print_parm;
+
+ print_desc:proc;
+ dcl ix fixed bin (31);
+
+ do ix = 1 to desc_used while(sct.sctsname ^= desc_array(ix).stepname);
+ end;
+
+ if ix <= desc_used then
+   do;
+     put edit(desc_array(ix).text) (x(1), a);
+   end;
+ end print_desc;
+
+ char3_to_ptr: proc(ch3) returns(ptr);
+ dcl ch3          char (3);
+ dcl wp           ptr;
+
+ dcl 1 wp_redef based(addr(wp)),
+       2 highbyte char (1),
+       2 lowbytes char (3);
+
+ wp_redef.highbyte = '00'x;
+ wp_redef.lowbytes = ch3;
+ return(wp);
+ end char3_to_ptr;
+
+ load_desc_array: proc;
+ dcl sysin file input record sequential;
+ dcl (undf,eof) bit (1) init('0'b);
+
+ on undefinedfile(sysin) undf = '1'b;
+ on endfile(sysin)       eof  = '1'b;
+
+ dcl sysin_rec char      (80);
+ dcl ix        fixed bin (31);
+
+ open file(sysin);
+
+ if undf then
+   do;
+     put skip list('Unable to open SYSIN');
+     stop;
+   end;
+
+ read file(sysin) into(sysin_rec);
+ if eof then
+   do;
+     put skip list('No records in SYSIN');
+     stop;
+   end;
+
+ alloc desc_array;
+
+ do while(^eof);
+   ix = index(sysin_rec, ',');
+
+   if ix > 1 & ix <= 9 then
+     do;
+       desc_used                      = desc_used + 1;
+       desc_array(desc_used).stepname = substr(sysin_rec, 1, ix - 1);
+       desc_array(desc_used).text     = substr(sysin_rec, ix + 1, 64);
+     end;
+   else
+     do;
+       put skip list('Invalid record in SYSIN');
+       stop;
+     end;
+
+   read file(sysin) into(sysin_rec);
+ end;
+
+ close file(sysin);
+ end load_desc_array;
+
+ abend_code: proc(ch4) returns(char(5));
+ dcl ch4 char       (4);
+ dcl w4b fixed bin (31);
+ dcl w4  char       (4) based(addr(w4b));
+ dcl p4  pic     '9999';
+
+ unspec(w4) = unspec(ch4) & '00fff000'bx;
+ if unspec(w4) then
+   do;
+     return('S' !! substr(hex(w4), 3, 3));
+   end;
+ else
+   do;
+     unspec(w4) = unspec(ch4) & '00000fff'bx;
+     p4 = w4b;
+     return('U' !! p4);
+   end;
+ end abend_code;
+
+ hex: proc(ch_string) returns(char(100) var);
+ dcl ch_string  char  (*);
+ dcl hex_string char     (100) var init ('');
+ dcl ix         fixed bin (31);
+
+ dcl tt01       char (256) static
+    init (((16)'0' !! (16)'1' !! (16)'2' !! (16)'3' !!
+           (16)'4' !! (16)'5' !! (16)'6' !! (16)'7' !!
+           (16)'8' !! (16)'9' !! (16)'A' !! (16)'B' !!
+           (16)'C' !! (16)'D' !! (16)'E' !! (16)'F'));
+
+ dcl tt02 char(256) static
+    init (((16)'0123456789ABCDEF'));
+
+ do ix = 1 to length(ch_string);
+   hex_string = hex_string !!
+                translate(substr(ch_string, ix, 1), tt01) !!
+                translate(substr(ch_string, ix, 1), tt02);
+ end;
+ return(hex_string);
+ end hex;
+
+ ch1_to_fb15: proc(ch1) returns(fixed bin(15));
+ dcl ch1    char       (1);
+ dcl fb15   fixed bin (15);
+ dcl fb15ch char       (2) based (addr(fb15));
+
+ substr(fb15ch, 1, 1) = '00'x;
+ substr(fb15ch, 2, 1) = ch1;
+ return(fb15);
+ end ch1_to_fb15;
+
+ print_accounting:proc;
+ dcl (nf, nc)   fixed bin (15);
+ dcl p         ptr;
+ dcl 1 actfield based(p),
+       2 len   char       (1),
+       2 rest  char     (144);
+ dcl w_account char     (100) var init ('');
+ dcl ix        fixed bin (31);
+
+ nf = ch1_to_fb15(act.actjnfld);
+ p  = addr(actaccnt);
+
+ do ix = 1 to nf;
+   nc = ch1_to_fb15(actfield.len);
+   w_account = w_account !! substr(actfield.rest, 1, nc);
+
+   if ix < nf then
+     w_account = w_account !! ',';
+
+   p = ptradd(p, nc + 1);
+ end;
+
+ w_account = '(' !! w_account !! ')';
+
+ put edit(w_account, '''' !! actprgnm !! '''')
+     (x(1), a, x(1), a);
+ end print_accounting;
+
+ print_title: proc;
+   put skip edit((69)'-')(a);
+   put skip edit('Step', 'Program', 'Code')
+                (x(9), a(8), x(1), a(8), x(4), a(4));
+   have_had_title = '1'b;
+ end print_title;
+ end steps;
+/**********************************************************************
+//.********************************************************************
+//. Create .STEPS dataset containing summary of job steps
+//.********************************************************************
+//#440   EXEC PGM=STEPS,COND=EVEN,
+//            PARM='/B D N'    Before Desc Nonzero
+//SYSPRINT DD DSN=&ZPREFIX..&MEM..STEPS,
+//            DISP=(,CATLG),
+//            UNIT=SYSDA
+//            SPACE=(TRK,(2,1),RLSE),
+//            DCB=(RECFM=VBA,LRECL=125,BLKSIZE=0)
+//SYSIN    DD *
+A&MEM7,Find PLI program (&MEM)
+B&MEM7,PLI Compiler (Macro/Include) (&MEM)
+V&MEM7,IDMS Special Versions (&MEM)
+C&MEM7,IDMS Preprocessor (&MEM)
+D&MEM7,DB2 Precompiler (&MEM)
+Z&MEM7,CICS Preprocessor (&MEM)
+E&MEM7,PLI Compiler (Compile) (&MEM)
+F&MEM7,InterTest Postprocess listing (&MEM)
+G&MEM7,Find LEL (&MEM)
+H&MEM7,Link Edit Load module (&MEM)
+K&MEM7,InterTest Postprocess linkedit (&MEM)
+**********************************************************************/
+Robert
+

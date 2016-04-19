@@ -1,0 +1,1124 @@
+* PROCESS XOPTS(CICS);                                                  00010092
+ /* PROCESS INCLUDE,XOPTS(CICS),AG,A,M,MAP,MI('-'),NEST,NIS,OPT(2),X,O*/00020092
+   /*      PROGRAM NANE : EPPTENEA**  PHASE NAME : EPPTENEA        */   00030092
+   /*--------------------------------------------------------------*/   00040092
+   /*      TRANSACTION  ENEA    KINHrHr KEuAkAIxN                  */   00050092
+   /*      EKTYpxrHr ANEKTEkErTxN ENTOkxN                          */   00060092
+   /* METATPOpH ApO MACRO rE COMMAND  LEVEL    11/11/94            */   00070092
+   /*--------------------------------------------------------------*/   00080092
+ /* TYпымеи левяи йаи окес тис  амейтекестес лгй  еццяажес ле око том   00090099
+    йыдийа  выяис яоутима  */                                           00100099
+ ENEA: PROC OPTIONS(MAIN,REENTRANT);                                    00110092
+ DCL PLIXOPT CHAR(39) VAR EXT  INIT ('ERRCOUNT(0)');                    00150092
+                                                                        00160092
+ /*****************************************************************/    00170092
+                                                                        00180092
+ DCL IOAREA               CHAR (600);                                   00190092
+                                                                        00200092
+ DCL  ZEROSTRING      BIT(24) INIT('0'B) ;                              00210099
+ DCL TEST_SERIAL      BASED (ADDR(EWSERIAL)) BIT (24);                  00220099
+                                                                        00230099
+ DCL WRK_ARLOG            DEC FIXED(13,0);                              00240092
+ DCL 1 WSARLOG            BASED(ADDR(WRK_ARLOG)),                       00250092
+       2 BIT_FLR          BIT(52),                                      00260092
+       2 BIT_ARLOG        BIT (4)  ;                                    00270092
+                                                                        00280092
+ DCL MM                   PIC '999'  INIT(0);                           00290092
+ DCL SW                   PIC '9'    INIT(0);                           00300092
+                                                                        00310092
+ DCL WRK_KATMA       DEC FIXED(5,0)  INIT(0) ;                          00320092
+                                                                        00330092
+ DCL WRK_SKAT        CHAR(03)        INIT('') ;                         00340092
+ DCL WRK_STER        CHAR(01)        INIT('') ;                         00350092
+ DCL WRK_ARTR        CHAR(03)        INIT('') ;                         00360092
+                                                                        00370092
+ DCL DB2_REC         PIC'Z.ZZZ.ZZ9'  INIT(0) ;                          00380000
+                                                                        00390092
+ DCL EOF             BIT (1)         INIT('0'B) ;                       00400092
+  /********************  DB2  AREA ****************/                    00410092
+                                                                        00420092
+    EXEC SQL  INCLUDE CTAJISSU;                                         00430092
+                                                                        00440092
+    EXEC SQL INCLUDE SQLCA;                                             00450092
+                                                                        00460092
+      /* апо то пимайа CTAJAISSU епикецоуле та RECORDS поу              00470092
+         ANTIстоивоум стис апкгяытес коцистийес еццяAжес тоу йатлос     00480092
+         амTAпойяисгс */                                                00490092
+                                                                        00500092
+    EXEC SQL                                                            00510092
+         DECLARE ISSUE_CHK CURSOR FOR                                   00520092
+           SELECT KEY_CODKATMA,                                         00530092
+                  KEY_AREGGR                                            00540092
+           FROM CTAJISSU                                                00550092
+           WHERE  KEY_CODKATMA = :WRK_KATMA                             00560092
+           AND    KEY_INDEX    = 2                                      00570092
+           AND  ( KEY_AREGGR   BETWEEN 8000000000000                    00580092
+                               AND     9000000000000 )                  00590092
+           AND    FLG_STATUS   = '0'                                    00600092
+           ORDER BY KEY_AREGGR ;                                        00610092
+                                                                        00620092
+ DCL  NO_OF_ROWS       BIN  FIXED(15) INIT (0);                         00630099
+ DCL  DECIMAL_NO_OF_ROWS   PIC'(8)9' INIT (0);                          00640099
+ /************   T E LO S  DB2  AREA  ***************************/      00650092
+                                                                        00660092
+ DCL  (CUADSPTR,EWADSPTR,TWADSPTR,cwaptr, twaptr,p )  PTR;              00670092
+ % INCLUDE  EFHCWADS ;                                                  00680092
+  DCL 1 TWA_AREA       BASED(TWAPTR),                                   00690092
+                                                                        00700092
+ % INCLUDE  EFHDLIDS  ;                                                 00710092
+ % INCLUDE  EFHTFDS ;                                                   00720092
+ % INCLUDE  EFHCUADS ;                                                  00730092
+ % INCLUDE  EFHTWADS ;                                                  00740092
+ % INCLUDE  KINTWADS ;                                                  00750092
+ % INCLUDE  AJSEGA ;                                                    00760092
+ % INCLUDE  dayrtno;                                                    00770092
+                                                                        00780092
+                                                                        00790092
+                                                                        00800092
+ DCL 1   SIGNF            BASED(P),                                     00810092
+      2  SFIL1            CHAR(6),                                      00820092
+      2  SFIL2            BIT(4),                                       00830092
+      2  FF1              BIT(4);                                       00840092
+                                                                        00850092
+  DCL  COM_FLG          PIC'9'  INIT(0)  ;                              00860093
+  DCL  MAX_ARRAY_SIZE    FIXED(08)   INIT(500) ;                        00870099
+  DCL  1 COM_TBL_X(500),                                                00880092
+         2 COM_ARLOG     FIXED(13)     INIT(0) ,                        00890092
+         2 COM_AITIOL    CHAR(30)      INIT(''),                        00900092
+         2 COM_POSO      FIXED(9,2)    INIT(0) ,                        00910092
+         2 COM_EIDOS     PIC'99'       INIT(0) ,                        00920092
+         2 COM_PLHR      PIC'999'      INIT(0) ,                        00930092
+         2 COM_TAYT      CHAR(07)      INIT('');                        00940092
+  DCL    COM_MAX_XX      PIC'999'      INIT(0) ;                        00950092
+                                                                        00960092
+                                                                        00970092
+ DCL   PrintFlag   pic'9'  ;                                            00980092
+ DCL  ( DiagnMessage    , MSG(10 ) )    CHAR(70);                       00990092
+ DCL  (HEADER1, HEADER2)   CHAR(70)  INIT(' ') ;                        01000092
+ DCL  1  PSYOUT02  BASED(CUAFW)           ,                             01010011
+         2  HEADER       CHAR(13)         ,                             01020011
+         2  LINE1_TABLE(2)                ,                             01030011
+            4  LIN1_GR   BIT(8)           ,                             01040011
+            4  LIN1_ST   BIT(8)           ,                             01050011
+            4  LIN1_MH   BIT(8)           ,                             01060011
+            4  LINE1     CHAR(70)         ,                             01070011
+         2  PSYEND2    BIT(16)            ;                             01080011
+                                                                        01090011
+ DCL  TOTAL_NO_OF_PAGES PIC'999' INIT(0);                               01100099
+ DCL  NO_OF_PAGES       FIXED(15,8) ;                                   01110099
+ dcl  (date1,date2)   pic'(08)9' init(0) ;                              01120092
+ dcl  pr_thlef     pic'(09)Z9' init(0) ;                                01130092
+ DCL  ( K , L, I )        PIC'(03)9' INIT(0) ;                          01140099
+ DCL  (JUMP, PR_ARLOG )     PIC'(13)9' INIT(0) ;                        01150099
+ DCL  PR_DIKAIO     CHAR(31) INIT(' ') ;                                01160099
+ DCL  PR_EIDOS      PIC'(03)9'  INIT(0 ) ;                              01170099
+ DCL  HeadQualif    char(50) init(' ') ;                                01180099
+ DCL  PR_TAYT       CHAR(07 ) init(' ') ;                               01190099
+ DCL  PR_SER        PIC'Z9' INIT(0) ;                                   01200099
+ DCL  pr_POSO       PIC'ZZZ.ZZZ.ZZ9V,99'  ;                             01210099
+ dcl  dikaiouhos    char(26) init(' ') ;                                01220092
+ dcl  pr_kat        pic'(03)9' init(0) ;                                01230092
+                                                                        01240092
+ DCL     PTIME                  PIC'999999';                            01250092
+ DCL     1 PTIMEB               BASED(ADDR(PTIME)),                     01260092
+         2 PHH                  PIC'99',                                01270092
+         2 PMM                  PIC'99',                                01280092
+         2 PSS                  PIC'99';                                01290092
+                                                                        01300092
+ DCL PR_DATE  PIC'99/99/9999'  INIT(0) ;                                01310092
+ DCL 1  PR_DATE1   BASED(ADDR(PR_DATE    )),                            01320092
+      2  DD PIC'99',                                                    01330092
+      2  DELIM1 CHAR(1),                                                01340092
+      2  MM  PIC'99',                                                   01350092
+      2  DELIM2  CHAR(1),                                               01360092
+      2  YY  PIC'9999' ;                                                01370092
+                                                                        01380092
+ DCL     TER3600      BIT (8)  INIT ('00000000'B);                      01390092
+                                                                        01400092
+ dcl  pr_trace        char(30) init(' ')       ;                        01410092
+ DCL 1   ABCD         BASED(USERPTR),                                   01420092
+      2  P6           PTR;                                              01430092
+ DCL 1   TP           BASED(CUAFW)    ALIGNED,                          01440092
+      2  FTR888       CHAR(90),                                         01450092
+      2  FTR          CHAR(12),                                         01460092
+      2  FTRFF        BIT(16);                                          01470092
+ DCL     TELEPHON     PIC'9999999'    BASED(ADDR(ESRTHLEF));            01480092
+ DCL 1   PER          BASED(ADDR(EWATHLEF)),                            01490092
+      2  HMERPRIN     PIC '999999',                                     01500092
+      2  GREKT        PIC '99',                                         01510092
+      2  SYNENT       PIC '9999';                                       01520092
+ DCL 1   PER1         BASED(ADDR(EWAUSER)),                             01530092
+      2  PRINDATE     CHAR(6);                                          01540092
+ dcl     ArxKat       bit(12)     based(addr(saveacca));                01550092
+ dcl     CurrKat      bit (12)    based(addr(esrarlog));                01560092
+ dcl     FirstKat     bit (12)    based(addr(ewaarlog));                01570092
+ DCL 1   ARX1         ALIGNED,                                          01580092
+      2  ARX2         BIT(12),                                          01590092
+      2  ARX3         BIT(04);                                          01600092
+ DCL 1   ARX11        ALIGNED,                                          01610092
+      2  ARX22        BIT(12),                                          01620092
+      2  ARX33        BIT(04);                                          01630092
+ DCL     HMSYN        CHAR(6)         BASED(USERPTR);                   01640092
+ DCL     SHMERA       PIC '999999'    BASED(ADDR(CUAHMTS));             01650092
+ DCL     MAS          PIC '999999'    BASED(P);                         01660092
+ DCL     PRERGA       CHAR(6);                                          01670092
+ DCL 1   PERERG       BASED(ADDR(PRERGA)),                              01680092
+      2  HM           PIC '99',                                         01690092
+      2  MHN          PIC '99',                                         01700092
+      2  ET           PIC '99';                                         01710092
+ DCL     YESTER       PIC '999999'    BASED(ADDR(PRERGA));              01720092
+ DCL     Y            PIC '99';                                         01730092
+ DCL     YY1          PIC '9999';                                       01740092
+ DCL     SUSPENS      CHAR(16);                                         01750092
+ DCL 1   SUSPENS1     BASED(ADDR(SUSPENS)),                             01760092
+      2  FDBD         CHAR(08),           /* DBD NAME                */ 01770092
+      2  FNUMBER      FIXED(13),          /* NUMBER OF CONTROL ROOT  */ 01780092
+      2  FBZERO       BIT(08);            /* BINARY ZEROES           */ 01790092
+ DCL 1   FNUMBER1     BASED(ADDR(FNUMBER)),                             01800092
+      2  FFILLER      CHAR(06),                                         01810092
+      2  FFIRST       BIT(04),                                          01820092
+      2  FSIGN        BIT(04);                                          01830092
+ DCL     (NewSaved,  SAVEACCA )   FIXED(13)           ;                 01840092
+ DCL 1   SAVE1        BASED(ADDR(SAVEACCA)),                            01850092
+      2  SAVE11       CHAR(06),                                         01860092
+      2  SAVE22       BIT(4),                                           01870092
+      2  SAVE33       BIT(4);                                           01880092
+  DCL   ( SKIPPED,   TOTAL_SKIPPED )   FIXED(13) INIT(0) ;              01890092
+  DCL  PAGE_LEN    FIXED(13) INIT(025 ) ;                               01900099
+  DCL  (PR_LIMIT,  COUNT_PRINTED )  FIXED(7)  INIT(0) ;                 01910099
+ %PAGE;                                                                 01920092
+                                                                        01930092
+      EXEC CICS IGNORE CONDITION QIDERR;                                01940092
+      EXEC CICS ADDRESS TWA (TWAPTR);                                   01950092
+      EXEC CICS DELETEQ TS QUEUE('DIMI');                               01960092
+                                                                        01970092
+         EXEC CICS ADDRESS TWA (TWAPTR);                                01980092
+         CUADSPTR=ADDR(TFDSEND);                                        01990092
+         TWADSPTR=ADDR(CUAATWAA);                                       02000092
+         EWADSPTR=ADDR(TWAATM1);                                        02010092
+                                                                        02020092
+         HMERPRIN=0;  GREKT=0;  SYNENT=0;                               02030092
+         /*************  test values for input     *********/           02040092
+     /*  EWKWDEKT  = '7'  ;           EWSERIAL = 01; */                 02050099
+         /*************  end of test values  *********/                 02060092
+                                                                        02070099
+         IF TEST_SERIAL   = ZEROSTRING THEN EWSERIAL = 1;               02080099
+                                                                        02090099
+     /*  PUT SKIP LIST ( ' EWKWDEKT = ', EWKWDEKT, ' EWSERIAL= ',       02100099
+                           EWSERIAL ) ; */                              02110099
+                                                                        02120099
+                                                                        02130099
+         K = 0 ;                     PrintFlag = 0;                     02140099
+                                                                        02150092
+           /* ANALOGA ME THN TIMH TOY EWKWDEKT DIAFEREI                 02160092
+                H PROSPELASH SE  IMS H  SE  DB2 PINAKA  */              02170092
+                                                                        02180092
+             IF ( EWKWDEKT = '1') !                                     02190092
+                ( EWKWDEKT = '6') !                                     02200092
+                ( EWKWDEKT = '7')                                       02210092
+             THEN    DO;                                                02220092
+              /* PROSPELASH   IMS  */                                   02230092
+                   TFIODBNM='DBDKEF';                                   02240092
+                                                                        02250092
+                 /*  dIAMOPuxrH  KkEIdIOY  cIA ANAcNxrH CONTROL RECORD  02260092
+                    TOY KATARTHMATOR PKHPXMHR THR EPITACHR         */   02270092
+                                                                        02280092
+                   EWAONDIK=' ';                                        02290092
+                   P=ADDR(EWAARLOG);                                    02300092
+                   IF  EWAKATMA=0                                       02310092
+                       THEN do ;                                        02320092
+                            EWAARLOG=CUASKAT*10000000000;               02330092
+                            pr_kat   = cuaskat ;                        02340092
+                       end ;                                            02350092
+                       ELSE do ;                                        02360092
+                            EWAARLOG=EWAKATMA*10000000000;              02370092
+                            pr_kat   = EWAKATMA;                        02380092
+                       end ;                                            02390092
+                   FF1='1111'B;                                         02400092
+                                                                        02410092
+                 /*------------------------------------------------*/   02420092
+                 /*  ANACNXRH ROOT ENTOKHR - EKECXOR YPAPNEXR       */  02430092
+                 /*-------------------------------------------------*/  02440092
+                   TFIODBNM = 'DBDKEF';           /* D/B NAME       */  02450092
+                   TFIOSGNM = 'FROOTSEG';         /* SEGMENT NAME  */   02460092
+                   TFIORDID = ADDR(EWAARLOG);     /* AP. ENTOKHR   */   02470092
+                   TFIOFC   = '00000000'B;                              02480092
+                   TFIOFLG  = TFIOFLG ! '10000000'B;                    02490092
+                                                                        02500092
+                                                                        02510092
+                   EXEC CICS LINK PROGRAM ('TFIOMOD');                  02520092
+                                                                        02530092
+                   IF  TFIOSC    ='GE'  THEN  DO       ;                02540092
+                      /* TO йатастгла дем еимаи сто T/P     */          02550092
+                       CUAITCOD='00000000'B;     /* POYTINA  кахым  */  02560092
+                       CUAERCOD='0000000001011101'B;                    02570092
+         /*  PUT SKIP LIST ( ' BEFORE  DERRORTN ') ;  */                02580099
+                       EXEC CICS XCTL PROGRAM ('DERRORTN');             02590092
+                   END;                                                 02600092
+           %SKIP(2);                                                    02610092
+           %PAGE;                                                       02620092
+                   SAVEACCA=LASTPRIN;     /* GET STORAGE     */         02630092
+                   SAVE33='1111'B;                                      02640092
+                                                                        02650092
+                /*--------------------------------------------------*/  02660092
+                /*  CINETAI  DEQ  TO CONTROL ROOT TOY KATARTHMATOR  */  02670092
+                /*  TO  DEQ  CINETAI ME BARH TO PEDIO  SUSPENS      */  02680092
+                /*  TO OPOIO EXEI PPOHCOYMENXR ENHMEPXHEI           */  02690092
+                /*--------------------------------------------------*/  02700092
+                                                                        02710092
+                FDBD='DBDKEF  '; FNUMBER=EWAARLOG; FBZERO='00000000'B;  02720092
+                FSIGN='1111'B;                                          02730092
+                EXEC CICS DEQ RESOURCE (SUSPENS);                       02740092
+                                                                        02750092
+           CALL  PRINTHEADER ;                                          02760099
+                                                                        02770092
+           SELECT ( EWKWDEKT );                                         02780092
+               when('1') do;                                            02790092
+                 do   while (FirstKat    = CurrKat )  ;                 02800092
+                    IF ( ESRKWD = 02 ! ESRKWD = 01)                     02810099
+                       & ESRARLOG > SAVEACCA &                          02820099
+                       esrposo > 0.0 & esrkait  = 0                     02830092
+                    then do ;                                           02840092
+                       NewSaved = esrarlog ;                            02850092
+                       PrintFlag = 1;                                   02860092
+                       k = k + 1;                                       02870092
+                       pr_arlog = esrarlog ; pr_poso = esrposo ;        02880092
+                       dikaiouhos = esrondik ;  pr_kat = esrkatma ;     02890092
+                       pr_thlef = esrthlef ;                            02900092
+                       msg(k) = pr_arlog !!' '!! pr_poso !!' '!!        02910092
+                                 dikaiouhos !!' '!!                     02920092
+                       pr_thlef!!' '!!pr_kat ;                          02930092
+                       if k = 2 then do ;                               02940092
+                         call Print2entoles ;  k = 0 ;                  02950092
+                       end ;                                            02960092
+                    end ;                                               02970092
+                    tfiofc='00100100'B;                                 02980092
+                    tfiosgnm='FROOTSEG';                                02990092
+                    TFIODBNM='DBDKEF';                                  03000092
+                    exec cics link program ('TFIOMOD');                 03010092
+                    tfioroot = tfiosadd ;                               03020092
+                 end; /* do while */                                    03030092
+                 if PrintFlag = 1 then do;                              03040092
+                      call  UpdateCtrlRoot ;                            03050092
+                      call  PrintRest ;                                 03060092
+                 end;                                                   03070092
+                 else do;                                               03080092
+                    DiagnMessage = 'дем упаявоум ANEйтупытес тгк.'!!    03090092
+                                   'емтокес ';                          03100092
+                    call NotFound ;                                     03110092
+                 end;                                                   03120092
+               end; /* when '1' */                                      03130092
+               when('3') do;                                            03140092
+                 do   while (FirstKat    = CurrKat )  ;                 03150092
+                       date1 = days6r8(cuahmts) ; /* sistima */         03160092
+                       date2 = dayr6r8(esrhmdue)  ; /* entolh */        03170092
+                 /* EXEC CICS WRITEQ TS QUEUE ('DIMI')                  03180092
+                     FROM ( date1    ) LENGTH(08);                      03190092
+                    EXEC CICS WRITEQ TS QUEUE ('DIMI')                  03200092
+                     FROM ( date2    ) LENGTH(08);  */                  03210092
+                    if esrkwd = 01 & esrkait = 0 & esrposo > 0.0        03220092
+                    & DAYS6R8(CUAHMTS) >= DAYR6R8(ESRHMDUE) THEN DO;    03230092
+                       k = k + 1;                                       03240092
+                       PrintFlag = 1;                                   03250092
+                       pr_arlog = esrarlog ; pr_poso = esrposo ;        03260092
+                       dikaiouhos = esrondik ;  pr_kat = esrkatma ;     03270092
+                       pr_thlef = esrthlef ;                            03280092
+                       msg(k) = pr_arlog !!' '!! pr_poso !!' '!!        03290092
+                                 dikaiouhos !!' '!!                     03300092
+                       pr_thlef!!' '!!pr_kat ;                          03310092
+                       if k = 2 then do ;                               03320092
+                         call Print2entoles ;  k = 0 ;                  03330092
+                       end ;                                            03340092
+                    end ;                                               03350092
+                    tfiofc='00100100'B;                                 03360092
+                    tfiosgnm='FROOTSEG';                                03370092
+                    TFIODBNM='DBDKEF';                                  03380092
+                    exec cics link program ('TFIOMOD');                 03390092
+                    tfioroot = tfiosadd ;                               03400092
+               /*   EXEC CICS WRITEQ TS QUEUE ('DIMI')                  03410092
+                     FROM ( esrarlog ) LENGTH(13);                      03420092
+                    EXEC CICS WRITEQ TS QUEUE ('DIMI')                  03430092
+                     FROM (FirstKat  ) LENGTH(03);                      03440092
+                    EXEC CICS WRITEQ TS QUEUE ('DIMI')                  03450092
+                     FROM (CurrKat ) LENGTH(03); */                     03460092
+                 end; /* do while */                                    03470092
+                 if PrintFlag = 1 then                                  03480092
+                      call  PrintRest ;                                 03490092
+                 else do;                                               03500092
+                   DIAGNMESSAGE = 'дем упаявоум апкгяытес тав.емтокес'; 03510092
+                                                                        03520092
+                    call NotFound ;                                     03530092
+                 end;                                                   03540092
+               end; /* when '3' */                                      03550092
+               when('6') do;                                            03560092
+                 do   while (FirstKat    = CurrKat )  ;                 03570092
+                     CUAOFORM = 'Z';                                    03580092
+                     CUAHMERX = dayr8s6(dayr6r8(esrhmts)) ; /* ЛИЙЯГ */ 03590092
+                     CUAHMERZ = cuahmts ; /* ЛeЦэКГ*/                   03600092
+                     CUAKLEIT = 'HM';                                   03610092
+                     EXEC CICS LINK PROGRAM ( 'VALDAYC' );              03620092
+                    IF (ESRKWD = 01 ! ESRKWD = 02 )                     03630099
+                       &  CUAARHMR  <= 10   & ESRKAIT = 0               03640099
+                    & esrposo > 0.0                                     03650092
+                    then do ;                                           03660092
+                       PrintFlag = 1;                                   03670092
+                       k = k + 1;                                       03680092
+                       pr_arlog = esrarlog ; pr_poso = esrposo ;        03690092
+                       dikaiouhos = esrondik ;  pr_kat = esrkatma ;     03700092
+                       pr_thlef = esrthlef ;                            03710092
+                       msg(k) = pr_arlog !!' '!! pr_poso !!' '!!        03720092
+                                 dikaiouhos !!' '!!                     03730092
+                       pr_thlef!!' '!!pr_kat ;                          03740092
+                       if k = 2 then do ;                               03750092
+                         call Print2entoles ;  k = 0 ;                  03760092
+                       end ;                                            03770092
+                    end ;                                               03780092
+                    tfiofc='00100100'B;                                 03790092
+                    tfiosgnm='FROOTSEG';                                03800092
+                    exec cics link program ('TFIOMOD');                 03810092
+                    tfioroot = tfiosadd ;                               03820092
+                 end; /* do while */                                    03830092
+                 if PrintFlag = 1 then                                  03840092
+                      call  PrintRest ;                                 03850092
+                 else do;                                               03860092
+                    DIAGNMESSAGE = 'дем упаявоум апкгяытес  емтокес'!!  03870092
+                                   '10 текеутаиым  глеяым ';            03880092
+                    call NotFound ;                                     03890092
+                 end;                                                   03900092
+               end; /* when '6' */                                      03910092
+               WHEN('7') DO;                                            03920092
+                   SKIPPED = 0 ; COUNT_PRINTED =  0 ;                   03930092
+                   TOTAL_SKIPPED = (EWSERIAL - 1) * PAGE_LEN ;          03940099
+                   DO   WHILE ( (FIRSTKAT    = CURRKAT ) &              03950092
+                              (SKIPPED <  TOTAL_SKIPPED) )   ;          03960099
+                      IF (ESRKWD = 01 ! ESRKWD = 02 )                   03970099
+                         &  ESRPOSO > 0.0  &  ESRKAIT = 0               03980099
+                      THEN  DO ;                                        03990092
+                         SKIPPED = SKIPPED + 1;                         04000092
+                      END ;                                             04010092
+                      TFIOFC='00100100'B;                               04020092
+                      TFIOSGNM='FROOTSEG';                              04030092
+                      EXEC CICS LINK PROGRAM ('TFIOMOD');               04040092
+                      TFIOROOT = TFIOSADD ;                             04050092
+                   END   /*  WHILE  */   ;                              04060092
+                   DO   WHILE (  (FIRSTKAT    = CURRKAT )  &            04070092
+                      ( COUNT_PRINTED <  PAGE_LEN ) ) ;                 04080099
+                      IF (ESRKWD = 01 ! ESRKWD = 02 )                   04090099
+                         &    ESRPOSO > 0.0  &  ESRKAIT = 0             04100099
+                      then do ;                                         04110092
+                         PrintFlag = 1;                                 04120092
+                         K = K + 1; COUNT_PRINTED = COUNT_PRINTED + 1;  04130092
+                         pr_arlog = esrarlog ; pr_poso = esrposo ;      04140092
+                         dikaiouhos = esrondik ;  pr_kat = esrkatma ;   04150092
+                         pr_thlef = esrthlef ;                          04160092
+                         msg(k) = pr_arlog !!' '!! pr_poso !!' '!!      04170092
+                                   dikaiouhos !!' '!!                   04180092
+                         pr_thlef!!' '!!pr_kat ;                        04190092
+                         if k = 2 then do ;                             04200092
+                           call Print2entoles ;  k = 0 ;                04210092
+                         end ;                                          04220092
+                      END ;                                             04230092
+                      tfiofc='00100100'B;                               04240092
+                      tfiosgnm='FROOTSEG';                              04250092
+                      exec cics link program ('TFIOMOD');               04260092
+                      tfioroot = tfiosadd ;                             04270092
+                   end; /* do while */                                  04280092
+                   if PrintFlag = 1 then                                04290092
+                        call  PrintRest ;                               04300092
+                   else do;                                             04310092
+                      DIAGNMESSAGE = 'дем упаявоум апкгяытес емтокес'!! 04320092
+                       ' стгм  секида  поу дохгйе ' ;                   04330099
+                      call NotFound ;                                   04340092
+                   end;                                                 04350092
+                 END; /* WHEN '7' */                                    04360092
+              END  ;  /* SELECT ( EWKWDEKT ); */                        04370092
+             END  ;  /*  IF EWKWDEKT = ('1','6','7')     */             04380092
+                                                                        04390092
+                                                                        04400092
+             IF ( EWKWDEKT = '8') !                                     04410092
+                ( EWKWDEKT = '9')                                       04420092
+             THEN    DO;                                                04430092
+               CALL  PRINTHEADER ;                                      04440099
+                /* PROSPELASH     DB2   */                              04450092
+               SELECT ( EWKWDEKT );                                     04460092
+                  WHEN('8') DO;                                         04470092
+                                                                        04480099
+                      CALL  ANOIXE_CURSOR ;                             04490099
+                                                                        04500099
+                   LAB_A:                                               04510099
+                      CALL  FILL_500_FROM_DB2 ;                         04520099
+                  /*+++++++++ TORA  TYPOSE  левяи 500  +++++++ */       04530099
+                                                                        04540092
+                      IF  COM_MAX_XX = 0  THEN DO;                      04550092
+                         DIAGNMESSAGE = 'дем упаявоум апкгяытес  '      04560092
+                                        !! 'MHK.Eццяажес';              04570092
+                                                                        04580092
+                         call NotFound ;                                04590092
+                      END ;                                             04600092
+                      do   while (   K  <  COM_MAX_XX  )  ;             04610095
+                         K = K + 1; L = L + 1;                          04620099
+                         if COM_POSO(K) > 0.0                           04630092
+                         THEN DO;                                       04640092
+                       /*   PUT SKIP LIST( 'K= ',K) ; */                04650099
+                            PrintFlag = 1;                              04660092
+                            pr_arlog = COM_ARLog(K) ;                   04670092
+                            PR_DIKAIO = COM_AITIOL(K) ;                 04680092
+                            pr_poso = COM_POSO(K) ;                     04690092
+                                                                        04700099
+                            IF  ( COM_EIDOS(K) > 03 &                   04710099
+                                  COM_EIDOS(K) < 08 )                   04720099
+                            THEN DO ;                                   04730099
+                              PR_EIDOS = 042;                           04740099
+                            END ;                                       04750099
+                            IF  ( COM_EIDOS(K) = 11 )                   04760099
+                            THEN DO ;                                   04770099
+                              PR_EIDOS = 041;                           04780099
+                            END ;                                       04790099
+                            IF  ( COM_EIDOS(K) = 12 )                   04800099
+                            THEN DO ;                                   04810099
+                              PR_EIDOS = 043;                           04820099
+                            END ;                                       04830099
+                            IF  ( COM_EIDOS(K) > 12 &                   04840099
+                                  COM_EIDOS(K) < 16 )                   04850099
+                            THEN DO ;                                   04860099
+                              PR_EIDOS = 044;                           04870099
+                            END ;                                       04880099
+                                                                        04890099
+                            pr_kat = COM_PLHR(K);                       04900092
+                            pr_TAYT  = COM_TAYT (K) ;                   04910092
+                            MSG(L) = PR_ARLOG !!' '!! PR_DIKAIO !!      04920099
+                                     ' '!!                              04930099
+                                     PR_POSO     !!' '!! PR_EIDOS!!     04940092
+                            ' '!!    PR_KAT ;                           04950099
+                            IF L = 2 THEN DO ;                          04960099
+                              CALL PRINT2ENTOLES ;  L = 0 ;             04970099
+                           /* CALL PRINT_K_ENTOLES ; */                 04980099
+                            end ;                                       04990099
+                         end ; /* COM_POSO > 0.0     */                 05000092
+                      end; /* do while */                               05010092
+                      IF COM_MAX_XX < MAX_ARRAY_SIZE THEN DO;           05020099
+                          if PrintFlag = 1 then                         05030099
+                               CALL  RESTMHK   ;                        05040099
+                          else do;                                      05050099
+                             DIAGNMESSAGE = 'дем упаявоум апкгяытес'    05060099
+                                       !! '   MHK.Eццяажес  ';          05070099
+                                                                        05080099
+                             call NotFound ;                            05090099
+                          end;                                          05100099
+                      END ;                                             05110099
+                      ELSE  DO;                                         05120099
+                        /* XANAGEMISE  ARRAY 500 */                     05130099
+                        K = 0 ; MM = 0; COM_MAX_XX = 0; EOF = '0'B;     05140099
+                        GOTO LAB_A ;                                    05150099
+                      END ;                                             05160099
+                  END; /* WHEN '8' */                                   05170092
+                  WHEN('9') DO;                                         05180092
+                      CALL  ANOIXE_CURSOR ;                             05190099
+                                                                        05200099
+                                                                        05210099
+                        /*PROSPERASE  TA  PROHGOUMENA  */               05220099
+                        JUMP  = (EWSERIAL - 1) * PAGE_LEN ;             05230099
+      /* PUT SKIP LIST (' JUMP =   ', JUMP       );  */                 05240099
+                          I = 0;                                        05250099
+                          CALL  SKIP_TO_JUMP ;                          05260099
+                                                                        05270099
+                          CALL  FILL_500_FROM_DB2 ;                     05280099
+                         /*+++++++++ TORA  TYPOSE  TA ++++++++++ */     05290099
+                                                                        05300099
+      /* PUT SKIP LIST ('COM_MAX_XX =   ', COM_MAX_XX        ); */      05310099
+                                                                        05320099
+                           IF  COM_MAX_XX = 0  THEN DO;                 05330099
+                              DIAGNMESSAGE = 'дем упаявоум апкгяытес  ' 05340099
+                                     !! 'коц.Eццяажес стгм секида '!!   05350099
+                                            ' поу дохгйе  ' ;           05360099
+                                                                        05370099
+                                                                        05380099
+                              call NotFound ;                           05390099
+                           END ;                                        05400099
+                                                                        05410099
+                           IF COM_MAX_XX < PAGE_LEN THEN                05420099
+                              PR_LIMIT = COM_MAX_XX ;                   05430099
+                           ELSE                                         05440099
+                              PR_LIMIT = PAGE_LEN ;                     05450099
+                                                                        05460099
+                           DO   WHILE (   K  <  PR_LIMIT ) ;            05470099
+                                                                        05480099
+                              K = K + 1;  L = L + 1;                    05490099
+                              if COM_POSO(K) > 0.0                      05500099
+                              THEN DO;                                  05510099
+                          /*     PUT SKIP LIST( 'K= ',K) ; */           05520099
+                                 PrintFlag = 1;                         05530099
+                                 pr_arlog = COM_ARLog(K) ;              05540099
+                                 PR_DIKAIO = COM_AITIOL(K) ;            05550099
+                                 pr_poso = COM_POSO(K) ;                05560099
+                                                                        05570099
+                                 IF  ( COM_EIDOS(K) > 03 &              05580099
+                                       COM_EIDOS(K) < 08 )              05590099
+                                 THEN DO ;                              05600099
+                                   PR_EIDOS = 042;                      05610099
+                                 END ;                                  05620099
+                                 IF  ( COM_EIDOS(K) = 11 )              05630099
+                                 THEN DO ;                              05640099
+                                   PR_EIDOS = 041;                      05650099
+                                 END ;                                  05660099
+                                 IF  ( COM_EIDOS(K) = 12 )              05670099
+                                 THEN DO ;                              05680099
+                                   PR_EIDOS = 043;                      05690099
+                                 END ;                                  05700099
+                                 IF  ( COM_EIDOS(K) > 12 &              05710099
+                                       COM_EIDOS(K) < 16 )              05720099
+                                 THEN DO ;                              05730099
+                                   PR_EIDOS = 044;                      05740099
+                                 END ;                                  05750099
+                                                                        05760099
+                                 pr_kat = COM_PLHR(K);                  05770099
+                                 pr_TAYT  = COM_TAYT (K) ;              05780099
+                             MSG(L) = PR_ARLOG !!' '!! PR_DIKAIO !!     05790099
+                                          ' '!!                         05800099
+                                     PR_POSO     !!' '!! PR_EIDOS!!     05810099
+                                 ' '!!     PR_KAT  ;                    05820099
+                                 IF L = 2 THEN DO ;                     05830099
+                                      CALL PRINT2ENTOLES ;  L = 0 ;     05840099
+                             /*CALL PRINT_K_ENTOLES ;  L = 0 ; */       05850099
+                                 end ;                                  05860099
+                              end ; /* COM_POSO > 0.0     */            05870099
+                           end; /* do while */                          05880099
+                                                                        05890099
+                                                                        05900099
+                 /*   PUT SKIP LIST ( 'PRINTFLAG = ' , PRINTFLAG);*/    05910099
+                           if PrintFlag = 1 then                        05920099
+                                CALL  RESTMHK   ;                       05930099
+                                                                        05940099
+                                                                        05950099
+                           else do;                                     05960099
+                            DIAGNMESSAGE = 'дем упаявоум апкгяытес  '   05970099
+                                     !! 'коц.Eццяажес стгм секида '!!   05980099
+                                            ' поу дохгйе  ' ;           05990099
+                                                                        06000099
+                              call NotFound ;                           06010099
+                           end;                                         06020099
+                                                                        06030099
+                  END; /* WHEN '9' */                                   06040092
+               END  ;  /*  SELECT ( EWKWDEKT );  */                     06050092
+             END ;  /* IF  EWKWDEKT  =(8 ,  9 )  */                     06060092
+                                                                        06070092
+        /* EAN TO EWKWDEKT EXEI TIMH  DIAFORH TOY 1,6,7,8,9             06080092
+           DEN TO XEIRIZOMAI        SKAEI TO PROGRAMA */                06090092
+                                                                        06100092
+                                                                        06110092
+   /* ++++++++  LOCAL  PROCEDURES    +++++++++++++++++ */               06120092
+   /* ++++++++  LOCAL  PROCEDURES    +++++++++++++++++ */               06130092
+                                                                        06140092
+      NotFound : proc ;                                                 06150092
+                                                                        06160088
+     /*   PUT SKIP LIST ( ' ENTER  NOTFOUND  ') ;  */                   06170099
+                                                                        06180089
+              LIN1_GR (1) = '00000111'B;                                06190050
+              LIN1_ST (1) = '00000010'B;                                06200048
+         /*   LIN1_MH (1) = '00111100'B;   60 */                        06210048
+              LIN1_MH (1) = '01000110'B;                                06220048
+              LINE1   (1) =  ' '    ;                                   06230054
+              LIN1_GR (2) = '00001001'B;                                06240050
+              LIN1_ST (2) = '00000010'B;                                06250048
+         /*   LIN1_MH (2) = '00111100'B;     MHKOr = 60 CHRS  */        06260048
+              LIN1_MH (2) = '01000110'B;                                06270048
+              LINE1   (2) = DiagnMessage;                               06280054
+    /* EC  CICS  ENTER TRACENUM(51) FROM(MSG4); */                      06290066
+              PSYEND2 = '1111111111111111'B;                            06300050
+                                                                        06310048
+              CUAALSEL = '00011000'B;                                   06320050
+              EXEC CICS LINK PROGRAM ('PREDITOR');                      06330050
+                                                                        06340051
+      /*   PUT SKIP LIST ( ' EXIT   NOTFOUND  ') ;  */                  06350099
+              CUAALSEL = '00010100'B;                                   06360048
+              EXEC CICS XCTL PROGRAM ('PREDITOR');                      06370048
+                                                                        06380092
+      end   NotFound      ;                                             06390092
+   /* +++++++++++++++++++++++++++++++++++++++++ */                      06400092
+                                                                        06410092
+      PRINT2ENTOLES: proc ;                                             06420092
+                                                                        06430088
+        /*   PUT SKIP LIST ( ' ENTER  PRINT2ENTOLES     ') ; */         06440099
+                                                                        06450089
+              LIN1_GR (1) = '00000111'B;                                06460050
+              LIN1_ST (1) = '00000010'B;                                06470048
+         /*   LIN1_MH (1) = '00111100'B;   60 */                        06480048
+              LIN1_MH (1) = '01000110'B;                                06490048
+              LINE1   (1) =  MSG(1) ;                                   06500054
+              LIN1_GR (2) = '00001001'B;                                06510050
+              LIN1_ST (2) = '00000010'B;                                06520048
+         /*   LIN1_MH (2) = '00111100'B;     MHKOr = 60 CHRS  */        06530048
+              LIN1_MH (2) = '01000110'B;                                06540048
+              LINE1   (2) = MSG(2) ;                                    06550054
+    /* EC  CICS  ENTER TRACENUM(51) FROM(MSG4); */                      06560066
+              PSYEND2 = '1111111111111111'B;                            06570050
+                                                                        06580048
+              CUAALSEL = '00011000'B;                                   06590050
+              EXEC CICS LINK PROGRAM ('PREDITOR');                      06600050
+                                                                        06610051
+       /*    PUT SKIP LIST ( ' EXIT  PRINT2ENTOLES  ') ;  */            06620099
+                                                                        06630092
+      end   PRINT2ENTOLES ;                                             06640092
+   /* +++++++++++++++++++++++++++++++++++++++++ */                      06650092
+                                                                        06660099
+      PRINT_K_ENTOLES: PROC ;                                           06670099
+                                                                        06680099
+                                                                        06690099
+              LIN1_GR (1) = '00000111'B;                                06700099
+              LIN1_ST (1) = '00000010'B;                                06710099
+         /*   LIN1_MH (1) = '00111100'B;   60 */                        06720099
+              LIN1_MH (1) = '01000110'B;                                06730099
+              LINE1   (1) =  MSG(K-1) ;                                 06740099
+              LIN1_GR (2) = '00001001'B;                                06750099
+              LIN1_ST (2) = '00000010'B;                                06760099
+         /*   LIN1_MH (2) = '00111100'B;     MHKOr = 60 CHRS  */        06770099
+              LIN1_MH (2) = '01000110'B;                                06780099
+              LINE1   (2) = MSG(K) ;                                    06790099
+    /* EC  CICS  ENTER TRACENUM(51) FROM(MSG4); */                      06800099
+              PSYEND2 = '1111111111111111'B;                            06810099
+                                                                        06820099
+              CUAALSEL = '00011000'B;                                   06830099
+              EXEC CICS LINK PROGRAM ('PREDITOR');                      06840099
+                                                                        06850099
+                                                                        06860099
+      END   PRINT_K_ENTOLES ;                                           06870099
+   /* +++++++++++++++++++++++++++++++++++++++++ */                      06880099
+      PrintHeader  : proc ;                                             06890092
+                                                                        06900088
+       /*  PUT SKIP LIST ( ' enter  PrintHeader  ') ;  */               06910099
+         select ( ewkwdekt );                                           06920092
+           when('1') do;                                                06930092
+             HEADQUALIF = ' амейтупытес     емтокес';                   06940092
+           end;                                                         06950092
+           WHEN('3') DO;                                                06960092
+             HeadQualif = ' тавудяолийес емтокес' ;                     06970092
+           END;                                                         06980092
+           when('6') do;                                                06990092
+             HEADQUALIF = ' апкгяытес емтокес текеутаиым 10 глеяым' ;   07000092
+           end;                                                         07010092
+           WHEN('7') DO;                                                07020092
+             HEADQUALIF = ' Aпкгяытес емтокес '!!ewserial!!' гс '       07030092
+                          !!'секидас ' ;                                07040099
+           END;                                                         07050092
+           WHEN('8') DO;                                                07060092
+             HEADQUALIF = ' амейтекестес коцистийес еццяажес   ' ;      07070099
+           END;                                                         07080092
+           WHEN('9') DO;                                                07090092
+             PR_SER =  ewserial ;                                       07100099
+             HEADQUALIF = ' амейтекестес коцистийес еццяажес  '!!       07110099
+                             PR_SER  !!' гс '!!'секидас ' ;             07120099
+           END;                                                         07130092
+           OTHERWISE  DO ;                                              07140092
+             HEADQUALIF = ' LATHOS  LATHOS  LATHOS  LATHOS ' ;          07150092
+           END ;                                                        07160092
+         end ;  /*select */                                             07170092
+                                                                        07180092
+          EXEC CICS ASKTIME;                                            07190092
+          PTIME  = EIBTIME;                                             07200092
+          PR_DATE = DAYS6S8( CUAHMTS  );                                07210092
+                                                                        07220092
+          header1 = (25)' '!!PR_DATE !!' '!!                            07230092
+                  PHH!!':'!!PMM!!':'!!PSS!!                             07240092
+                  ' '!!pr_kat !!CUASTERM  ;                             07250092
+          HEADER2 = (20)' '!! HEADQUALIF ;                              07260092
+        EXEC CICS GETMAIN SET (CUAFW) INITIMG (' ') LENGTH (200);       07270092
+                                                                        07280089
+              LIN1_GR (1) = '00000111'B;                                07290050
+              LIN1_ST (1) = '00000010'B;                                07300048
+         /*   LIN1_MH (1) = '00111100'B; */                             07310011
+              LIN1_MH (1) = '01000110'B;                                07320011
+              LINE1   (1) =  ' ';                                       07330051
+                                                                        07340011
+              LIN1_GR (2) = '00001001'B;                                07350050
+              LIN1_ST (2) = '00000010'B;                                07360048
+         /*   LIN1_MH (2) = '00111100'B;     MHKOс = 60 CHRS  */        07370089
+              LIN1_MH (2) = '01000110'B;                                07380089
+              LINE1   (2) = header1;                                    07390054
+                                                                        07400092
+              PSYEND2 = '1111111111111111'B;                            07410050
+              CUAALSEL = '00011000'B;                                   07420048
+              EXEC CICS LINK PROGRAM ('PREDITOR');                      07430048
+                                                                        07440089
+              LIN1_GR (1) = '00000111'B;                                07450050
+              LIN1_ST (1) = '00000010'B;                                07460048
+         /*   LIN1_MH (1) = '00111100'B; */                             07470048
+              LIN1_MH (1) = '01000110'B;                                07480048
+              LINE1   (1) = header2;                                    07490054
+              LIN1_GR (2) = '00001001'B;                                07500050
+              LIN1_ST (2) = '00000010'B;                                07510048
+         /*   LIN1_MH (2) = '00111100'B;     MHKOr = 60 CHRS  */        07520048
+              LIN1_MH (2) = '01000110'B;  /* MHKOr = 70 CHRS  */        07530048
+              LINE1   (2) =  ' ' ;                                      07540054
+    /* EC  CICS  ENTER TRACENUM(51) FROM(MSG4); */                      07550066
+              PSYEND2 = '1111111111111111'B;                            07560050
+              CUAALSEL = '00011000'B;                                   07570050
+              EXEC CICS LINK PROGRAM ('PREDITOR');                      07580050
+                                                                        07590092
+             IF ( EWKWDEKT = '1') !                                     07600099
+                ( EWKWDEKT = '6') !                                     07610099
+                ( EWKWDEKT = '7')                                       07620099
+             THEN    DO;                                                07630099
+                  HEADER1 = (03)' '!!'ая.емтокгс'!! (11)' ' !!          07640099
+                         'посо'!!(14)' '                                07650099
+                  !!'дийаиоувос'!! (08)' ' !!'тгкеж.'!! (01)' ' !!      07660092
+                  'KAT' ;                                               07670092
+             END;                                                       07680099
+             ELSE DO;                                                   07690099
+                  HEADER1 = (02)' '!!'ая.еццяажгс'!! (21)' ' !!         07700099
+                         'аитиокоциа'!!(11)' '                          07710099
+                  !!'посом'!! (01)' ' !!'еид'!! (01)' ' !!              07720099
+                  'Kтл' ;                                               07730099
+             END ;                                                      07740099
+                                                                        07750099
+                                                                        07760099
+              HEADER2 = (70)'-' ;                                       07770092
+                                                                        07780089
+              LIN1_GR (1) = '00000111'B;                                07790050
+              LIN1_ST (1) = '00000010'B;                                07800048
+              LIN1_MH (1) = '01000110'B;                                07810011
+              LINE1   (1) =  header1;                                   07820051
+                                                                        07830011
+              LIN1_GR (2) = '00001001'B;                                07840050
+              LIN1_ST (2) = '00000010'B;                                07850048
+              LIN1_MH (2) = '01000110'B;                                07860089
+              LINE1   (2) = header2;                                    07870054
+                                                                        07880092
+              PSYEND2 = '1111111111111111'B;                            07890050
+              CUAALSEL = '00011000'B;                                   07900048
+              EXEC CICS LINK PROGRAM ('PREDITOR');                      07910048
+                                                                        07920089
+      /*   PUT SKIP LIST ( ' EXIT   PrintHeader  ') ;                   07930099
+                                                                        07940099
+         CUAALSEL = '00010100'B;                                        07950048
+         EXEC CICS XCTL PROGRAM ('PREDITOR');   */                      07960048
+                                                                        07970092
+      end    PrintHeader  ;                                             07980092
+      /*  ---------------------------------------------- */             07990092
+      UpdateCtrlRoot   : proc ;                                         08000092
+         IF  EWAKATMA=0    THEN EWAARLOG=CUASKAT*10000000000;           08010092
+                           ELSE EWAARLOG=EWAKATMA*10000000000;          08020092
+                           P=ADDR(EWAARLOG);                            08030092
+                           FF1='1111'B;                                 08040092
+                                                                        08050092
+       /*------------------------------------------------------*/       08060092
+       /*  ANAcNxrH ROOT ENTOkHr - EkEcXOr YpAPnExr            */       08070092
+       /*------------------------------------------------------*/       08080092
+         TFIODBNM = 'DBDKEF';           /* D/B NAME            */       08090092
+         TFIOSGNM = 'FROOTSEG';         /* SEGMENT NAME        */       08100092
+         TFIORDID = ADDR(EWAARLOG);     /* AP. ENTOkHr         */       08110092
+         TFIOFC   = '00000000'B;                                        08120092
+         TFIOFLG  = TFIOFLG ! '10000000'B; /* FOR UPDATE ROOT  */       08130092
+                                                                        08140092
+         EXEC CICS LINK PROGRAM ('TFIOMOD');                            08150092
+         LastPrin = NewSaved  ;                                         08160092
+                                                                        08170092
+         /*---------------------------------*/                          08180092
+         /*  REPLACE  ROOT SEGMENT ENTOkHr  */                          08190092
+         /*---------------------------------*/                          08200092
+                                                                        08210092
+         TFIOSGNM = 'FROOTSEG';         /* SEGMENT NAME        */       08220092
+         TFIOFC   = '00001100'B;        /* 0C--> UPDATE SEG    */       08230092
+         EXEC CICS LINK PROGRAM ('TFIOMOD');                            08240092
+                                                                        08250092
+         FDBD='DBDKEF  ';  FNUMBER=EWAARLOG; FBZERO='00000000'B;        08260092
+         FSIGN='1111'B;                                                 08270092
+         EXEC CICS DEQ RESOURCE (SUSPENS);                              08280092
+                                                                        08290092
+      end  UpdateCtrlRoot  ;                                            08300092
+      /*  ---------------------------------------------- */             08310092
+      PrintRest    : proc ;                                             08320092
+      /*     PUT SKIP LIST ( ' ENTER    PRINTREST       ') ; */         08330099
+         if k  ^= 0 then do;                                            08340088
+              if k = 1  then  do;                                       08350092
+                  msg(2) = ' ';                                         08360092
+              end ;                                                     08370092
+                                                                        08380089
+                                                                        08390092
+              LIN1_GR (1) = '00000111'B;                                08400050
+              LIN1_ST (1) = '00000010'B;                                08410048
+         /*   LIN1_MH (1) = '00111100'B; */                             08420011
+              LIN1_MH (1) = '01000110'B;                                08430011
+              LINE1   (1) =  msg(1)  ;                                  08440051
+                                                                        08450011
+              LIN1_GR (2) = '00001001'B;                                08460050
+              LIN1_ST (2) = '00000010'B;                                08470048
+         /*   LIN1_MH (2) = '00111100'B;     MHKOс = 60 CHRS  */        08480089
+              LIN1_MH (2) = '01000110'B;  /* MHKOс = 70 CHRS  */        08490089
+              LINE1   (2) =  msg(2)  ;                                  08500054
+                                                                        08510011
+              PSYEND2 = '1111111111111111'B;                            08520050
+              CUAALSEL = '00011000'B;                                   08530048
+              EXEC CICS LINK PROGRAM ('PREDITOR');                      08540048
+                                                                        08550089
+         end ; /*  if k  ^= 0 then  */                                  08560092
+        /*   PUT SKIP LIST ( ' EXIT     PRINTREST       ') ;  */        08570099
+         CUAALSEL = '00010100'B;                                        08580048
+         EXEC CICS XCTL PROGRAM ('PREDITOR');                           08590048
+      end    PrintRest    ;                                             08600092
+                                                                        08610092
+      /*  ---------------------------------------------- */             08620099
+      /*  ---------------------------------------------- */             08630099
+   ANOIXE_CURSOR :   PROC ;                                             08640099
+                  /*                                                    08650099
+                    COPY  PASTE  FROM  AJPG007A      THEODOSIOU ++*/    08660099
+                                                                        08670099
+                       IF  EWAKATMA=0                                   08680099
+                       THEN do ;                                        08690099
+                            WRK_KATMA  =CUASKAT            ;            08700099
+                            pr_kat   = cuaskat ;                        08710099
+                       end ;                                            08720099
+                       ELSE do ;                                        08730099
+                            WRK_KATMA   =EWAKATMA  ;                    08740099
+                            pr_kat   = EWAKATMA;                        08750099
+                       end ;                                            08760099
+                       EXEC SQL                                         08770099
+                         OPEN ISSUE_CHK ;                               08780099
+                                                                        08790099
+                /*    PUT SKIP LIST (' OPEN SQLCODE = ', SQLCODE ) ;*/  08800099
+                        IF SQLCODE ^= 0 THEN                            08810099
+                        BEGIN ;                                         08820099
+                        IF SQLCODE = 100 THEN                           08830099
+                          EOF = '1'B ;                                  08840099
+                        END ;                                           08850099
+                                                                        08860099
+  END  ANOIXE_CURSOR  ;                                                 08870099
+ /*****************  ++++++++++++++++++++++   *******************/      08880099
+ FILL_500_FROM_DB2: PROC;                                               08890099
+                                                                        08900099
+                                                                        08910099
+                 /* EMжамисг ломо тым пяытым 500 ецця.*/                08920099
+                 DO WHILE (^EOF & COM_MAX_XX < MAX_ARRAY_SIZE ) ;       08930099
+                                                                        08940099
+                                                                        08950099
+                        EXEC SQL                                        08960099
+                         FETCH ISSUE_CHK                                08970099
+                         INTO  :CTAJISSU.KEY_CODKATMA,                  08980099
+                               :CTAJISSU.KEY_AREGGR;                    08990099
+                                                                        09000099
+          /*   PUT SKIP LIST (' FETCH SQLCODE = ', SQLCODE ) ;*/        09010099
+                        IF SQLCODE ^= 0 THEN                            09020099
+                        BEGIN ;                                         09030099
+                        IF SQLCODE = 100 THEN                           09040099
+                          EOF = '1'B ;                                  09050099
+                        END ;                                           09060099
+                                                                        09070099
+                        IF ^EOF THEN DO;                                09080099
+                             DB2_REC = DB2_REC + 1 ;                    09090099
+                                                                        09100099
+                             WRK_ARLOG = CTAJISSU.KEY_AREGGR;           09110099
+                             BIT_ARLOG     = '1111'B;                   09120099
+                   /*   PUT SKIP LIST('WRK_ARLOG = ', WRK_ARLOG) ;*/    09130099
+                                                                        09140099
+                             CALL READ_DLI ;                            09150099
+                        END ;                                           09160099
+                                                                        09170099
+                 END; /*  WHILE  */                                     09180099
+                                                                        09190099
+                                                                        09200099
+ END  FILL_500_FROM_DB2 ;                                               09210099
+                                                                        09220099
+      /*  ---------------------------------------------- */             09230095
+      /*  ---------------------------------------------- */             09240099
+                                                                        09250099
+      RESTMHK1 : PROC ;                                                 09260099
+                                                                        09270099
+         IF L  ^= 0 THEN DO;                                            09280099
+              IF L = 1  THEN  DO;                                       09290099
+                  MSG(K-1) = MSG(K) ;                                   09300099
+                  MSG(K) = ' ';                                         09310099
+              end ;                                                     09320099
+                                                                        09330099
+                                                                        09340099
+              LIN1_GR (1) = '00000111'B;                                09350099
+              LIN1_ST (1) = '00000010'B;                                09360099
+         /*   LIN1_MH (1) = '00111100'B; */                             09370099
+              LIN1_MH (1) = '01000110'B;                                09380099
+              LINE1   (1) =  MSG(K-1)  ;                                09390099
+                                                                        09400099
+              LIN1_GR (2) = '00001001'B;                                09410099
+              LIN1_ST (2) = '00000010'B;                                09420099
+         /*   LIN1_MH (2) = '00111100'B;     MHKOс = 60 CHRS  */        09430099
+              LIN1_MH (2) = '01000110'B;  /* MHKOс = 70 CHRS  */        09440099
+              LINE1   (2) =  MSG(K)  ;                                  09450099
+                                                                        09460099
+              PSYEND2 = '1111111111111111'B;                            09470099
+              CUAALSEL = '00011000'B;                                   09480099
+              EXEC CICS LINK PROGRAM ('PREDITOR');                      09490099
+                                                                        09500099
+         END ; /*  IF L  ^= 0 THEN  */                                  09510099
+         CUAALSEL = '00010100'B;                                        09520099
+         EXEC CICS XCTL PROGRAM ('PREDITOR');                           09530099
+      END    RESTMHK1   ;                                               09540099
+                                                                        09550095
+ /*****************  ++++++++++++++++++++++   *******************/      09560095
+      /*  ---------------------------------------------- */             09570099
+                                                                        09580099
+      RESTMHK  : PROC ;                                                 09590099
+                                                                        09600099
+         IF L  ^= 0 THEN DO;                                            09610099
+              IF L = 1  THEN  DO;                                       09620099
+                  msg(2) = ' ';                                         09630099
+              end ;                                                     09640099
+                                                                        09650099
+                                                                        09660099
+              LIN1_GR (1) = '00000111'B;                                09670099
+              LIN1_ST (1) = '00000010'B;                                09680099
+         /*   LIN1_MH (1) = '00111100'B; */                             09690099
+              LIN1_MH (1) = '01000110'B;                                09700099
+              LINE1   (1) =  msg(1)  ;                                  09710099
+                                                                        09720099
+              LIN1_GR (2) = '00001001'B;                                09730099
+              LIN1_ST (2) = '00000010'B;                                09740099
+         /*   LIN1_MH (2) = '00111100'B;     MHKOс = 60 CHRS  */        09750099
+              LIN1_MH (2) = '01000110'B;  /* MHKOс = 70 CHRS  */        09760099
+              LINE1   (2) =  msg(2)  ;                                  09770099
+                                                                        09780099
+              PSYEND2 = '1111111111111111'B;                            09790099
+              CUAALSEL = '00011000'B;                                   09800099
+              EXEC CICS LINK PROGRAM ('PREDITOR');                      09810099
+                                                                        09820099
+         end ; /*  if k  ^= 0 then  */                                  09830099
+         CUAALSEL = '00010100'B;                                        09840099
+         EXEC CICS XCTL PROGRAM ('PREDITOR');                           09850099
+                                                                        09860099
+      END    RESTMHK    ;                                               09870099
+                                                                        09880099
+ /*****************  ++++++++++++++++++++++   *******************/      09890099
+ READ_DLI : PROC ;                                                      09900092
+                                                                        09910092
+                                                                        09920092
+       /*                                                               09930092
+       TFIOROOT = ADDR(IOAREA);                                         09940092
+       TFIOSADD = ADDR(IOAREA);                                         09950092
+                               */                                       09960092
+                                                                        09970092
+         TFIODBNM = 'DBDKEF';           /* D/B NAME            */       09980092
+         TFIOSGNM = 'FROOTSEG';         /* SEGMENT NAME        */       09990092
+         TFIORDID = ADDR(WRK_ARLOG);     /* AP. ENTOKHR         */      10000092
+         TFIOFC   = '00000000'B;                                        10010092
+         TFIOFLG  = TFIOFLG ! '10000000'B; /* FOR UPDATE ROOT  */       10020092
+         EXEC CICS LINK PROGRAM ('TFIOMOD');                            10030092
+                                                                        10040092
+       /*                                                               10050099
+       IF COM_MAX_XX = MAX_ARRAY_SIZE        THEN                       10060099
+       DO ;                                                             10070092
+         EOF        = '1'B ;                                            10080000
+         put skip list (' found  500 ') ;                               10090092
+         GO TO END_READ_DLI;                                            10100092
+       END;                                                             10110092
+       */                                                               10120099
+                                                                        10130092
+   /*  PUT SKIP LIST ( ' TFIOSC = ', TFIOSC ) ; */                      10140099
+          IF   TFIOSC = 'GE'  THEN                                      10150092
+          DO ;                                                          10160092
+            COM_FLG  = 1;                                               10170092
+            GO TO END_READ_DLI;                                         10180092
+          END;                                                          10190092
+          ELSE                                                          10200092
+          DO ;                                                          10210092
+            CALL WRITE_PROC ;                                           10220092
+          END;                                                          10230092
+                                                                        10240092
+                                                                        10250092
+ END_READ_DLI:;                                                         10260092
+                                                                        10270092
+ END READ_DLI ;                                                         10280092
+                                                                        10290092
+ /*****************  ++++++++++++++++++++++   *******************/      10300092
+ WRITE_PROC : PROC ;                                                    10310092
+                                                                        10320092
+  IF ESRPOSO > 0.0  THEN DO;                                            10330096
+       MM = MM + 1;                                                     10340092
+     /* PUT SKIP LIST ( 'MM = ',  MM ) ; */                             10350099
+       COM_MAX_XX = MM ;                                                10360092
+                                                                        10370092
+    /*  PUT SKIP LIST ( 'ESRARLOG =   ',  ESRARLOG      ) ; */          10380099
+       COM_ARLOG(MM)  = ESRARLOG ;                                      10390092
+       COM_AITIOL(MM) = SUBSTR(ESRAIT1,1,30) ;                          10400092
+       COM_POSO(MM)   = ESRPOSO ;                                       10410092
+       COM_EIDOS(MM)  = ESRKWD  ;                                       10420092
+       WRK_SKAT       = ESRSKAT1;                                       10430092
+       WRK_STER       = ESRSTER1;                                       10440092
+       WRK_ARTR       = ESRARTR1;                                       10450092
+       COM_PLHR(MM)   = ESRKATMA;                                       10460092
+       COM_TAYT(MM)   = WRK_SKAT !! WRK_STER !! WRK_ARTR ;              10470092
+                                                                        10480092
+    /*  PUT SKIP LIST ( MM, '  ', COM_ARLOG(MM) ) ; */                  10490099
+   END ; /*  IF ESRPOSO > 0.0 */                                        10500096
+ END WRITE_PROC  ;                                                      10510092
+                                                                        10520092
+ /*****************  ++++++++++++++++++++++   *******************/      10530099
+ SKIP_TO_JUMP: PROC;                                                    10540099
+                 DO WHILE (  I <  JUMP &  ^ EOF  ) ;                    10550099
+                                                                        10560099
+                                                                        10570099
+                        EXEC SQL                                        10580099
+                         FETCH ISSUE_CHK                                10590099
+                         INTO  :CTAJISSU.KEY_CODKATMA,                  10600099
+                               :CTAJISSU.KEY_AREGGR;                    10610099
+                                                                        10620099
+                /*  PUT SKIP LIST (' FETCH SQLCODE = ', SQLCODE ) ;*/   10630099
+                        IF SQLCODE ^= 0 THEN                            10640099
+                        BEGIN ;                                         10650099
+                        IF SQLCODE = 100 THEN                           10660099
+                          EOF = '1'B ;                                  10670099
+                        END ;                                           10680099
+                                                                        10690099
+                        IF ^EOF THEN DO;                                10700099
+                                                                        10710099
+                             WRK_ARLOG = CTAJISSU.KEY_AREGGR;           10720099
+                             BIT_ARLOG     = '1111'B;                   10730099
+                   /*   PUT SKIP LIST('WRK_ARLOG = ', WRK_ARLOG) ;*/    10740099
+                                                                        10750099
+                             CALL COUNT_DLI ;                           10760099
+                        END ;                                           10770099
+                                                                        10780099
+                 END; /*  WHILE  */                                     10790099
+                                                                        10800099
+                 IF EOF & I < JUMP THEN DO;                             10810099
+                       DIAGNMESSAGE = 'дем упаявоум апкгяытес  '        10820099
+                                !! 'коц.Eццяажес стгм секида '!!        10830099
+                                       ' поу дохгйе  ' ;                10840099
+                                                                        10850099
+                       CALL NOTFOUND ;                                  10860099
+                 END ;                                                  10870099
+                                                                        10880099
+ END  SKIP_TO_JUMP ;                                                    10890099
+                                                                        10900099
+ /*****************  ++++++++++++++++++++++   *******************/      10910099
+ COUNT_DLI : PROC ;                                                     10920099
+                                                                        10930099
+                                                                        10940099
+       /*                                                               10950099
+       TFIOROOT = ADDR(IOAREA);                                         10960099
+       TFIOSADD = ADDR(IOAREA);                                         10970099
+                               */                                       10980099
+                                                                        10990099
+         TFIODBNM = 'DBDKEF';           /* D/B NAME            */       11000099
+         TFIOSGNM = 'FROOTSEG';         /* SEGMENT NAME        */       11010099
+         TFIORDID = ADDR(WRK_ARLOG);     /* AP. ENTOKHR         */      11020099
+         TFIOFC   = '00000000'B;                                        11030099
+         TFIOFLG  = TFIOFLG ! '10000000'B; /* FOR UPDATE ROOT  */       11040099
+         EXEC CICS LINK PROGRAM ('TFIOMOD');                            11050099
+                                                                        11060099
+                                                                        11070099
+                                                                        11080099
+    /* PUT SKIP LIST ( ' TFIOSC = ', TFIOSC ) ; */                      11090099
+          IF   TFIOSC = 'GE'  THEN                                      11100099
+          DO ;                                                          11110099
+            COM_FLG  = 1;                                               11120099
+            GO TO END_COUNT_DLI;                                        11130099
+          END;                                                          11140099
+          ELSE                                                          11150099
+          DO ;                                                          11160099
+            IF ESRPOSO > 0.0 THEN I = I + 1;                            11170099
+          END;                                                          11180099
+                                                                        11190099
+                                                                        11200099
+ END_COUNT_DLI:;                                                        11210099
+                                                                        11220099
+ END COUNT_DLI ;                                                        11230099
+                                                                        11240099
+ /*****************  ++++++++++++++++++++++   *******************/      11250099
+         END ENEA;                                                      11260092
+

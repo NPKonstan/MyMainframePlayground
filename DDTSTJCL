@@ -1,0 +1,22 @@
+//DKTTTTT1 JOB (ACCTNO),PROGRAMMER,NOTIFY=TSOID,USER=KONSTAN,           JOB06896
+//*        TYPRUN=HOLD,
+//         CLASS=T,MSGCLASS=X,MSGLEVEL=(1,1)
+//*
+/*JOBPARM SYSAFF=SYP2
+//JOBLIB   DD DSN=DSN810.DSNT.SDSNEXIT,DISP=SHR
+//         DD DSN=DSN810.SDSNLOAD,DISP=SHR
+//         DD  DSN=CBG.TEST.LOAD,DISP=SHR
+//*****************************************************
+//*****************************************************
+//DKBTEST1 EXEC   PGM=DDTEST
+//OUTFILE  DD SYSOUT=(A,INTRDR)
+//PRINT    DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*                                                 00082003
+//SYSDBOUT DD  SYSOUT=*                                                 00083003
+//SYSUDUMP DD  SYSOUT=*                                                 00084003
+//SYSTSPRT DD  SYSOUT=*                                                 00085003
+//SYSABEND DD  SYSOUT=*                                                 00086003
+//SYSOUT   DD  SYSOUT=*                                                 00087003
+//PRT      DD  SYSOUT=*                                                 00087003
+/*                                                                      00210000
+

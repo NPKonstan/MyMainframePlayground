@@ -1,0 +1,1119 @@
+*PROCESS GOSTMT;
+     /*  c  */
+     /***********************************************************/
+     /*          MEMBER = DK529                                 */
+     /*                                                         */
+     /* INTERFACE циа екецво сто коцистгяио                    */
+     /* диабафы аявеио тал20     & дглиоуяцы  аявеио циа       */
+     /* коцистгяио                                              */
+     /* епистокг диеухумсгс коцистийоу : 821/т1/415 20/10/2003  */
+     /*                                                         */
+     /* ------------------------------------------------------- */
+     /*                 пяосовг-пяосовг-пяосовг                 */
+     /* ------------------------------------------------------- */
+     /*                                                         */
+     /* пяосовг то педио <иS_TEST> ма пеяиевеи тгм тилг  <NO>   */
+     /* OTAN паеи стгм паяацыцг.                                */
+     /* ------------------------------------------------------- */
+     /*                                                         */
+     /* NPK     13-11-2003                                      */
+     /***********************************************************/
+     /* NPK     24-01-2004  METABOкг ста педиа тоу ACCREC       */
+     /***********************************************************/
+     /* NPK     01-04-2004  пяосхгйг йахокийым 5114-5150        */
+     /***********************************************************/
+     /* NPK     04-05-2004  аккацг 10ьгжиым йыдийым циа та      */
+     /*         KAхокийа 5120 йаи 5121                          */
+     /*         апо                   се                        */
+     /*    5310000003          5310000003  ( идиытым          ) */
+     /*    5311000007          5310000003  ( етаияиым         ) */
+     /*    5312000001          5311000007  ( дгл.ояцамислым   ) */
+     /*    5313000004          5312000001  ( дгл.епивеиягсеым ) */
+     /***********************************************************/
+     /* NPK     10-12-2004  аккацг яоутимас DKR4TO6             */
+     /*         циа упостгяинг меым йахокийым 5114              */
+     /***********************************************************/
+     /**********************************************************/
+     /* Nпй 27-12-2004                                         */
+     /* ------------------------------------------------------ */
+     /* EAN H яоутима DKR4TO6 епистяеьеи сысто йахокийо тоте , */
+     /* то йахокийо аккафеи                                    */
+     /* ------------------------------------------------------ */
+     /*Aккацг йахокийым,акка циа коцистийа акка,циа ейтойислоус*/
+     /* ------------------------------------------------------ */
+     /* EKтойистийо йах.   коцистийо йахокийо                  */
+     /* ------------------------------------------------------ */
+     /* апо 506086      |     се 506005                        */
+     /* апо 506008      |     се 506002                        */
+     /* апо 506009      |     се 506002                        */
+     /* апо 511430      |     се 511401                        */
+     /* ------------------------------------------------------ */
+     /**********************************************************/
+     /**********************************************************/
+     /* Nпй 22-02-2005                                         */
+     /* ------------------------------------------------------ */
+     /* EAN H яоутима DKR4TO6 епистяеьеи сысто йахокийо тоте , */
+     /* то йахокийо аккафеи                                    */
+     /* ------------------------------------------------------ */
+     /*Aккацг йахокийым,акка циа коцистийа акка,циа ейтойислоус*/
+     /* ------------------------------------------------------ */
+     /* EKтойистийо йах.   коцистийо йахокийо                  */
+     /* ------------------------------------------------------ */
+     /* апо 511402      |     се 511401                        */
+     /* ------------------------------------------------------ */
+     /**********************************************************/
+     /*                                                         */
+     /***********************************************************/
+     /* NPK     04-101-2005 аккацг апо DKR4TO6 се DKR4TO6B    */
+     /*                                                         */
+     /***********************************************************/
+     /***********************************************************/
+     /* NPK     28-12-2005                                      */
+     /*                    1)дглиоуяц╨а аявеиоу ле тгм идиа     */
+     /*                    цяаллоцяажгсг йаи циа талиеут╧яио    */
+     /*                    2)пяосхгйг дуо м╦ым педиым           */
+     /*                    емдеинг йатоийос лг йатоийос йаи     */
+     /*                    Xыяа йатацыцгс дийаиоувоу            */
+     /* бКщПЕ еПИСТОКч дИЕУХУМСГР оИЙОМОЛИЙЧМ уПГЯЕСИЧМ         */
+     /*       TОЛщА кОЦИСТИЙОЩ СУСТчЛАТОР ЙАИ еЖАЯЛОЦЧМ         */
+     /*       аЯИХЛЭР еПИСТОКчР 132/д104/т1-253                 */
+     /*       гЛЕЯОЛГМъА        25/11/2005                      */
+     /***********************************************************/
+     /* аккацг сто TRANSLATE                    с.а. 05.04.2007 */
+     /***********************************************************/
+     /***********************************************************/
+     /* аккацг from  DKR4TO6B  TO DK4TO6B       NPK 27.11.2007 */
+     /***********************************************************/
+ DK529 : PROC OPTIONS (MAIN);
+ DCL DK4TO6B EXTERNAL ENTRY(FIXED(5,0),    /*йахокийо*/
+                            CHAR(2),     /*INPUT йыдийос епацйеклатос*/
+                            CHAR(1),     /*INPUT йыдийос жусийо-молийо*/
+                            FIXED(9,0),  /*INPUT аяихлос коцаяиаслоу*/
+                            FIXED(3,0)   /*OUTPUT еRROR FLAG*/
+                            ) RETURNS(FIXED(7));
+ FETCH DK4TO6B;
+
+ DCL  TAM20      FILE RECORD INPUT ENV(
+                 FB RECSIZE(90)                          );
+
+ % INCLUDE  BKT20T ;
+
+ DCL ACCFILE    FILE RECORD OUTPUT                                      00180002
+                          ENV(FB RECSIZE(86) );                         00190002
+ DCL ACFILET   FILE RECORD OUTPUT                                       00180002
+                          ENV(FB RECSIZE(86) );                         00190002
+ /*NEW FORMAT FOR ACCREC 24.01.2004 */
+
+ DCL 1 ACCREC ,
+   2 ACCNUMBER  CHAR(8)        ,/*  APихлос коцаяиаслоу               */
+   2 ACCCUSNAME CHAR(30)       ,/*  пкгяес омолатепымуло пекатг       */
+   2 ACCCIDBNUM CHAR(08)       ,/*  CIDB NUMBER                       */
+   2 ACCBRANCH  CHAR(4)        ,/*  COD-BRANCH                        */
+   2 ACC_F_N    CHAR(1)        ,/*  жусийо=1 молийо=2                 */
+   2 ACCEPAG    CHAR(2)        ,/*  COD-епаццеклатос                  */
+   2 ACCBALANCE PIC'S(12)9V,99',/*  диахесило                         */
+   2 ACC4KATH   CHAR(4)        ,/*  йахокийо 4-ьгжио                  */
+   2 ACC10KATH  CHAR(10)       ,/*  йахокийо 10ЬГЖИО    MSA           */
+   2 ACCKATOIK  CHAR(1)        ,/*  KATOIKOS лг йатоийос              */
+   2 ACCCOUNTRY CHAR(2)       ; /*  йыдийос выяас йатоийиас           */
+
+
+
+     /* DECLARATIONS                         */
+
+     DCL  EOF          FIXED(1)       INIT(0)  ;
+
+     DCL  FLAG         FIXED(1)       INIT(0)  ;
+
+     DCL  WS_CUSTOMER_FOUND FIXED(1)  INIT(0)  ;
+
+     DCL  WS_IS_TAM    FIXED(1)  INIT(0)  ;
+     DCL ERROR_FLG     FIXED DEC (3,0);
+
+     /****************************/
+     /*SOME VARIABLES FOR TESTING*/
+     /****************************/
+
+     /*IF IT IS TEST IS_TEST HAS VALUE YES*/
+     /*IN PRODUCTION YOU HAVE TO PUT NO  */
+
+     DCL  IS_TEST          CHAR(3)   INIT('NO');
+
+     DCL  REC_COUNTER      FIXED(15) INIT(0);
+     DCL  MAX_REC_COUNTER  FIXED(3)  INIT(999); /*MAXIMUM NUMBER OF*/
+                                               /*RECORDS FOR TESTING*/
+     /***************************/
+     /*SOME VARIABLES FOR TOTALS*/
+     /***************************/
+   DCL   SYNOLO_KATHOLIKOY  PIC'ZZZZ.ZZZ.ZZZ.ZZ9V,99-' INIT(0);
+   DCL   TOTAL_REC_KATHOLIKOY PIC'ZZZ.ZZZ.ZZ9' INIT(0);
+   DCL   MY_SYNOLO_KATHOLIKOY  FIXED(15,2) INIT(0);
+
+   DCL 1 COUNTERS ,
+      2 CNT_REC_READ               PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_REJECT_CYPR        PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_PROCCED            PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_REJECT_T04CNV97    PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_REJECT_T04DOM01    PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_PROCCED_RIGHT      PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_WRITTEN_KAT        PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_WRITTEN_TAM        PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_FISICAL            PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_BIG_COMPANY        PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_SMALL_COMPANY      PIC 'ZZZ.ZZZ.ZZ9' ;
+
+     /***************************/
+     /*DB2 DECLARATIONS         */
+     /***************************/
+                                                                        01460000
+ EXEC SQL INCLUDE T04CNV97;                                             01510300
+ /*                                                                     01510400
+ EXEC SQL                                                               01460000
+          INCLUDE T04DBA01;                                             01510300
+ */                                                                     01510400
+ EXEC SQL                                                               01510500
+            INCLUDE SQLCA;                                              01510600
+
+
+ DCL PRT   FILE RECORD OUTPUT ENV(                    FB
+           RECSIZE(133)            CTLASA);
+
+ DCL 1 ERLINE  ,
+       2 ERLIN1    CHAR(1)  INIT(' ')       ,
+       2 ERLIN2    CHAR(132);
+
+ DCL WNAME_60   CHAR(60) INIT(' ');
+ DCL WNAME      CHAR(35) INIT(' ');
+ DCL WDATE      PIC'(8)9' INIT(0);
+ DCL WKAPELDS   CHAR(25) INIT(' ');
+ DCL WPOSO      FIXED(15,2);
+ DCL WPOSO1     FIXED(15,2);
+ DCL WKATHO     PIC'(10)9' INIT(0);
+
+ DCL WFLAG      CHAR(1) INIT(' ');
+ DCL WKAPEL     PIC'99';
+ DCL WTRAPEL    PIC'9';
+ DCL WARPEL     PIC'(8)9';
+ DCL WACCAR     PIC'(4)9';
+ DCL WCIDB      CHAR(18) INIT(' ');
+ DCL I          PIC'99';
+ DCL WKATMA     PIC'(4)9';
+ DCL WPELATH  DEC FIXED(9,0) INIT(0)  ;
+ DCL WPEL       PIC'(8)9';
+ DCL CNTRYP     FIXED(9) INIT(0);
+ DCL CNTRWR     FIXED(9) INIT(0);
+ DCL CNTRCI     FIXED(9) INIT(0);
+ DCL WYPOL      FIXED(15,2) INIT (0);
+ DCL TOT_KAT    PIC'ZZZZ.ZZZ.ZZZ.ZZ9V,99' INIT(0);
+ DCL TOT_TAM    PIC'ZZZZ.ZZZ.ZZZ.ZZ9V,99' INIT(0);
+
+ DCL  ONLY_ONCE        FIXED(1 ) INIT(0);
+ DCL A506001    FIXED(15,2) INIT (0);
+ DCL A506002    FIXED(15,2) INIT (0);
+ DCL A506003    FIXED(15,2) INIT (0);
+ DCL A506004    FIXED(15,2) INIT (0);
+ DCL A506005    FIXED(15,2) INIT (0);
+ DCL A506006    FIXED(15,2) INIT (0);
+ DCL A506007    FIXED(15,2) INIT (0);
+ DCL A506099    FIXED(15,2) INIT (0);
+ DCL A506801    FIXED(15,2) INIT (0);
+ DCL A506899    FIXED(15,2) INIT (0);
+ DCL A507801    FIXED(15,2) INIT (0);
+ DCL A507899    FIXED(15,2) INIT (0);
+ DCL A508001    FIXED(15,2) INIT (0);
+ DCL A508002    FIXED(15,2) INIT (0);
+ DCL A508003    FIXED(15,2) INIT (0);
+ DCL A508004    FIXED(15,2) INIT (0);
+ DCL A508005    FIXED(15,2) INIT (0);
+ DCL A508006    FIXED(15,2) INIT (0);
+ DCL A508007    FIXED(15,2) INIT (0);
+ DCL A508099    FIXED(15,2) INIT (0);
+ DCL A509005    FIXED(15,2) INIT (0);
+ DCL A509006    FIXED(15,2) INIT (0);
+ DCL A509099    FIXED(15,2) INIT (0);
+ DCL A510001    FIXED(15,2) INIT (0);
+ DCL A510002    FIXED(15,2) INIT (0);
+ DCL A510099    FIXED(15,2) INIT (0);
+ DCL A511401    FIXED(15,2) INIT (0);
+ DCL A511499    FIXED(15,2) INIT (0);
+ DCL A511501    FIXED(15,2) INIT (0);
+ DCL A511599    FIXED(15,2) INIT (0);
+ DCL A511601    FIXED(15,2) INIT (0);
+ DCL A511602    FIXED(15,2) INIT (0);
+ DCL A511603    FIXED(15,2) INIT (0);
+ DCL A511604    FIXED(15,2) INIT (0);
+ DCL A511605    FIXED(15,2) INIT (0);
+ DCL A511606    FIXED(15,2) INIT (0);
+ DCL A511607    FIXED(15,2) INIT (0);
+ DCL A511699    FIXED(15,2) INIT (0);
+ DCL A511701    FIXED(15,2) INIT (0);
+ DCL A511799    FIXED(15,2) INIT (0);
+ DCL A512001    FIXED(15,2) INIT (0);
+ DCL A512002    FIXED(15,2) INIT (0);
+ DCL A512003    FIXED(15,2) INIT (0);
+ DCL A512004    FIXED(15,2) INIT (0);
+ DCL A512099    FIXED(15,2) INIT (0);
+ DCL A512101    FIXED(15,2) INIT (0);
+ DCL A512102    FIXED(15,2) INIT (0);
+ DCL A512103    FIXED(15,2) INIT (0);
+ DCL A512104    FIXED(15,2) INIT (0);
+ DCL A512199    FIXED(15,2) INIT (0);
+ DCL A512201    FIXED(15,2) INIT (0);
+ DCL A512299    FIXED(15,2) INIT (0);
+ DCL A515001    FIXED(15,2) INIT (0);
+ DCL A515002    FIXED(15,2) INIT (0);
+ DCL A515003    FIXED(15,2) INIT (0);
+ DCL A515004    FIXED(15,2) INIT (0);
+ DCL A515005    FIXED(15,2) INIT (0);
+ DCL A515006    FIXED(15,2) INIT (0);
+ DCL A515007    FIXED(15,2) INIT (0);
+ DCL A515099    FIXED(15,2) INIT (0);
+ DCL A530001    FIXED(15,2) INIT (0);
+ DCL A530099    FIXED(15,2) INIT (0);
+
+ DCL C          FIXED(15,2) INIT (0);
+ DCL D          FIXED(15,2) INIT (0);
+
+ DCL B506001    FIXED(15,2) INIT (0);
+ DCL B506002    FIXED(15,2) INIT (0);
+ DCL B506003    FIXED(15,2) INIT (0);
+ DCL B506004    FIXED(15,2) INIT (0);
+ DCL B506005    FIXED(15,2) INIT (0);
+ DCL B506006    FIXED(15,2) INIT (0);
+ DCL B506007    FIXED(15,2) INIT (0);
+ DCL B506099    FIXED(15,2) INIT (0);
+ DCL B506801    FIXED(15,2) INIT (0);
+ DCL B506899    FIXED(15,2) INIT (0);
+ DCL B507801    FIXED(15,2) INIT (0);
+ DCL B507899    FIXED(15,2) INIT (0);
+ DCL B508001    FIXED(15,2) INIT (0);
+ DCL B508002    FIXED(15,2) INIT (0);
+ DCL B508003    FIXED(15,2) INIT (0);
+ DCL B508004    FIXED(15,2) INIT (0);
+ DCL B508005    FIXED(15,2) INIT (0);
+ DCL B508006    FIXED(15,2) INIT (0);
+ DCL B508007    FIXED(15,2) INIT (0);
+ DCL B508099    FIXED(15,2) INIT (0);
+ DCL B509005    FIXED(15,2) INIT (0);
+ DCL B509006    FIXED(15,2) INIT (0);
+ DCL B509099    FIXED(15,2) INIT (0);
+ DCL B510001    FIXED(15,2) INIT (0);
+ DCL B510002    FIXED(15,2) INIT (0);
+ DCL B510099    FIXED(15,2) INIT (0);
+ DCL B511401    FIXED(15,2) INIT (0);
+ DCL B511499    FIXED(15,2) INIT (0);
+ DCL B511501    FIXED(15,2) INIT (0);
+ DCL B511599    FIXED(15,2) INIT (0);
+ DCL B511601    FIXED(15,2) INIT (0);
+ DCL B511602    FIXED(15,2) INIT (0);
+ DCL B511603    FIXED(15,2) INIT (0);
+ DCL B511604    FIXED(15,2) INIT (0);
+ DCL B511605    FIXED(15,2) INIT (0);
+ DCL B511606    FIXED(15,2) INIT (0);
+ DCL B511607    FIXED(15,2) INIT (0);
+ DCL B511699    FIXED(15,2) INIT (0);
+ DCL B511701    FIXED(15,2) INIT (0);
+ DCL B511799    FIXED(15,2) INIT (0);
+ DCL B512001    FIXED(15,2) INIT (0);
+ DCL B512002    FIXED(15,2) INIT (0);
+ DCL B512003    FIXED(15,2) INIT (0);
+ DCL B512004    FIXED(15,2) INIT (0);
+ DCL B512099    FIXED(15,2) INIT (0);
+ DCL B512101    FIXED(15,2) INIT (0);
+ DCL B512102    FIXED(15,2) INIT (0);
+ DCL B512103    FIXED(15,2) INIT (0);
+ DCL B512104    FIXED(15,2) INIT (0);
+ DCL B512199    FIXED(15,2) INIT (0);
+ DCL B512201    FIXED(15,2) INIT (0);
+ DCL B512299    FIXED(15,2) INIT (0);
+ DCL B515001    FIXED(15,2) INIT (0);
+ DCL B515002    FIXED(15,2) INIT (0);
+ DCL B515003    FIXED(15,2) INIT (0);
+ DCL B515004    FIXED(15,2) INIT (0);
+ DCL B515005    FIXED(15,2) INIT (0);
+ DCL B515006    FIXED(15,2) INIT (0);
+ DCL B515007    FIXED(15,2) INIT (0);
+ DCL B515099    FIXED(15,2) INIT (0);
+ DCL B530001    FIXED(15,2) INIT (0);
+ DCL B530099    FIXED(15,2) INIT (0);
+
+ DCL TODAY      CHAR(17);
+ DCL  1 SYSDATE  BASED(ADDR(TODAY)),
+             2 SYSYY  CHAR(4),
+             2 SYSMM  CHAR(2),
+             2 SYSDD  CHAR(2);
+
+
+ DCL WS_PIC9_ARACC   PIC '(8)9'  ;
+ DCL WS_PIC9_ARKATMA PIC '(3)9'  ;
+ DCL WS_ARKATMA CHAR(3)  ;
+
+ DCL 1 WS_PIC9_KATH_B  PIC '(6)9' BASED(ADDR(WS_PIC9_KATH));
+ DCL 1 WS_PIC9_KATH_B1 PIC '(6)9' ;
+
+ DCL 1 WS_PIC9_KATH                  ,
+       2  WS_PIC9_KATHOL PIC '(4)9'  ,
+       2  WS_99          PIC '99'    ;
+
+ DCL  WS_KATH_OLD   PIC'(6)9' INIT (931900);
+ DCL  WS_KATH_OLD1  CHAR(6) BASED(ADDR(WS_KATH_OLD));
+ DCL  WS_KATH_NEW   PIC'(6)9' INIT (0);
+ DCL  WS_KATH_NEW1  CHAR(6) BASED(ADDR(WS_KATH_NEW));
+
+
+  DCL   ORIO     FIXED(9) INIT(066);
+  DCL   P1KATHOL(66)   CHAR(58)    INIT (
+         '506001 / 5000000005-IdIxTxN                               ',
+         '506002 / 5001000009-ETAIPEIxN                             ',
+         '506003 / 5002000002-dHMOrIxN OPcANIrMxN                   ',
+         '506004 / 5003000006-dHMOrIxN EpIXEIPHrExN                 ',
+         '506005 / 5004000000-pIrTxTIKxN IdPYMATxN-TPApEZxN         ',
+         '506006 / 5004000018-rYNdEdEMENxN TPApEZxN-IdPYMATxN       ',
+         '506007 / 5004000026-TPApEZxN EnxTEP.METETPEw.rE dPX       ',
+         '506099 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '506801 / 5011000010 pPONOMIAKOr kOc/rMOr KATAhErExN       ',
+         '506899 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '507801 / 5011000001 TPEXOYMENxN k/rMxN KATAhErExN         ',
+         '507899 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '508001 / 5000000005-IdIxTxN                               ',
+         '508002 / 5001000009-ETAIPEIxN                             ',
+         '508003 / 5002000002-dHMOrIxN OPcANIrMxN                   ',
+         '508004 / 5003000006-dHMOrIxN EpIXEIPHrExN                 ',
+         '508005 / 5004000000-pIrTxTIKxN IdPYMATxN-TPApEZxN         ',
+         '508006 / 5004000018-rYNdEdEMENxN TPApEZxN-IdPYMATxN       ',
+         '508007 / 5004000026-TPApEZxN EnxTEP.METETPEw.rE dPX       ',
+         '508099 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '509005 / 5004000000-pIrTxTIKxN IdPYMATxN-TPApEZxN         ',
+         '509006 / 5004000018-rYNdEdEMENxN TPApEZxN-IdPYMATxN       ',
+         '509099 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '510001 / 5000000013-IdIxTxN                               ',
+         '510002 / 5001000017-ETAIPEIxN                             ',
+         '510099 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ' ,
+         '511401 / 5011000001-IdIxTxN                               ',
+         '511499 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '511501 / 5304000005-IdIxTxN                               ',
+         '511599 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '511601 / 5000000048-IdIxTxN                               ',
+         '511602 / 5001000041-ETAIPEIxN                             ',
+         '511603 / 5002000045-dHMOrIxN OPcANIrMxN                   ',
+         '511604 / 5003000049-dHMOrIxN EpIXEIPHrExN                 ',
+         '511605 / 5004000042-pIrTxTIKxN IdPYMATxN-TPApEZxN         ',
+         '511606 /           -rYNdEdEMENxN TPApEZxN-IdPYMATxN       ',
+         '511607 /           -TPApEZxN EnxTEP.METETPEw.rE dPX       ',
+         '511699 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '511701 / 5304000005-IdIxTxN                               ',
+         '511799 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '512001 / 5310000003-IdIxTxN                               ',
+         '512002 / 5310000003-ETAIPEIxN                             ',
+         '512003 / 5311000007-dHMOrIxN OPcANIrMxN                   ',
+         '512004 / 5312000001-dHMOrIxN EpIXEIPHrExN                 ',
+         '512099 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '512101 / 5310000003-IdIxTxN                               ',
+         '512102 / 5310000003-ETAIPEIxN                             ',
+         '512103 / 5311000007-dHMOrIxN OPcANIrMxN                   ',
+         '512104 / 5312000001-dHMOrIxN EpIXEIPHrExN                 ',
+         '512199 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '512201 / 5001000009-pPONOMIAKOr EpIXEIPHrExN              ',
+         '512299 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '515001 / 5100000007-IdIxTxN                               ',
+         '515002 / 5001000009-ETAIPEIxN                             ',
+         '515003 / 5002000002-dHMOrIxN OPcANIrMxN                   ',
+         '515004 / 5003000006-dHMOrIxN EpIXEIPHrExN                 ',
+         '515005 / 5004000000-pIrTxTIKxN IdPYMATxN-TPApEZxN         ',
+         '515006 / 5004000018-rYNdEdEMENxN TPApEZxN-IdPYMATxN       ',
+         '515007 / 5004000026-TPApEZxN EnxTEP.METETPEw.rE dPX       ',
+         '515099 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '530001 / 5100000007-TAMIEYTHPIOY                          ',
+         '530099 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '000000 /                                                  ',
+         '000000 /                                                  ',
+         '000000 /                                                  ',
+         '000000 /                                                  '); ;
+
+          /* 05.04.2007
+ DCL LAT      CHAR(25) INIT ('ABcdEZHhIKkMNnOpPrTYuXwx ');
+ DCL GRE      CHAR(25) INIT ('абцдефгхийклмнопястужвьы ');     */
+
+ DCL LAT      CHAR(28) INIT ('ABcdEZHhIKkMNnOpPrTYuXwx 	▌');
+ DCL GRE      CHAR(28) INIT ('абцдефгхийклмнопястужвьы    ');
+
+ DCL (ONFILE,ONCODE,ONKEY,PRIORITY,TIME) BUILTIN;
+ DCL (DATETIME,SUBSTR,NULL,ADDR,UNSPEC,TRANSLATE) BUILTIN;
+
+  /*******************************************************************/
+  /***********    M A I N   P R O G R A M    *************************/
+  /*******************************************************************/
+
+ %PAGE;
+ ARXH :;
+
+   CNT_REC_READ              = 0 ;
+   CNT_REC_REJECT_CYPR       = 0 ;
+   CNT_REC_PROCCED           = 0 ;
+   CNT_REC_REJECT_T04CNV97   = 0 ;
+   CNT_REC_REJECT_T04DOM01   = 0 ;
+   CNT_REC_PROCCED_RIGHT     = 0 ;
+   CNT_REC_WRITTEN_TAM       = 0 ;
+   CNT_REC_WRITTEN_KAT       = 0 ;
+   CNT_REC_FISICAL           = 0 ;
+   CNT_REC_BIG_COMPANY       = 0 ;
+   CNT_REC_SMALL_COMPANY     = 0 ;
+
+   OPEN FILE(TAM20);
+
+   OPEN FILE(ACCFILE);
+   OPEN FILE(ACFILET);
+
+   ON ENDFILE(TAM20)
+        BEGIN ;
+          GO TO  TELOS;
+        END;
+
+ /* * * * * * * * * * * * * * * * * * * * * * * */
+ READ_FILE:;
+
+     WS_IS_TAM = 0;
+     READ  FILE(TAM20) INTO(T20REC);
+
+
+     /*лгм епенеяцастгс то талиеутгяио*/
+     IF T20ARLOGTAM < 80000000 THEN  DO;
+        WS_IS_TAM = 1;
+     END;
+     ELSE DO;
+        WS_IS_TAM = 2;
+     END;
+     /*лгм епенеяцастгс тA AKYROMENA  */
+     IF T20AKYR    ^= '0'      THEN GO TO READ_FILE;
+
+     CNT_REC_READ  = CNT_REC_READ  + 1;
+
+     /*лгм епенеяцасхEIс тяапефес аккес ейтос елпояийгс*/
+     /*оуте йатастглата  CYPRUS*/
+     IF  (T20TRAP ^= 0 ) !
+         (T20KATMA > 452 & T20KATMA < 460) THEN
+          CNT_REC_REJECT_CYPR   = CNT_REC_REJECT_CYPR +1;
+     ELSE DO ;                    /*                              */
+
+    CNT_REC_PROCCED = CNT_REC_PROCCED   + 1;
+
+
+
+    CALL FILL_TRIVIAL          ; /* ломо та еуйока  еды          */
+    CALL LOAD_TBL              ; /* жоятысе пимайа апотекеслатым */
+    CALL FILL_KATHOLIKO_10     ; /* то дейаьгжио йахокийо        */
+    CALL FILL_CIDB_NUMBER      ; /* аяихлос   CIDB               */
+
+    IF IS_TEST = 'YES' THEN
+           CALL PRINT_FOR_TEST ;
+    ELSE
+           CALL WRITE_ACC        ; /* еццяажг сто аявеио ACC       */
+   END; /*TELOS тоу оуте йупяос оуте аккг тяапефа*/
+
+   GO TO READ_FILE;   /*READ AGAIN*/
+  /**************************************************************
+  *  FILL_TRIVIAL             START                             *
+  *                                                             *
+  **************************************************************/
+     FILL_TRIVIAL           : PROC;
+
+     ACCREC = ''; /* CLEAR RECORD FOR WRITING */
+
+     WS_PIC9_ARACC    = T20ARLOGTAM ;
+
+     ACCNUMBER        = WS_PIC9_ARACC  ;
+     ACCCUSNAME  = TRANSLATE(T20ONOMA,GRE,LAT);
+
+     /*ACCCUSNAME       = T20ONOMA    ; */
+
+     ACCBALANCE       = T20POSON    ;
+     IF WS_IS_TAM = 1 THEN
+          TOT_TAM          = TOT_TAM   + T20POSON;
+     ELSE
+          TOT_KAT          = TOT_KAT   + T20POSON;
+
+     WS_PIC9_ARKATMA  = T20KATMA      ;
+     WS_ARKATMA       =  WS_PIC9_ARKATMA    ;
+     ACCBRANCH        = '0'!!WS_ARKATMA;   /*йыдийос йатастглатос 4ьгж*/
+
+     ACCEPAG          = T20EPAGELMA;       /* йыдийос епаццеклатос */
+
+     WS_PIC9_KATH      = T20KATHO         ;
+
+     ACC4KATH         =  WS_PIC9_KATHOL  ; /*тетяаьгжио йахокийо  */
+
+     /*аккацг тгс йкгсгс тгс яоутимас,екецвоуле йаи циа кахос*/
+     ERROR_FLG   = 0;
+     WS_PIC9_KATH_B1   =  0 ;
+
+     WS_PIC9_KATH_B1   =  DK4TO6B(T20KATHO ,
+                                 T20EPAGELMA ,
+                                 T20FN,
+                                 T20ARLOGTAM ,
+                                 ERROR_FLG
+                                 ) ;
+       /**********************************************************/
+       /*Aккацг йахокийым,акка циа коцистийа акка,циа ейтойислоус*/
+       /* апо 506086         се 506005                           */
+       /* апо 506008         се 506002                           */
+       /* апо 506009         се 506002                           */
+       /* апо 511430         се 511401                           */
+       /* Nпй 27-12-2004                                         */
+       /* ------------------------------------------------------ */
+       /* апо 511402         се 511401                           */
+       /* Nпй 22-02-2005                                         */
+       /**********************************************************/
+         SELECT(WS_PIC9_KATH_B1);/*лгпыс вяеиафетаи аккацг йахокийоу ;*/
+
+               WHEN(506086 )  DO;
+                                  WS_PIC9_KATH_B = 506005  ; END;
+               WHEN(506008 )  DO;
+                                  WS_PIC9_KATH_B = 506002  ; END;
+               WHEN(506009 )  DO;
+                                  WS_PIC9_KATH_B = 506002  ; END;
+               WHEN(511430 )  DO;
+                                  WS_PIC9_KATH_B = 511401  ; END;
+               WHEN(511402 )  DO;
+                                  WS_PIC9_KATH_B = 511401  ; END;
+               OTHERWISE      DO; /*дем вяеиафетаи аккацг йахокийоу*/
+                                  WS_PIC9_KATH_B =  WS_PIC9_KATH_B1;
+                              END;
+         END; /*SELECT END*/
+
+     IF T20FN = 'N' THEN
+           ACC_F_N  = '2';  /* NOMIKO */
+     ELSE
+           ACC_F_N  = '1';  /* жусийо */
+
+       ACCCOUNTRY  = T20CNTRY   ; /*  йыдийос выяас йатоийиас  */
+
+       ACCKATOIK   = T20IDSTA   ; /*  KATOIKOS лг йатоийос     */
+     END  FILL_TRIVIAL          ;
+  /**************************************************************
+  *  FILL_TRIVIAL                    END                        *
+  **************************************************************/
+
+  /**************************************************************
+  *  FILL_KATHOLIKO_10      START                               *
+  *                                                             *
+  **************************************************************/
+     FILL_KATHOLIKO_10      : PROC;
+        DCL I      PIC  '99'  INIT (0);
+
+        ACC10KATH  =(10)' ';   /*  йахокийо 10ЬГЖИО   */
+   /*   PUT SKIP LIST('WS_PIC9_KATH_B = ',WS_PIC9_KATH_B); */
+        DO I = 1 TO ORIO ;
+            IF WS_PIC9_KATH_B = SUBSTR(P1KATHOL(I),1,6)
+               THEN
+               ACC10KATH = SUBSTR(P1KATHOL(I),10,10);
+
+        END;
+
+     END  FILL_KATHOLIKO_10     ;
+  /**************************************************************
+  *  FILL_KATHOLIKO_10               END                        *
+  **************************************************************/
+  /**************************************************************
+  *  FILL_CIDB_NUMBER         START                             *
+  *                                                             *
+  **************************************************************/
+     FILL_CIDB_NUMBER       : PROC;
+       DCL MYEFARM CHAR(2);
+       WPELATH = 0;                                                        05280
+
+       WS_CUSTOMER_FOUND   = 0;
+
+       T04CNV97.COD_PELATH = 0;
+
+       /* CREATE ACCOUNT NUMBER FOR T04CNV97 */
+       IF WS_IS_TAM = 1 THEN DO ;/*EINAI TAMIEYTHRIO*/
+           MYEFARM = '90' ;
+           WCIDB    =  '0'!!WS_PIC9_ARACC!!(7)' '!!'01';
+       END;
+       ELSE DO ;                   /*еимаи йатахесеис */
+           MYEFARM = '70' ;
+           WCIDB    =  WS_PIC9_ARACC!!(8)' '!!'01';
+       END;
+
+
+       EXEC SQL
+            SELECT  COD_PELATH                                             05270
+            INTO   :T04CNV97.COD_PELATH
+            FROM   T04CNV97                                                05290
+            WHERE  T04CNV97.COD_EFARM      = :MYEFARM AND                  05300
+                   T04CNV97.NUM_AR_LOGAR   = :WCIDB                        05310
+            WITH UR;                                                       05320
+                                                                           05330
+       IF SQLCODE ^= 0   THEN  DO;
+            WS_CUSTOMER_FOUND = 1;
+            CNT_REC_REJECT_T04CNV97 = CNT_REC_REJECT_T04CNV97 +1;
+            ERLIN2 = 'пяобкгла **** еуяесг пекатг стом т04CNV97 : '     !!
+                   !!' Aяихл.коцая. '
+                   !! WCIDB
+                   !!'  SQLCODE  : '!!SQLCODE;
+
+         IF IS_TEST  ^= 'YES' THEN
+              WRITE FILE(PRT) FROM(ERLINE);
+
+       END;
+
+       WPEL       =  T04CNV97.COD_PELATH ;                              05270000
+
+       ACCCIDBNUM = WPEL ;                                              05270000
+
+     END  FILL_CIDB_NUMBER      ;
+  /**************************************************************
+  *  FILL_CIDB_NUMBER         END                               *
+  **************************************************************/
+  /**************************************************************
+  *  LOAD_TBL                 START                             *
+  **************************************************************/
+     LOAD_TBL :PROC;
+
+    SELECT(WS_PIC9_KATH_B ) ;
+    WHEN(506001 )  DO;
+                   A506001  = A506001     + T20POSON;
+                   B506001  = B506001     +  1; END;
+    WHEN(506002 )  DO;
+                   A506002  = A506002     + T20POSON;
+                   B506002  = B506002     +  1; END;
+    WHEN(506003 )  DO;
+                   A506003  = A506003     + T20POSON;
+                   B506003  = B506003     +  1;  END;
+    WHEN(506004 )  DO;
+                   A506004  = A506004     + T20POSON;
+                   B506004  = B506004     +  1; END;
+    WHEN(506005 )  DO;
+                   A506005  = A506005     + T20POSON;
+                   B506005  = B506005     +  1; END;
+    WHEN(506006 )  DO;
+                   A506006  = A506006     + T20POSON;
+                   B506006  = B506006     +  1; END;
+    WHEN(506007 )  DO;
+                   A506007  = A506007     + T20POSON;
+                   B506007  = B506007     +  1; END;
+    WHEN(506099 )  DO;
+                   A506099  = A506099     + T20POSON;
+                   B506099  = B506099     +  1; END;
+    WHEN(506801 )  DO;
+                   A506801  = A506801     + T20POSON;
+                   B506801  = B506801     +  1; END;
+    WHEN(506899 )  DO;
+                   A506899  = A506899     + T20POSON;
+                   B506899  = B506899     +  1; END;
+    WHEN(507801 )  DO;
+                   A507801  = A507801     + T20POSON;
+                   B507801  = B507801     +  1; END;
+    WHEN(507899 )  DO;
+                   A507899  = A507899     + T20POSON;
+                   B507899  = B507899     +  1;END;
+    WHEN(508001 )  DO;
+                   A508001  = A508001     + T20POSON;
+                   B508001  = B508001     +  1;END;
+    WHEN(508002 )  DO ;
+                   A508002  = A508002     + T20POSON;
+                   B508002  = B508002     +  1;END;
+    WHEN(508003 )  DO;
+                   A508003  = A508003     + T20POSON;
+                   B508003  = B508003     +  1;END;
+    WHEN(508004 )  DO;
+                   A508004  = A508004     + T20POSON;
+                   B508004  = B508004     +  1;END;
+    WHEN(508005 )  DO;
+                   A508005  = A508005     + T20POSON;
+                   B508005  = B508005     +  1;END;
+    WHEN(508006 )  DO;
+                   A508006  = A508006     + T20POSON;
+                   B508006  = B508006     +  1;END;
+    WHEN(508007 )  DO;
+                   A508007  = A508007     + T20POSON;
+                   B508007  = B508007     +  1;END;
+    WHEN(508099 )  DO;
+                   A508099  = A508099     + T20POSON;
+                   B508099  = B508099     +  1;END;
+    WHEN(509005 )  DO;
+                   A509005  = A509005     + T20POSON;
+                   B509005  = B509005     +  1;END;
+    WHEN(509006 )  DO;
+                   A509006  = A509006     + T20POSON;
+                   B509006  = B509006     +  1;END;
+    WHEN(509099 )  DO;
+                   A509099  = A509099     + T20POSON;
+                   B509099  = B509099     +  1;END;
+    WHEN(510001 )  DO;
+                   A510001  = A510001     + T20POSON;
+                   B510001  = B510001     +  1;END;
+    WHEN(510002 )  DO;
+                   A510002  = A510002     + T20POSON;
+                   B510002  = B510002     +  1;END;
+    WHEN(510099 )  DO;
+                   A510099  = A510099     + T20POSON;
+                   B510099  = B510099     +  1;END;
+    WHEN(511401 )  DO;
+                   A511401  = A511401     + T20POSON;
+                   B511401  = B511401     +  1;END;
+    WHEN(511499 )  DO;
+                   A511499  = A511499     + T20POSON;
+                   B511499  = B511499     +  1;END;
+    WHEN(511501 )  DO;
+                   A511501  = A511501     + T20POSON;
+                   B511501  = B511501     +  1;END;
+    WHEN(511599 )  DO;
+                   A511599  = A511599     + T20POSON;
+                   B511599  = B511599     +  1;END;
+    WHEN(511601 )  DO;
+                   A511601  = A511601     + T20POSON;
+                   B511601  = B511601     +  1;END;
+    WHEN(511602 )  DO;
+                   A511602  = A511602     + T20POSON;
+                   B511602  = B511602     +  1;END;
+    WHEN(511603 )  DO;
+                   A511603  = A511603     + T20POSON;
+                   B511603  = B511603     +  1;END;
+    WHEN(511604 )  DO;
+                   A511604  = A511604     + T20POSON;
+                   B511604  = B511604     +  1;END;
+    WHEN(511605 )  DO;
+                   A511605  = A511605     + T20POSON;
+                   B511605  = B511605     +  1;END;
+    WHEN(511606 )  DO;
+                   A511606  = A511606     + T20POSON;
+                   B511606  = B511606     +  1;END;
+    WHEN(511607 )  DO;
+                   A511607  = A511607     + T20POSON;
+                   B511607  = B511607     +  1;END;
+    WHEN(511699 )  DO;
+                   A511699  = A511699     + T20POSON;
+                   B511699  = B511699     +  1;END;
+    WHEN(511701 )  DO;
+                   A511701  = A511701     + T20POSON;
+                   B511701  = B511701     +  1;END;
+    WHEN(511799 )  DO;
+                   A511799  = A511799     + T20POSON;
+                   B511799  = B511799     +  1;END;
+    WHEN(512001 )  DO;
+                   A512001  = A512001     + T20POSON;
+                   B512001  = B512001     +  1;END;
+    WHEN(512002 )  DO;
+                   A512002  = A512002     + T20POSON;
+                   B512002  = B512002     +  1;END;
+    WHEN(512003 )  DO;
+                   A512003  = A512003     + T20POSON;
+                   B512003  = B512003     +  1;END;
+    WHEN(512004 )  DO;
+                   A512004  = A512004     + T20POSON;
+                   B512004  = B512004     +  1;END;
+    WHEN(512099 )  DO;
+                   A512099  = A512099     + T20POSON;
+                   B512099  = B512099     +  1;END;
+    WHEN(512101 )  DO;
+                   A512101  = A512101     + T20POSON;
+                   B512101  = B512101     +  1;END;
+    WHEN(512102 )  DO;
+                   A512102  = A512102     + T20POSON;
+                   B512102  = B512102     +  1;END;
+    WHEN(512103 )  DO;
+                   A512103  = A512103     + T20POSON;
+                   B512103  = B512103     +  1;END;
+    WHEN(512104 )  DO;
+                   A512104  = A512104     + T20POSON;
+                   B512104  = B512104     +  1;END;
+    WHEN(512199 )  DO;
+                   A512199  = A512199     + T20POSON;
+                   B512199  = B512199     +  1;END;
+    WHEN(512201 )  DO;
+                   A512201  = A512201     + T20POSON;
+                   B512201  = B512201     +  1;END;
+    WHEN(512299 )  DO;
+                   A512299  = A512299     + T20POSON;
+                   B512299  = B512299     +  1;END;
+    WHEN(515001 )  DO;
+                   A515001  = A515001     + T20POSON;
+                   B515001  = B515001     +  1; END;
+    WHEN(515002 )  DO;
+                   A515002  = A515002     + T20POSON;
+                   B515002  = B515002     +  1;END;
+    WHEN(515003 )  DO;
+                   A515003  = A515003     + T20POSON;
+                   B515003  = B515003     +  1;END;
+    WHEN(515004 )  DO;
+                   A515004  = A515004     + T20POSON;
+                   B515004  = B515004     +  1;END;
+    WHEN(515005 )  DO;
+                   A515005  = A515005     + T20POSON;
+                   B515005  = B515005     +  1;END;
+    WHEN(515006 )  DO;
+                   A515006  = A515006     + T20POSON;
+                   B515006  = B515006     +  1;END;
+    WHEN(515007 )  DO;
+                   A515007  = A515007     + T20POSON;
+                   B515007  = B515007     +  1;END;
+    WHEN(515099 )  DO;
+                   A515099  = A515099     + T20POSON;
+                   B515099  = B515099     +  1;END;
+    WHEN(530001 )  DO;
+                   A530001  = A530001     + T20POSON;
+                   B530001  = B530001     +  1;END;
+    WHEN(530099 )  DO;
+                   A530099  = A530099     + T20POSON;
+                   B530099  = B530099     +  1;END;
+    OTHERWISE      DO;
+                   C        = C           + T20POSON;
+                   D        = D           +  1;
+                   END;
+     END;
+     END LOAD_TBL;
+  /**************************************************************
+  *  LOAD_TBL                 END                               *
+  **************************************************************/
+  /**************************************************************
+  *  WRITE_ACC              : PROC;                             *
+  *                                                             *
+  **************************************************************/
+     WRITE_ACC              : PROC;
+       IF WS_IS_TAM = 1 THEN DO;
+              WRITE FILE(ACFILET ) FROM(ACCREC);
+              CNT_REC_WRITTEN_TAM = CNT_REC_WRITTEN_TAM + 1;
+       END;
+       ELSE DO;
+              WRITE FILE(ACCFILE ) FROM(ACCREC);
+              CNT_REC_WRITTEN_KAT = CNT_REC_WRITTEN_KAT + 1;
+       END;
+
+
+       ACCREC = ''; /* CLEAR RECORD  */
+
+     END  WRITE_ACC             ;
+
+  /**************************************************************
+  *  WRITE_ACC                   END                            *
+  **************************************************************/
+
+ /*                                                                  */
+  /**************************************************************
+  *  PRINT_FOR_TEST                                             *
+  *                                                             *
+  **************************************************************/
+     PRINT_FOR_TEST        : PROC;
+
+      REC_COUNTER = REC_COUNTER +1 ;
+
+      IF WS_IS_TAM = 1 & ONLY_ONCE = 0 THEN DO ;/*EINAI TAMIEYTHRIO*/
+         REC_COUNTER =0;
+         ONLY_ONCE = 1;
+      END;
+
+      IF REC_COUNTER < MAX_REC_COUNTER THEN DO ;
+         ERLIN2 =
+            ' LOGAR   ' !!  ACCNUMBER    !!
+            ' BALANCE ' !!  ACCBALANCE   !!
+            ' йатг  4 ' !!  ACC4KATH     !!
+            ' KATH 10 ' !!  ACC10KATH    ;
+        WRITE FILE(PRT) FROM(ERLINE);
+         /*
+         ERLIN2 =
+            ' CUSNAME ' !!  ACCCUSNAME   !!
+            ' CIDBNUM ' !!  ACCCIDBNUM   !!
+            ' EPAGELM ' !!  ACCEPAG      !!
+            ' BRANCH  ' !!  ACCBRANCH    ;
+
+        WRITE FILE(PRT) FROM(ERLINE);
+        */
+         ERLIN2 =
+            ' йатоийос ' !!  ACCKATOIK    !!
+            ' выяа  ' !!  ACCCOUNTRY ;
+
+        WRITE FILE(PRT) FROM(ERLINE);
+     END;
+     END  PRINT_FOR_TEST ;
+
+  /**************************************************************
+  *  WRITE_ACC                   END                            *
+  **************************************************************/
+
+  TELOS:
+
+  /***********************************************/
+  /**   PRINT TOTALS     *************************/
+  /***********************************************/
+   ERLIN1    = '1';  /*SKIP LINE*/
+
+   ERLIN2 = '   ейтупысг сумокым тоу пяоцяаллатос *DK529*   ';
+   WRITE FILE(PRT) FROM(ERLINE);
+
+   ERLIN1    = ' ';
+   ERLIN2 = ' глеяолгмиа KAI ыяа яогс :  ' !!DATETIME ;
+   WRITE FILE(PRT) FROM(ERLINE);
+
+   ERLIN2 = 'сумоко еццяажым поу упаявоум сто тал20                :'!!
+   CNT_REC_READ                  ;
+   WRITE FILE(PRT) FROM(ERLINE);
+   ERLIN2 = 'сумокийо посом йатахесеым сто    тал20                :'!!
+               TOT_KAT ;
+   WRITE FILE(PRT) FROM(ERLINE);
+
+   ERLIN2 = 'сумокийо посом талиеутгяиоу сто  тал20                :'!!
+               TOT_TAM ;
+   WRITE FILE(PRT) FROM(ERLINE);
+
+   ERLIN2 = 'сумоко еццяажым поу епенеяцасхгйам                    :'!!
+   CNT_REC_PROCCED               ;
+   WRITE FILE(PRT) FROM(ERLINE);
+
+   ERLIN2 = 'сумоко еццяажым поу дем упаяв.  сто T04CNV97          :'!!
+   CNT_REC_REJECT_T04CNV97       ;
+   WRITE FILE(PRT) FROM(ERLINE);
+
+   ERLIN2 = 'сумоко еццяажым поу цяажтгйам сто аявеио йатахесеым   :'!!
+   CNT_REC_WRITTEN_KAT           ;
+   WRITE FILE(PRT) FROM(ERLINE);
+
+   ERLIN2 = 'сумоко еццяажым поу цяажтгйам сто аявеио талиеутгяиоу :'!!
+   CNT_REC_WRITTEN_TAM           ;
+   WRITE FILE(PRT) FROM(ERLINE);
+
+   ERLIN2 = 'сумоко амупаяйтым йахокийым = '!!C;
+   WRITE FILE(PRT) FROM(ERLINE);
+
+   ERLIN2 = 'сумоко POSON ANYP йахокийым = '!!D;
+   WRITE FILE(PRT) FROM(ERLINE);
+
+   ERLIN2 = '*******************************************************';
+   WRITE FILE(PRT) FROM(ERLINE);
+
+   ERLIN2 = '* сумока посым,коцаяиаслым ама 6-ьгжио йахокийо *******';
+   WRITE FILE(PRT) FROM(ERLINE);
+
+   ERLIN2 = '*******************************************************';
+   WRITE FILE(PRT) FROM(ERLINE);
+
+  ERLIN2 ='йахокийо '!!506001!!' '!!B506001!!' '!!A506001     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!506002!!' '!!B506002!!' '!!A506002     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!506003!!' '!!B506003!!' '!!A506003     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!506004!!' '!!B506004!!' '!!A506004     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!506005!!' '!!B506005!!' '!!A506005     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!506006!!' '!!B506006!!' '!!A506006     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!506007!!' '!!B506007!!' '!!A506007     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!506099!!' '!!B506099!!' '!!A506099     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!506801!!' '!!B506801!!' '!!A506801     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!506899!!' '!!B506899!!' '!!A506899     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!507801!!' '!!B507801!!' '!!A507801     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!507899!!' '!!B507899!!' '!!A507899     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!508001!!' '!!B508001!!' '!!A508001     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!508002!!' '!!B508002!!' '!!A508002     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!508003!!' '!!B508003!!' '!!A508003     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!508004!!' '!!B508004!!' '!!A508004     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!508005!!' '!!B508005!!' '!!A508005     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!508006!!' '!!B508006!!' '!!A508006     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!508007!!' '!!B508007!!' '!!A508007     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!508099!!' '!!B508099!!' '!!A508099     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!509005!!' '!!B509005!!' '!!A509005     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!509006!!' '!!B509006!!' '!!A509006     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!509099!!' '!!B509099!!' '!!A509099     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!510001!!' '!!B510001!!' '!!A510001     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!510002!!' '!!B510002!!' '!!A510002     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!510099!!' '!!B510099!!' '!!A510099     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!511401!!' '!!B511401!!' '!!A511401     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!511499!!' '!!B511499!!' '!!A511499     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!511501!!' '!!B511501!!' '!!A511501     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!511599!!' '!!B511599!!' '!!A511599     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!511601!!' '!!B511601!!' '!!A511601     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!511602!!' '!!B511602!!' '!!A511602     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!511603!!' '!!B511603!!' '!!A511603     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!511604!!' '!!B511604!!' '!!A511604     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!511605!!' '!!B511605!!' '!!A511605     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!511606!!' '!!B511606!!' '!!A511606     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!511607!!' '!!B511607!!' '!!A511607     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!511699!!' '!!B511699!!' '!!A511699     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!511701!!' '!!B511701!!' '!!A511701     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!511799!!' '!!B511799!!' '!!A511799     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!512001!!' '!!B512001!!' '!!A512001     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!512002!!' '!!B512002!!' '!!A512002     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!512003!!' '!!B512003!!' '!!A512003     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!512004!!' '!!B512004!!' '!!A512004     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!512099!!' '!!B512099!!' '!!A512099     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!512101!!' '!!B512101!!' '!!A512101     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!512102!!' '!!B512102!!' '!!A512102     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!512103!!' '!!B512103!!' '!!A512103     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!512104!!' '!!B512104!!' '!!A512104     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!512199!!' '!!B512199!!' '!!A512199     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!512201!!' '!!B512201!!' '!!A512201     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!512299!!' '!!B512299!!' '!!A512299     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!515001!!' '!!B515001!!' '!!A515001     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!515002!!' '!!B515002!!' '!!A515002     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!515003!!' '!!B515003!!' '!!A515003     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!515004!!' '!!B515004!!' '!!A515004     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!515005!!' '!!B515005!!' '!!A515005     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!515006!!' '!!B515006!!' '!!A515006     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!515007!!' '!!B515007!!' '!!A515007     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!515099!!' '!!B515099!!' '!!A515099     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!530001!!' '!!B530001!!' '!!A530001     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+  ERLIN2 ='йахокийо '!!530099!!' '!!B530099!!' '!!A530099     ;
+   WRITE FILE(PRT) FROM(ERLINE);
+
+     CLOSE FILE(TAM20);
+     CLOSE FILE(ACCFILE);
+     CLOSE FILE(ACFILET);
+ END DK529;
+

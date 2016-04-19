@@ -1,0 +1,1024 @@
+      ****************************************************************
+      **                                                            **
+      **           FOUNDATION FOR COOPERATIVE PROCESSING            **
+      **                                                            **
+      **                       COBOL CICS                           **
+      **                   SERVICE MODULE FILE                      **
+      **                                                            **
+      **           COPYRIGHT (C) 1996 ANDERSEN CONSULTING.          **
+      **                    ALL RIGHTS RESERVED.                    **
+      **                                                            **
+      ****************************************************************
+      **                                                            **
+      **  MODULE NAME:       ATS01009                               **
+      **                                                            **
+      **  DATE GENERATED:    Wed Mar 14 14:41:39 2012               **
+      **                                                            **
+      **  BY USER:           NPK                                    **
+      **                                                            **
+      **  DESIGNER:                                                 **
+      **                                                            **
+      **  PROGRAMMER:                                               **
+      **                                                            **
+      **  SHORT DESCRIPTION:                                        **
+      ****************************************************************
+
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. ATS01009.
+       ENVIRONMENT DIVISION.
+
+       DATA DIVISION.
+
+       WORKING-STORAGE SECTION.
+      ****************************************************************
+      ** REPOSITORY WORKING STORAGE                                 **
+      ****************************************************************
+      *--> LT - VARIABLES
+       01 LT-MAX-ROWS              PIC 9(05)      VALUE 60 .
+       01 LT-SPACE                 PIC X(9)       VALUE SPACES.
+
+       01 WS-IND-NULL-1        PIC S9(4)V COMP.
+
+      *--> WS - VARIABLES
+
+       01 WS-INPUT-ATM-CODE         PIC X(8)     VALUE SPACES.
+       01 WS-INPUT-DATE             PIC X(10)    VALUE SPACES.
+
+       01 WS-COUNTER                PIC 9(05)    VALUE ZEROES.
+       01 WS-RECS     PIC S9(02)V   USAGE COMP-3 VALUE ZEROES.
+
+       01 WS-DATE-EFODIASMOY       PIC X(10)       VALUE SPACES.
+       01 WS-DATE-EPISTROFIS       PIC X(10)       VALUE SPACES.
+       01 WS-DATE-EFODIASMOY-PREV  PIC X(10)       VALUE SPACES.
+       01 WS-DATE-EPISTROFIS-PREV  PIC X(10)       VALUE SPACES.
+
+       01 WS-AMT-EFODIASMOY PIC S9(13)V9(2) USAGE COMP-3 VALUE ZEROES.
+       01 WS-AMT-EPISTROFIS PIC S9(13)V9(2) USAGE COMP-3 VALUE ZEROES.
+
+      *TABLE WITH TRANSACTION DATES,60   DATES MAXIMUM
+       01  MYTABLE.
+         05  WS-MYDATES-TABLE PIC X(10) OCCURS 60 TIMES.
+
+
+
+      *****************************************************************
+      *  SWITCHES AREA - INDICATORS
+      *****************************************************************
+       01  SWITCHES.
+          05 SW-END-CURSOR            PIC X(1) VALUE '0'.
+              88 END-CURSOR-YES             VALUE '1'.
+              88 END-CURSOR-NO              VALUE '0'.
+      ****************************************************************
+      **     CONSTANTS OF              ERRORS                      **
+      ****************************************************************
+       COPY DTERRORS.
+
+      ****************************************************************
+      **     COPY OF                   AQERROR.                     **
+      ****************************************************************
+       COPY BKERRORP.
+      ****************************************************************
+      ** INCLUDE TABLES - CURSORS                                   **
+      ****************************************************************
+           EXEC SQL  INCLUDE CTBKARMV  END-EXEC.
+           EXEC SQL  INCLUDE CTBKARTD  END-EXEC.
+      ****************************************************************
+      ** WORKING ARQUITECTURA                                       **
+      ****************************************************************
+       COPY ADSIK200.
+       COPY ADSAK001.
+
+       COPY AQSRV001.
+           05  LT-MODULO-SERV-V2         PIC X(8) VALUE 'ATS01009'.
+
+       LINKAGE SECTION.
+      ****************************************************************
+      ** FOUNDATION LINKAGE SECTION                                 **
+      ****************************************************************
+
+      ****************************************************************
+      ** BUSINESS FUNCTION CONTEXT DATA                             **
+      ****************************************************************
+       COPY AQBEBF.
+
+      ****************************************************************
+      ** INPUT MESSAGE PARMBLOCK                                    **
+      ****************************************************************
+       01  SRV-TXN-PB.
+           COPY WAPIMSG.
+
+      ****************************************************************
+      ** REPLY MESSAGE PARMBLOCK                                    **
+      ****************************************************************
+       01  RTAF-TXN-PB.
+           COPY WAPIMSG.
+
+      ****************************************************************
+      ** INPUT MESSAGE DATA                                         **
+      ****************************************************************
+       01  INPUT-TXN.
+           COPY AT01009I.
+
+
+      ****************************************************************
+      ** OUTPUT MESSAGE DATA                                       **
+      ****************************************************************
+       01  OUTPUT-TXN.
+           COPY AT01009O.
+
+
+      ****************************************************************
+      ** USER LINKAGE COPYBOOKS                                     **
+      ****************************************************************
+
+
+
+
+
+      ****************************************************************
+      ** USER PROCEDURE DIVISION                                    **
+      ****************************************************************
+       PROCEDURE DIVISION USING
+                                 &AQPROC1(),
+                                 &AQPROC2(),
+                                 &AQPROC3(),
+                                 AQBF-AQBEBF,
+                                 &AQPROC4(),
+                                 SRV-TXN-PB,
+                                 INPUT-TXN,
+                                 RTAF-TXN-PB,
+                                 OUTPUT-TXN.
+
+       0000-MAINLINE.
+      * START CODE PROCEDURE
+
+           PERFORM A1000-HOUSEKEEPING.
+           PERFORM A2000-PROCESS.
+           PERFORM A8000-WRAP-UP.
+
+       A1000-HOUSEKEEPING.
+      *****************************************************************
+      **  A1000-HOUSEKEEPING                                         **
+      *****************************************************************
+      *    DISPLAY 'NPK ATS01009 A1000 22-03-2012 ' .
+           &AQOPCION(NO-ERROSQL) .
+           INITIALIZE WS-COUNTER
+                      OUTPUT-TXN
+                      MYTABLE
+                      WS-RECS    .
+
+           MOVE ATCODE      OF INPUT-TXN
+           TO   WS-INPUT-ATM-CODE.
+
+           MOVE AT-DATE     OF INPUT-TXN
+           TO   WS-INPUT-DATE.
+
+
+           PERFORM A1005-GET-DATE-EPISTR-PREV .
+           PERFORM A1010-GET-DATE-EFODIASMOY  .
+           PERFORM A1020-GET-DATE-EPISTROFIS  .
+           PERFORM A1040-FIND-AMT-EFODIASMOY  .
+           PERFORM A1050-FIND-AMT-EPISTROFIS  .
+           PERFORM A1060-GET-TRANSACTION-DATES.
+
+       A1005-GET-DATE-EPISTR-PREV .
+      *****************************************************************
+      **  A1005-GET-DATE-EPISTR-PREV .                               **
+      *****************************************************************
+           MOVE WS-INPUT-ATM-CODE  TO KEY-COD-ATM OF CTBKARTD.
+           MOVE WS-INPUT-DATE      TO KEY-DAT-TLF OF CTBKARTD.
+
+             EXEC SQL
+               SELECT IFNULL(MIN(KEY_DAT_TLF),CURRENT DATE)
+               INTO  :CTBKARTD.KEY-DAT-TLF
+               FROM  CTBKARTD
+             WHERE
+                KEY_COD_ATM  = :CTBKARTD.KEY-COD-ATM
+             AND
+                CHR_ADM_CDE  IN ('05','06')
+             AND
+                KEY_DAT_TLF < :CTBKARTD.KEY-DAT-TLF
+             END-EXEC
+
+           MOVE SQLSTATE TO SQLSTATE-SIGLO
+           EVALUATE  TRUE
+
+           WHEN  IND-SQL-CORRECTO
+                MOVE KEY-DAT-TLF OF CTBKARTD
+                TO WS-DATE-EPISTROFIS-PREV
+           WHEN OTHER
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                MOVE 'A1005-GET-DATE-EP'
+                TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'DATE EPISTROFIS PREV ERROR'
+                TO   ERR-COMMENTS    OF BKERRORP
+                MOVE   'CTBKARTD'
+                TO     ERR-TABLE                   OF BKERRORP
+                  &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)
+           END-EVALUATE
+
+      *    WS-DATE-EPISTROFIS-PREV
+
+       A1010-GET-DATE-EFODIASMOY.
+      *****************************************************************
+      **  A1010-GET-DATE-EFODIASMOY                                  **
+      *****************************************************************
+           MOVE WS-INPUT-ATM-CODE TO KEY-COD-ATM OF CTBKARTD.
+           MOVE WS-INPUT-DATE     TO KEY-DAT-TLF OF CTBKARTD.
+
+             EXEC SQL SELECT
+               IFNULL(MAX(KEY_DAT_TLF),CURRENT DATE)
+               INTO  :CTBKARTD.KEY-DAT-TLF
+               FROM  CTBKARTD
+             WHERE
+                KEY_COD_ATM  = :CTBKARTD.KEY-COD-ATM
+             AND
+                CHR_ADM_CDE  IN ('03','04')
+             AND
+                KEY_DAT_TLF <= :CTBKARTD.KEY-DAT-TLF
+             END-EXEC.
+
+           MOVE SQLSTATE TO SQLSTATE-SIGLO
+           EVALUATE  TRUE
+
+           WHEN  IND-SQL-CORRECTO
+                    CONTINUE
+           WHEN OTHER
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                MOVE 'A1010-GET-DATE-EF'
+                TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'DATE EFODIASMOY ERROR    '
+                TO   ERR-COMMENTS    OF BKERRORP
+                MOVE   'CTBKARTD'
+                TO     ERR-TABLE                   OF BKERRORP
+                  &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)
+           END-EVALUATE
+
+           MOVE KEY-DAT-TLF OF CTBKARTD TO WS-DATE-EFODIASMOY.
+
+       A1020-GET-DATE-EPISTROFIS  .
+      *****************************************************************
+      **  A1020-GET-DATE-EPISTROFIS  .                               **
+      *****************************************************************
+           MOVE WS-INPUT-ATM-CODE  TO KEY-COD-ATM OF CTBKARTD.
+           MOVE WS-DATE-EFODIASMOY TO KEY-DAT-TLF OF CTBKARTD.
+
+             EXEC SQL
+               SELECT IFNULL(MIN(KEY_DAT_TLF),CURRENT DATE)
+               INTO  :CTBKARTD.KEY-DAT-TLF
+               FROM  CTBKARTD
+             WHERE
+                KEY_COD_ATM  = :CTBKARTD.KEY-COD-ATM
+             AND
+                CHR_ADM_CDE  =  '05'
+             AND
+                KEY_DAT_TLF >= :CTBKARTD.KEY-DAT-TLF
+             END-EXEC
+           MOVE SQLSTATE TO SQLSTATE-SIGLO
+           EVALUATE  TRUE
+           WHEN  IND-SQL-CORRECTO
+                 CONTINUE
+           WHEN OTHER
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                MOVE 'A1020-GET-DATE-EP'
+                TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'DATE EPISTROFIS ERROR    '
+                TO   ERR-COMMENTS    OF BKERRORP
+                MOVE   'CTBKARTD'
+                TO     ERR-TABLE                   OF BKERRORP
+                  &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)
+           END-EVALUATE
+
+           MOVE KEY-DAT-TLF OF CTBKARTD TO WS-DATE-EPISTROFIS.
+
+
+       A1040-FIND-AMT-EFODIASMOY  .
+      *****************************************************************
+      **  A1040-FIND-AMT-EFODIASMOY  .                               **
+      *****************************************************************
+           MOVE WS-INPUT-ATM-CODE  TO KEY-COD-ATM   OF CTBKARTD.
+           MOVE WS-DATE-EFODIASMOY TO KEY-DAT-TLF   OF CTBKARTD.
+
+             EXEC SQL
+               SELECT IFNULL(SUM(BEG_CASH1+BEG_CASH4),0)
+               INTO  :WS-AMT-EFODIASMOY
+               FROM  CTBKARTD
+             WHERE
+                KEY_COD_ATM   = :CTBKARMV.KEY-COD-ATM
+             AND
+                CHR_ADM_CDE  IN ('03','04')
+             AND
+                KEY_DAT_TLF = :CTBKARTD.KEY-DAT-TLF
+             END-EXEC
+
+           MOVE SQLSTATE TO SQLSTATE-SIGLO
+           EVALUATE  TRUE
+
+           WHEN  IND-SQL-CORRECTO
+                    CONTINUE
+           WHEN OTHER
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                MOVE 'A1040-FIND-AMT   '
+                TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'FIND AMOUNT     ERROR    '
+                TO   ERR-COMMENTS    OF BKERRORP
+                MOVE   'CTBKARTD'
+                TO     ERR-TABLE                   OF BKERRORP
+                  &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)
+           END-EVALUATE
+
+                                    .
+       A1050-FIND-AMT-EPISTROFIS  .
+      *****************************************************************
+      **  A1050-FIND-AMT-EPISTROFIS  .                               **
+      *****************************************************************
+           MOVE WS-INPUT-ATM-CODE  TO KEY-COD-ATM   OF CTBKARTD.
+           MOVE WS-DATE-EPISTROFIS TO KEY-DAT-TLF   OF CTBKARTD.
+
+             EXEC SQL
+               SELECT IFNULL(SUM(END_CASH1+END_CASH4),0)
+               INTO  :WS-AMT-EPISTROFIS
+               FROM  CTBKARTD
+             WHERE
+                KEY_COD_ATM   = :CTBKARMV.KEY-COD-ATM
+             AND
+                CHR_ADM_CDE  =   '05'
+             AND
+                KEY_DAT_TLF = :CTBKARTD.KEY-DAT-TLF
+             END-EXEC
+
+           MOVE SQLSTATE TO SQLSTATE-SIGLO
+           EVALUATE  TRUE
+
+           WHEN  IND-SQL-CORRECTO
+                    CONTINUE
+           WHEN OTHER
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                MOVE 'A1050-FIND-AMT   '
+                TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'FIND AMOUNT     ERROR    '
+                TO   ERR-COMMENTS    OF BKERRORP
+                MOVE   'CTBKARTD'
+                TO     ERR-TABLE                   OF BKERRORP
+                  &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)
+           END-EVALUATE
+
+                                    .
+       A1060-GET-TRANSACTION-DATES.
+      *****************************************************************
+      **  A1060-GET-TRANSACTION-DATES.                               **
+      *****************************************************************
+            MOVE WS-INPUT-ATM-CODE  TO KEY-COD-ATM   OF CTBKARTD.
+            EXEC SQL
+              DECLARE C1 CURSOR WITH ROWSET POSITIONING FOR
+              SELECT  KEY_DAT_TLF
+              FROM   CTBKARTD
+              WHERE
+              KEY_COD_ATM  = :CTBKARTD.KEY-COD-ATM
+              AND
+              CHR_ADM_CDE IN ('03','04')
+              AND
+              KEY_DAT_TLF >= :WS-DATE-EFODIASMOY
+              AND
+              KEY_DAT_TLF <= :WS-DATE-EPISTROFIS
+              ORDER BY KEY_DAT_TLF
+            END-EXEC
+
+            EXEC SQL
+              OPEN C1
+            END-EXEC.
+             MOVE SQLSTATE TO SQLSTATE-SIGLO
+             EVALUATE  TRUE
+
+               WHEN  IND-SQL-CORRECTO
+                      CONTINUE
+               WHEN OTHER
+                  MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                  MOVE 'A1060-GET ' TO ERR-PARAGRAPH OF BKERRORP
+                  MOVE 'кахос сто амоицла CURSOR'
+                  TO      ERR-COMMENTS    OF BKERRORP
+                  MOVE   'CTBKARTD'
+                  TO     ERR-TABLE                   OF BKERRORP
+                 &AQERROR(ERROR,LT-ERR-OPEN-CURSOR,BKERRORP)
+             END-EVALUATE
+
+            EXEC SQL
+             FETCH NEXT ROWSET FROM C1
+             FOR  60          ROWS
+             INTO :WS-MYDATES-TABLE
+            END-EXEC.
+             MOVE SQLSTATE TO SQLSTATE-SIGLO
+
+             EVALUATE  TRUE
+               WHEN  IND-SQL-CORRECTO
+                  MOVE  SQLERRD(3) TO WS-RECS
+               WHEN OTHER
+                  MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                  MOVE 'A1060-GET ' TO ERR-PARAGRAPH OF BKERRORP
+                  MOVE 'кахос FETCHING CURSOR'
+                  TO      ERR-COMMENTS    OF BKERRORP
+                  MOVE   'CTBKARTD'
+                  TO     ERR-TABLE                   OF BKERRORP
+                 &AQERROR(ERROR,LT-ERR-FETCH-CURSOR,BKERRORP)
+             END-EVALUATE
+
+            EXEC SQL
+              CLOSE C1
+            END-EXEC.
+             MOVE SQLSTATE TO SQLSTATE-SIGLO
+
+             EVALUATE  TRUE
+
+               WHEN  IND-SQL-CORRECTO
+                      CONTINUE
+               WHEN OTHER
+                  MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                  MOVE 'A1060-GET ' TO ERR-PARAGRAPH OF BKERRORP
+                  MOVE 'кахос CLOSING CURSOR'
+                  TO      ERR-COMMENTS    OF BKERRORP
+                  MOVE   'CTBKARTD'
+                  TO     ERR-TABLE                   OF BKERRORP
+                 &AQERROR(ERROR,LT-ERR-UNKNOWN-OPE,BKERRORP)
+             END-EVALUATE.
+       A2000-PROCESS.
+      *****************************************************************
+      **  A2000-PROCESS                                              **
+      *   BECAUSE DATE OF EFODIASMOS AND DATE OF EPISTROFI
+      *   HAVE DIFFERENT HANDLING THAN THE REST DATES BETWEEN THEM
+      *   I HAVE DIFFERNT PROCEDURES FOR EFODIAMSO,EPISTROFI,REST
+      *   IN THE FIRST  TABLE POSITION I PUT EFODIASMO
+      *   IN THE SECOND TABLE POSITION I PUT EPISTRFI
+      *   THE REST POSITIONS ARE FILLED WITH REST
+      *****************************************************************
+      *    DISPLAY 'NPK DDS01009 A2000 NEW'.
+           MOVE  0 TO WS-COUNTER.
+           PERFORM A2010-CALC-EFODIASMO  .
+           PERFORM A2020-CALC-EPISTROFI  .
+      *(1) ADJUST RECORS NUMBER
+           SUBTRACT 2 FROM WS-RECS .
+           PERFORM A2030-CALC-REST   WS-RECS TIMES.
+      *(2) RESET  RECORS NUMBER
+           ADD 2 TO WS-RECS .
+                                    .
+       A2010-CALC-EFODIASMO .
+      *****************************************************************
+      **  A2010-CALC-EFODIASMO                                       **
+      *****************************************************************
+           ADD 1 TO WS-COUNTER.
+           MOVE WS-INPUT-ATM-CODE  TO KEY-COD-ATM   OF CTBKARMV.
+           MOVE WS-DATE-EFODIASMOY TO KEY-OPER-DATE OF CTBKARMV.
+             EXEC SQL SELECT
+                  AMT_AN_CASH_B,
+                  AMT_AN_VISA_GR_B,
+                  AMT_AN_VISA_INT_B,
+                  AMT_AN_CASH_AT_B,
+                  AMT_AN_YPER_CASH_B,
+                  IFNULL(SUM(
+                          AMT_AN_CASH_B     +
+                          AMT_AN_VISA_GR_B      +
+                          AMT_AN_VISA_INT_B     +
+                          AMT_AN_CASH_AT_B      +
+                          AMT_AN_YPER_CASH_B
+                  ),0),
+                  IFNULL(SUM(
+                          AMT_AN_METAF_B    +
+                          AMT_AN_YPER_META_B
+                  ),0),
+                  AMT_KT_CASH_B,
+                  AMT_KT_CASH_AT_B,
+                  IFNULL(SUM(
+                          AMT_KT_CASH_B     +
+                          AMT_KT_CASH_AT_B
+                  ),0),
+                  IFNULL(SUM(
+                          AMT_AN_METAF_B    +
+                          AMT_KT_YPER_META_B
+                  ),0)
+                INTO
+                    :CTBKARMV.AMT-AN-CASH-B                     ,
+                    :CTBKARMV.AMT-AN-VISA-GR-B                  ,
+                    :CTBKARMV.AMT-AN-VISA-INT-B                 ,
+                    :CTBKARMV.AMT-AN-CASH-AT-B                  ,
+                    :CTBKARMV.AMT-AN-YPER-CASH-B                ,
+                    :CTBKARMV.AMT-AN-METAF-B                    ,
+                    :CTBKARMV.AMT-AN-YPER-META-B                ,
+                    :CTBKARMV.AMT-KT-CASH-B                     ,
+                    :CTBKARMV.AMT-KT-CASH-AT-B                  ,
+                    :CTBKARMV.AMT-KT-METAF-B                    ,
+                    :CTBKARMV.AMT-KT-YPER-META-B
+               FROM  CTBKARMV
+                  WHERE
+                     KEY_COD_ATM   = :CTBKARMV.KEY-COD-ATM
+                  AND
+                     KEY_OPER_DATE = :CTBKARMV.KEY-OPER-DATE
+                        GROUP BY
+                        AMT_AN_CASH_B      ,
+                        AMT_AN_VISA_GR_B   ,
+                        AMT_AN_VISA_INT_B  ,
+                        AMT_AN_CASH_AT_B   ,
+                        AMT_AN_YPER_CASH_B ,
+                        AMT_AN_METAF_B     ,
+                        AMT_AN_YPER_META_B ,
+                        AMT_KT_CASH_B      ,
+                        AMT_KT_CASH_AT_B   ,
+                        AMT_AN_METAF_B     ,
+                        AMT_KT_YPER_META_B
+                        WITH UR
+                  END-EXEC
+
+      *2   10 AMT-AN-CASH-B            талеиайес
+      *3   10 AMT-AN-VISA-GR-B         VISA еккгмым
+      *4   10 AMT-AN-VISA-INT-B        VISA немым
+      *5   10 AMT-AN-CASH-AT-B         аккым тяапефым
+      *6   10 AMT-AN-YPER-CASH-B       упеябасеис
+      *7   10 AMT-AN-METAF-B           сумока
+      *8   10 AMT-AN-YPER-META-B       сульгжистийес пяанеис
+
+      *9   10 AMT-KT-CASH-B            талеиайес
+      *10  10 AMT-KT-CASH-AT-B         аккым тяапефым
+      *11  10 AMT-KT-METAF-B           сумока
+      *12  10 AMT-KT-YPER-META-B       сульгжистийес пяанеис
+
+           MOVE SQLSTATE TO SQLSTATE-SIGLO
+           EVALUATE  TRUE
+           WHEN  IND-SQL-CORRECTO
+                MOVE AMT-AN-CASH-B      OF CTBKARMV
+                TO   AT-TAMEIAKES       OF ATM-ANALIPSIS-B(WS-COUNTER)
+                MOVE AMT-AN-VISA-GR-B   OF CTBKARMV
+                TO   AT-VISA-GR         OF ATM-ANALIPSIS-B(WS-COUNTER)
+                MOVE AMT-AN-VISA-INT-B  OF CTBKARMV
+                TO   AT-VISA-INT        OF ATM-ANALIPSIS-B(WS-COUNTER)
+                MOVE AMT-AN-CASH-AT-B   OF CTBKARMV
+                TO   AT-OTHER-BANKS     OF ATM-ANALIPSIS-B(WS-COUNTER)
+                MOVE AMT-AN-YPER-CASH-B OF CTBKARMV
+                TO   AT-YPERVASEIS      OF ATM-ANALIPSIS-B(WS-COUNTER)
+                MOVE AMT-AN-METAF-B     OF CTBKARMV
+                TO   AT-TOTALS          OF ATM-ANALIPSIS-B(WS-COUNTER)
+                MOVE AMT-AN-YPER-META-B OF CTBKARMV
+                TO   AT-CLEARING-OPER   OF ATM-ANALIPSIS-B(WS-COUNTER)
+                MOVE AMT-KT-CASH-B      OF CTBKARMV
+                TO   AT-TAMEIAKES       OF ATM-KATATHESIS-B(WS-COUNTER)
+                MOVE AMT-KT-CASH-AT-B   OF CTBKARMV
+                TO   AT-OTHER-BANKS     OF ATM-KATATHESIS-B(WS-COUNTER)
+                MOVE AMT-KT-METAF-B     OF CTBKARMV
+                TO   AT-TOTALS          OF ATM-KATATHESIS-B(WS-COUNTER)
+                MOVE AMT-KT-YPER-META-B OF CTBKARMV
+                TO   AT-CLEARING-OPER   OF ATM-KATATHESIS-B(WS-COUNTER)
+           WHEN OTHER
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                MOVE 'A2010-CALC-EFODIA'
+                TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'SELECT EFODIASMOS ERROR  '
+                TO   ERR-COMMENTS    OF BKERRORP
+                MOVE   'CTBKARMV'
+                TO     ERR-TABLE                   OF BKERRORP
+                  &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)
+           END-EVALUATE.
+       A2020-CALC-EPISTROFI .
+      *****************************************************************
+      **  A2020-CALC-EPISTROFI                                       **
+      *****************************************************************
+           ADD 1 TO WS-COUNTER.
+           MOVE WS-INPUT-ATM-CODE  TO KEY-COD-ATM   OF CTBKARMV.
+           MOVE WS-DATE-EPISTROFIS TO KEY-OPER-DATE OF CTBKARMV.
+             EXEC SQL SELECT
+                  AMT_AN_CASH_A,
+                  AMT_AN_VISA_GR_A,
+                  AMT_AN_VISA_INT_A,
+                  AMT_AN_CASH_AT_A,
+                  AMT_AN_YPER_CASH_A,
+                  IFNULL(SUM(
+                          AMT_AN_CASH_A     +
+                          AMT_AN_VISA_GR_A      +
+                          AMT_AN_VISA_INT_A     +
+                          AMT_AN_CASH_AT_A      +
+                          AMT_AN_YPER_CASH_A
+                  ),0),
+                  IFNULL(SUM(
+                          AMT_AN_METAF_A    +
+                          AMT_AN_YPER_META_A
+                  ),0),
+                  AMT_KT_CASH_A,
+                  AMT_KT_CASH_AT_A,
+                  IFNULL(SUM(
+                          AMT_KT_CASH_A     +
+                          AMT_KT_CASH_AT_A
+                  ),0),
+                  IFNULL(SUM(
+                          AMT_AN_METAF_A    +
+                          AMT_KT_YPER_META_A
+                  ),0)
+                INTO
+                    :CTBKARMV.AMT-AN-CASH-A                     ,
+                    :CTBKARMV.AMT-AN-VISA-GR-A                  ,
+                    :CTBKARMV.AMT-AN-VISA-INT-A                 ,
+                    :CTBKARMV.AMT-AN-CASH-AT-A                  ,
+                    :CTBKARMV.AMT-AN-YPER-CASH-A                ,
+                    :CTBKARMV.AMT-AN-METAF-A                    ,
+                    :CTBKARMV.AMT-AN-YPER-META-A                ,
+                    :CTBKARMV.AMT-KT-CASH-A                     ,
+                    :CTBKARMV.AMT-KT-CASH-AT-A                  ,
+                    :CTBKARMV.AMT-KT-METAF-A                    ,
+                    :CTBKARMV.AMT-KT-YPER-META-A
+               FROM  CTBKARMV
+                  WHERE
+                     KEY_COD_ATM   = :CTBKARMV.KEY-COD-ATM
+                  AND
+                     KEY_OPER_DATE = :CTBKARMV.KEY-OPER-DATE
+                        GROUP BY
+                        AMT_AN_CASH_A      ,
+                        AMT_AN_VISA_GR_A   ,
+                        AMT_AN_VISA_INT_A  ,
+                        AMT_AN_CASH_AT_A   ,
+                        AMT_AN_YPER_CASH_A ,
+                        AMT_AN_METAF_A     ,
+                        AMT_AN_YPER_META_A ,
+                        AMT_KT_CASH_A      ,
+                        AMT_KT_CASH_AT_A   ,
+                        AMT_AN_METAF_A     ,
+                        AMT_KT_YPER_META_A
+                        WITH UR
+                  END-EXEC
+
+      *2   10 AMT-AN-CASH-A            талеиайес
+      *3   10 AMT-AN-VISA-GR-A         VISA еккгмым
+      *4   10 AMT-AN-VISA-INT-A        VISA немым
+      *5   10 AMT-AN-CASH-AT-A         аккым тяапефым
+      *6   10 AMT-AN-YPER-CASH-A       упеябасеис
+      *7   10 AMT-AN-METAF-A           сумока
+      *8   10 AMT-AN-YPER-META-A       сульгжистийес пяанеис
+
+      *9   10 AMT-KT-CASH-A            талеиайес
+      *10  10 AMT-KT-CASH-AT-A         аккым тяапефым
+      *11  10 AMT-KT-METAF-A           сумока
+      *12  10 AMT-KT-YPER-META-A       сульгжистийес пяанеис
+
+           MOVE SQLSTATE TO SQLSTATE-SIGLO
+           EVALUATE  TRUE
+           WHEN  IND-SQL-CORRECTO
+                MOVE AMT-AN-CASH-A      OF CTBKARMV
+                TO   AT-TAMEIAKES       OF ATM-ANALIPSIS-A(WS-COUNTER)
+                MOVE AMT-AN-VISA-GR-A   OF CTBKARMV
+                TO   AT-VISA-GR         OF ATM-ANALIPSIS-A(WS-COUNTER)
+                MOVE AMT-AN-VISA-INT-A  OF CTBKARMV
+                TO   AT-VISA-INT        OF ATM-ANALIPSIS-A(WS-COUNTER)
+                MOVE AMT-AN-CASH-AT-A   OF CTBKARMV
+                TO   AT-OTHER-BANKS     OF ATM-ANALIPSIS-A(WS-COUNTER)
+                MOVE AMT-AN-YPER-CASH-A OF CTBKARMV
+                TO   AT-YPERVASEIS      OF ATM-ANALIPSIS-A(WS-COUNTER)
+                MOVE AMT-AN-METAF-A     OF CTBKARMV
+                TO   AT-TOTALS          OF ATM-ANALIPSIS-A(WS-COUNTER)
+                MOVE AMT-AN-YPER-META-A OF CTBKARMV
+                TO   AT-CLEARING-OPER   OF ATM-ANALIPSIS-A(WS-COUNTER)
+                MOVE AMT-KT-CASH-A      OF CTBKARMV
+                TO   AT-TAMEIAKES       OF ATM-KATATHESIS-A(WS-COUNTER)
+                MOVE AMT-KT-CASH-AT-A   OF CTBKARMV
+                TO   AT-OTHER-BANKS     OF ATM-KATATHESIS-A(WS-COUNTER)
+                MOVE AMT-KT-METAF-A     OF CTBKARMV
+                TO   AT-TOTALS          OF ATM-KATATHESIS-A(WS-COUNTER)
+                MOVE AMT-KT-YPER-META-A OF CTBKARMV
+                TO   AT-CLEARING-OPER   OF ATM-KATATHESIS-A(WS-COUNTER)
+           WHEN OTHER
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                MOVE 'A2020-CALC-EPISTR'
+                TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'SELECT EPISTROFI ERROR   '
+                TO   ERR-COMMENTS    OF BKERRORP
+                MOVE   'CTBKARMV'
+                TO     ERR-TABLE                   OF BKERRORP
+                  &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)
+           END-EVALUATE.
+
+       A2030-CALC-REST      .
+      *****************************************************************
+      **  A2020-CALC-REST                                            **
+      *****************************************************************
+           ADD 1 TO WS-COUNTER.
+           MOVE WS-INPUT-ATM-CODE  TO KEY-COD-ATM   OF CTBKARMV.
+           MOVE WS-MYDATES-TABLE(WS-COUNTER)
+           TO KEY-OPER-DATE OF CTBKARMV.
+
+             EXEC SQL SELECT
+                  AMT_AN_CASH_B,
+                  AMT_AN_VISA_GR_B,
+                  AMT_AN_VISA_INT_B,
+                  AMT_AN_CASH_AT_B,
+                  AMT_AN_YPER_CASH_B,
+                  IFNULL(SUM(
+                          AMT_AN_CASH_B     +
+                          AMT_AN_VISA_GR_B      +
+                          AMT_AN_VISA_INT_B     +
+                          AMT_AN_CASH_AT_B      +
+                          AMT_AN_YPER_CASH_B
+                  ),0),
+                  IFNULL(SUM(
+                          AMT_AN_METAF_B    +
+                          AMT_AN_YPER_META_B
+                  ),0),
+                  AMT_KT_CASH_B,
+                  AMT_KT_CASH_AT_B,
+                  IFNULL(SUM(
+                          AMT_KT_CASH_B     +
+                          AMT_KT_CASH_AT_B
+                  ),0),
+                  IFNULL(SUM(
+                          AMT_AN_METAF_B    +
+                          AMT_KT_YPER_META_B
+                  ),0),
+                  AMT_AN_CASH_A,
+                  AMT_AN_VISA_GR_A,
+                  AMT_AN_VISA_INT_A,
+                  AMT_AN_CASH_AT_A,
+                  AMT_AN_YPER_CASH_A,
+                  IFNULL(SUM(
+                          AMT_AN_CASH_A     +
+                          AMT_AN_VISA_GR_A      +
+                          AMT_AN_VISA_INT_A     +
+                          AMT_AN_CASH_AT_A      +
+                          AMT_AN_YPER_CASH_A
+                  ),0),
+                  IFNULL(SUM(
+                          AMT_AN_METAF_A    +
+                          AMT_AN_YPER_META_A
+                  ),0),
+                  AMT_KT_CASH_A,
+                  AMT_KT_CASH_AT_A,
+                  IFNULL(SUM(
+                          AMT_KT_CASH_A     +
+                          AMT_KT_CASH_AT_A
+                  ),0),
+                  IFNULL(SUM(
+                          AMT_AN_METAF_A    +
+                          AMT_KT_YPER_META_A
+                  ),0)
+                INTO
+                    :CTBKARMV.AMT-AN-CASH-B                     ,
+                    :CTBKARMV.AMT-AN-VISA-GR-B                  ,
+                    :CTBKARMV.AMT-AN-VISA-INT-B                 ,
+                    :CTBKARMV.AMT-AN-CASH-AT-B                  ,
+                    :CTBKARMV.AMT-AN-YPER-CASH-B                ,
+                    :CTBKARMV.AMT-AN-METAF-B                    ,
+                    :CTBKARMV.AMT-AN-YPER-META-B                ,
+                    :CTBKARMV.AMT-KT-CASH-B                     ,
+                    :CTBKARMV.AMT-KT-CASH-AT-B                  ,
+                    :CTBKARMV.AMT-KT-METAF-B                    ,
+                    :CTBKARMV.AMT-KT-YPER-META-B ,
+                    :CTBKARMV.AMT-AN-CASH-A                     ,
+                    :CTBKARMV.AMT-AN-VISA-GR-A                  ,
+                    :CTBKARMV.AMT-AN-VISA-INT-A                 ,
+                    :CTBKARMV.AMT-AN-CASH-AT-A                  ,
+                    :CTBKARMV.AMT-AN-YPER-CASH-A                ,
+                    :CTBKARMV.AMT-AN-METAF-A                    ,
+                    :CTBKARMV.AMT-AN-YPER-META-A                ,
+                    :CTBKARMV.AMT-KT-CASH-A                     ,
+                    :CTBKARMV.AMT-KT-CASH-AT-A                  ,
+                    :CTBKARMV.AMT-KT-METAF-A                    ,
+                    :CTBKARMV.AMT-KT-YPER-META-A
+               FROM  CTBKARMV
+                  WHERE
+                     KEY_COD_ATM   = :CTBKARMV.KEY-COD-ATM
+                  AND
+                     KEY_OPER_DATE = :CTBKARMV.KEY-OPER-DATE
+                        GROUP BY
+                        AMT_AN_CASH_B      ,
+                        AMT_AN_VISA_GR_B   ,
+                        AMT_AN_VISA_INT_B  ,
+                        AMT_AN_CASH_AT_B   ,
+                        AMT_AN_YPER_CASH_B ,
+                        AMT_AN_METAF_B     ,
+                        AMT_AN_YPER_META_B ,
+                        AMT_KT_CASH_B      ,
+                        AMT_KT_CASH_AT_B   ,
+                        AMT_AN_METAF_B     ,
+                        AMT_KT_YPER_META_B ,
+                        AMT_AN_CASH_A      ,
+                        AMT_AN_VISA_GR_A   ,
+                        AMT_AN_VISA_INT_A  ,
+                        AMT_AN_CASH_AT_A   ,
+                        AMT_AN_YPER_CASH_A ,
+                        AMT_AN_METAF_A     ,
+                        AMT_AN_YPER_META_A ,
+                        AMT_KT_CASH_A      ,
+                        AMT_KT_CASH_AT_A   ,
+                        AMT_AN_METAF_A     ,
+                        AMT_KT_YPER_META_A
+                        WITH UR
+                  END-EXEC
+
+      *2   10 AMT-AN-CASH-B            талеиайес
+      *3   10 AMT-AN-VISA-GR-B         VISA еккгмым
+      *4   10 AMT-AN-VISA-INT-B        VISA немым
+      *5   10 AMT-AN-CASH-AT-B         аккым тяапефым
+      *6   10 AMT-AN-YPER-CASH-B       упеябасеис
+      *7   10 AMT-AN-METAF-B           сумока
+      *8   10 AMT-AN-YPER-META-B       сульгжистийес пяанеис
+
+      *9   10 AMT-KT-CASH-B            талеиайес
+      *10  10 AMT-KT-CASH-AT-B         аккым тяапефым
+      *11  10 AMT-KT-METAF-B           сумока
+      *12  10 AMT-KT-YPER-META-B       сульгжистийес пяанеис
+
+           MOVE SQLSTATE TO SQLSTATE-SIGLO
+           EVALUATE  TRUE
+           WHEN  IND-SQL-CORRECTO
+                MOVE AMT-AN-CASH-B      OF CTBKARMV
+                TO   AT-TAMEIAKES       OF ATM-ANALIPSIS-B(WS-COUNTER)
+                MOVE AMT-AN-VISA-GR-B   OF CTBKARMV
+                TO   AT-VISA-GR         OF ATM-ANALIPSIS-B(WS-COUNTER)
+                MOVE AMT-AN-VISA-INT-B  OF CTBKARMV
+                TO   AT-VISA-INT        OF ATM-ANALIPSIS-B(WS-COUNTER)
+                MOVE AMT-AN-CASH-AT-B   OF CTBKARMV
+                TO   AT-OTHER-BANKS     OF ATM-ANALIPSIS-B(WS-COUNTER)
+                MOVE AMT-AN-YPER-CASH-B OF CTBKARMV
+                TO   AT-YPERVASEIS      OF ATM-ANALIPSIS-B(WS-COUNTER)
+                MOVE AMT-AN-METAF-B     OF CTBKARMV
+                TO   AT-TOTALS          OF ATM-ANALIPSIS-B(WS-COUNTER)
+                MOVE AMT-AN-YPER-META-B OF CTBKARMV
+                TO   AT-CLEARING-OPER   OF ATM-ANALIPSIS-B(WS-COUNTER)
+                MOVE AMT-KT-CASH-B      OF CTBKARMV
+                TO   AT-TAMEIAKES       OF ATM-KATATHESIS-B(WS-COUNTER)
+                MOVE AMT-KT-CASH-AT-B   OF CTBKARMV
+                TO   AT-OTHER-BANKS     OF ATM-KATATHESIS-B(WS-COUNTER)
+                MOVE AMT-KT-METAF-B     OF CTBKARMV
+                TO   AT-TOTALS          OF ATM-KATATHESIS-B(WS-COUNTER)
+                MOVE AMT-KT-YPER-META-B OF CTBKARMV
+                TO   AT-CLEARING-OPER   OF ATM-KATATHESIS-B(WS-COUNTER)
+                MOVE AMT-AN-CASH-A      OF CTBKARMV
+                TO   AT-TAMEIAKES       OF ATM-ANALIPSIS-A(WS-COUNTER)
+                MOVE AMT-AN-VISA-GR-A   OF CTBKARMV
+                TO   AT-VISA-GR         OF ATM-ANALIPSIS-A(WS-COUNTER)
+                MOVE AMT-AN-VISA-INT-A  OF CTBKARMV
+                TO   AT-VISA-INT        OF ATM-ANALIPSIS-A(WS-COUNTER)
+                MOVE AMT-AN-CASH-AT-A   OF CTBKARMV
+                TO   AT-OTHER-BANKS     OF ATM-ANALIPSIS-A(WS-COUNTER)
+                MOVE AMT-AN-YPER-CASH-A OF CTBKARMV
+                TO   AT-YPERVASEIS      OF ATM-ANALIPSIS-A(WS-COUNTER)
+                MOVE AMT-AN-METAF-A     OF CTBKARMV
+                TO   AT-TOTALS          OF ATM-ANALIPSIS-A(WS-COUNTER)
+                MOVE AMT-AN-YPER-META-A OF CTBKARMV
+                TO   AT-CLEARING-OPER   OF ATM-ANALIPSIS-A(WS-COUNTER)
+                MOVE AMT-KT-CASH-A      OF CTBKARMV
+                TO   AT-TAMEIAKES       OF ATM-KATATHESIS-A(WS-COUNTER)
+                MOVE AMT-KT-CASH-AT-A   OF CTBKARMV
+                TO   AT-OTHER-BANKS     OF ATM-KATATHESIS-A(WS-COUNTER)
+                MOVE AMT-KT-METAF-A     OF CTBKARMV
+                TO   AT-TOTALS          OF ATM-KATATHESIS-A(WS-COUNTER)
+                MOVE AMT-KT-YPER-META-A OF CTBKARMV
+                TO   AT-CLEARING-OPER   OF ATM-KATATHESIS-A(WS-COUNTER)
+           WHEN OTHER
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                MOVE 'A2030-CALC-REST  '
+                TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'SELECT REST       ERROR  '
+                TO   ERR-COMMENTS    OF BKERRORP
+                MOVE   'CTBKARMV'
+                TO     ERR-TABLE                   OF BKERRORP
+                  &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)
+           END-EVALUATE.
+       A8000-WRAP-UP.
+      *****************************************************************
+      **  A8000-WRAP-UP                                              **
+      *****************************************************************
+      *      DISPLAY 'A8000 NEW' WS-COUNTER .
+             .
+      *02  AT01009I.
+      *  04  AT-KATMA                            PIC X(4).
+      *  04  ATCODE                              PIC X(8).
+      *  04  AT-DATE                             PIC X(10).
+      *  04  ATM-TYPOS-SYMFONIAS                 PIC X(2).
+      *    88  TAMIAKI                             VALUE '01'.
+      *    88  LOGISTIKI                           VALUE '02'.
+      *****************************************************************
+      *02  AT01009O.
+      *  04  KEY-DAT-START                       PIC X(10).
+      *  04  KEY-DAT-END                         PIC X(10).
+      *  04  AT-EFODIASMOS                       PIC 9(10).
+      *  04  AT-EPISTROFI                        PIC 9(10).
+      *  04  ATM-MYREC
+      *                     OCCURS 60 TIMES.
+      *    06  AT-TRANSACTION-DATE               PIC X(10).
+      *    06  ATM-ANALIPSIS-A.
+      *      08  AT-TAMEIAKES                    PIC 9(10).
+      *      08  AT-VISA-GR                      PIC 9(10).
+      *      08  AT-VISA-INT                     PIC 9(10).
+      *      08  AT-OTHER-BANKS                  PIC 9(10).
+      *      08  AT-YPERVASEIS                   PIC 9(10).
+      *      08  AT-TOTALS                       PIC 9(10).
+      *      08  AT-CLEARING-OPER                PIC 9(10).
+      *    06  ATM-ANALIPSIS-B.
+      *      08  AT-TAMEIAKES                    PIC 9(10).
+      *      08  AT-VISA-GR                      PIC 9(10).
+      *      08  AT-VISA-INT                     PIC 9(10).
+      *      08  AT-OTHER-BANKS                  PIC 9(10).
+      *      08  AT-YPERVASEIS                   PIC 9(10).
+      *      08  AT-TOTALS                       PIC 9(10).
+      *      08  AT-CLEARING-OPER                PIC 9(10).
+      *    06  ATM-KATATHESIS-A.
+      *      08  AT-TAMEIAKES                    PIC 9(10).
+      *      08  AT-OTHER-BANKS                  PIC 9(10).
+      *      08  AT-TOTALS                       PIC 9(10).
+      *      08  AT-CLEARING-OPER                PIC 9(10).
+      *    06  ATM-KATATHESIS-B.
+      *      08  AT-TAMEIAKES                    PIC 9(10).
+      *      08  AT-OTHER-BANKS                  PIC 9(10).
+      *      08  AT-TOTALS                       PIC 9(10).
+      *      08  AT-CLEARING-OPER                PIC 9(10).
+      *
+      *****************************************************************
+      *01  CTBKARMV.
+      *    10 KEY-COD-ATM          PIC X(8).
+      *    10 KEY-OPER-DATE        PIC X(10).
+      *    10 AMT-AN-CASH-A        PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-AN-CASH-B        PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-AN-VISA-GR-A     PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-AN-VISA-GR-B     PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-AN-VISA-INT-A    PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-AN-VISA-INT-B    PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-AN-CASH-AT-A     PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-AN-CASH-AT-B     PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-AN-METAF-A       PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-AN-METAF-B       PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-AN-YPER-CASH-A   PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-AN-YPER-CASH-B   PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-AN-YPER-META-A   PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-AN-YPER-META-B   PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-KT-CASH-A        PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-KT-CASH-B        PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-KT-CASH-AT-A     PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-KT-CASH-AT-B     PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-KT-METAF-A       PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-KT-METAF-B       PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-KT-YPER-CASH-A   PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-KT-YPER-CASH-B   PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-KT-YPER-META-A   PIC S9(13)V9(2) USAGE COMP-3.
+      *    10 AMT-KT-YPER-META-B   PIC S9(13)V9(2) USAGE COMP-3.
+      ******************************************************************
+      * THE NUMBER OF COLUMNS DESCRIBED BY THIS DECLARATION IS 26      *
+      ******************************************************************
+      *01  CTBKARTD.
+      *    10 KEY-COD-ATM          PIC X(8).
+      *    10 KEY-DAT-TLF          PIC X(10).
+      *    10 KEY-DAT-ADM          PIC X(10).
+      *    10 KEY-TIM-ADM          PIC X(8).
+      *    10 CHR-CRD-PAN          PIC X(19).
+      *    10 CHR-ADM-CDE          PIC X(2).
+      *    10 BEG-CASH1            PIC S9(9)V USAGE COMP-3.
+      *    10 CRNCY-CDE1           PIC X(3).
+      *    10 BEG-CASH4            PIC S9(9)V USAGE COMP-3.
+      *    10 CRNCY-CDE4           PIC X(3).
+      *    10 INCR-CASH1           PIC S9(9)V USAGE COMP-3.
+      *    10 DECR-CASH1           PIC S9(9)V USAGE COMP-3.
+      *    10 OUT-CASH1            PIC S9(9)V USAGE COMP-3.
+      *    10 END-CASH1            PIC S9(9)V USAGE COMP-3.
+      *    10 INCR-CASH4           PIC S9(9)V USAGE COMP-3.
+      *    10 DECR-CASH4           PIC S9(9)V USAGE COMP-3.
+      *    10 OUT-CASH4            PIC S9(9)V USAGE COMP-3.
+      *    10 END-CASH4            PIC S9(9)V USAGE COMP-3.
+      *    10 NUM-DEP-AR           PIC S9(5)V USAGE COMP-3.
+      *    10 AMT-DEP-AR           PIC S9(9)V USAGE COMP-3.
+      *    10 NUM-PAY-AR           PIC S9(5)V USAGE COMP-3.
+      *    10 AMT-PAY-AR           PIC S9(9)V USAGE COMP-3.
+      *    10 NUM-CHK-AR           PIC S9(5)V USAGE COMP-3.
+      *    10 AMT-CHK-AR           PIC S9(9)V USAGE COMP-3.
+      *    10 NUM-CMRCL            PIC S9(5)V USAGE COMP-3.
+      *    10 AMT-CMRCL            PIC S9(9)V USAGE COMP-3.
+      *    10 NUM-MSG-AR           PIC S9(5)V USAGE COMP-3.
+      *    10 NUM-LOGONLY-AR       PIC S9(5)V USAGE COMP-3.
+      *    10 TTL-ENV-AR           PIC S9(5)V USAGE COMP-3.
+      *    10 CARDS-RETAIN         PIC S9(5)V USAGE COMP-3.
+      *    10 SETL-CRNCY-CDE       PIC X(3).
+      *    10 COD-USER-INS         PIC X(8).
+      *    10 COD-KATMA-INS        PIC X(4).
+      *    10 NUM-DOMAIN-INS       PIC X(4).
+      *    10 NUM-NODE-INS         PIC X(4).
+      *    10 KEY-TIMESTAMP        PIC X(26).
+      ******************************************************************
+      * THE NUMBER OF COLUMNS DESCRIBED BY THIS DECLARATION IS 36      *
+      ******************************************************************
+      *  01 HOST-ARRAY.
+      *           10 EMP-NO           PIC X(6) OCCURS 100 TIMES.
+      *           10 EMP-NAME         PIC X(20)OCCURS 100 TIMES.
+      *  *Declare the subcript varaible to access the array elements
+      *  01 SUB-I PIC S9(4) COMP VALUE ZERO.
+      *  *Declare the cursor
+      *  EXEC SQL
+      *    DECLARE EMP-DATA CURSOR
+      *      WITH ROWSET POSITIONING FOR
+      *      SELECT EMP_NO, EMP_NAME
+      *        FROM DB2.EMPLOYEE
+      *  END-EXEC
+      *  Procedure Division
+      *  *Open the cursor
+      *  OPEN EMP-DATA CURSOR
+      *  *Fetch the data in a single go
+      *  EXEC SQL
+      *    FETCH NEXT ROWSET FROM EMP_DATA  FOR 100 ROWS
+      *    INTO :EMP-NO, :EMP-NAME
+      *  END-EXEC.
+      *  *Use the data fetched
+      *  PERFORM 100 TIMES
+      *    ADD +1 TO SUB-I
+      *    DISPLAY  EMP-NO(SUB-I)
+      *    DISPLAY  EMP-NAME(SUB-I)
+      *  END-PERFORM
+

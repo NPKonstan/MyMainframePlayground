@@ -1,0 +1,303 @@
+ /*********************************************************************/
+ /* ауто то пяоцяалла дглиоуяцеи :                                    */
+ /*                                A) 6-ьгжио йахокийо йатахесеым     */
+ /*                                B) 10-ьгжио йахокийо коцистгяиоу   */
+ /* паиямеи сам INPUT :                                               */
+ /*                                                                   */
+ /*  т20KATHOF     FIXED(5,0) = 4-ьгжио йахокийо (пакио)              */
+ /*  T20EPAGELMA   CHAR (2)   = йыдийос епаццеклатос                  */
+ /*  T20FN         CHAR (1)   = жусийо-молийо пяосыпо ('u'-'N')       */
+ /*                                                                   */
+ /* Eпистяежеи  OUPUT :                                               */
+ /*     KATHOL6   FIXED(7)  6-ьгжио йахокийо йатахесеым               */
+ /*     KATHOL10  FIXED(10) 10-ьгжио йахокийо йатахесеым коцистгяиоу  */
+ /*********************************************************************/
+ /* H коцийг тоу пяоцяаллатос еимаи амтицяажг тоу  DK342              */
+ /*********************************************************************/
+ /*     03-10-2006   аявг                                             */
+ /*NPK пяосхгйг меым йахокийым     5100   01-09-2008                  */
+ /*********************************************************************/
+ DKR4L10 : PROC(T20KATHOF,T20EPAGELMA,T20FN,KATHOL6 ,KATHOL10)
+               OPTIONS(FETCHABLE)       ;
+
+   DCL T20KATHOF     FIXED DEC (5,0)   ;
+   DCL T20EPAGELMA   CHAR  (2)   ;
+   DCL T20FN         CHAR  (1)   ;
+
+   DCL KATHOL6       FIXED(7)      ;
+   DCL KATHOL10      FIXED(10)     ;
+
+   DCL T20KATHO      PIC'(4)9' INIT(0);
+   DCL 1  NEWKATOL  PIC'(6)9'   INIT(0)   ;
+   DCL 1  NEWKATOR  BASED(ADDR(NEWKATOL)) ,
+        2 NEWKAT1      PIC '(04)9'        ,
+        2 NEWKAT2      PIC '(02)9'        ;
+
+  DCL   ORIO1     FIXED(9) INIT(067);
+  DCL   P1KATHOL(67)   CHAR(58)    INIT (
+         '506001 / 5000000005-IdIxTxN                               ',
+         '506002 / 5001000009-ETAIPEIxN                             ',
+         '506003 / 5002000002-dHMOrIxN OPcANIrMxN                   ',
+         '506004 / 5003000006-dHMOrIxN EpIXEIPHrExN                 ',
+         '506005 / 5004000000-pIrTxTIKxN IdPYMATxN-TPApEZxN         ',
+         '506006 / 5004000018-rYNdEdEMENxN TPApEZxN-IdPYMATxN       ',
+         '506007 / 5004000026-TPApEZxN EnxTEP.METETPEw.rE dPX       ',
+         '506008 / 5001000009-DINERS                                ',
+         '506009 / 5001000009-биаме а.е.                            ',
+         '506086 / 5004000000-пистытийым идяулатым-тяапефым         ',
+         '506099 / ERROR-1   -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '506801 / 5011000010 pPONOMIAKOr kOc/rMOr KATAhErExN       ',
+         '506899 / ERROR-2   -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '507801 / 5011000001 TPEXOYMENxN k/rMxN KATAhErExN         ',
+         '507899 / ERROR-3   -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '508001 / 5000000005-IdIxTxN                               ',
+         '508002 / 5001000009-ETAIPEIxN                             ',
+         '508003 / 5002000002-dHMOrIxN OPcANIrMxN                   ',
+         '508004 / 5003000006-dHMOrIxN EpIXEIPHrExN                 ',
+         '508005 / 5004000000-pIrTxTIKxN IdPYMATxN-TPApEZxN         ',
+         '508006 / 5004000018-rYNdEdEMENxN TPApEZxN-IdPYMATxN       ',
+         '508007 / 5004000026-TPApEZxN EnxTEP.METETPEw.rE dPX       ',
+         '508099 / ERROR-4   -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '509005 / 5004000000-pIrTxTIKxN IdPYMATxN-TPApEZxN         ',
+         '509006 / 5004000018-rYNdEdEMENxN TPApEZxN-IdPYMATxN       ',
+         '509099 / ERROR-5   -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '510001 / 5100000007-IdIxTxN                               ',
+         '510002 / 5001000017-ETAIPEIxN                             ',
+         '510099 / ERROR-6   -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ' ,
+         '511401 / 5011000001-EMPORIKI SALARY                       ',
+         '511402 / 5011000001-EMPORIKI SALARY PLUS                  ',
+         '511430 / 5011000001-EMPORIKI SALARY (еИДИЙОъ )            ',
+         '511499 / ERROR-7   -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '511501 / 5304000005-IdIxTxN                               ',
+         '511599 / ERROR-8   -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '511601 / 5000000048-IdIxTxN                               ',
+         '511602 / 5001000041-ETAIPEIxN                             ',
+         '511603 / 5002000045-dHMOrIxN OPcANIrMxN                   ',
+         '511604 / 5003000049-dHMOrIxN EpIXEIPHrExN                 ',
+         '511605 / 5004000042-pIrTxTIKxN IdPYMATxN-TPApEZxN         ',
+         '511606 / ERROR-9   -rYNdEdEMENxN TPApEZxN-IdPYMATxN       ',
+         '511607 / ERROR-10  -TPApEZxN EnxTEP.METETPEw.rE dPX       ',
+         '511699 / ERROR-11  -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '511701 / 5304000005-IdIxTxN                               ',
+         '511799 / ERROR-12  -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '512001 / 5310000003-IdIxTxN                               ',
+         '512002 / 5310000003-ETAIPEIxN                             ',
+         '512003 / 5311000007-dHMOrIxN OPcANIrMxN                   ',
+         '512004 / 5312000001-dHMOrIxN EpIXEIPHrExN                 ',
+         '512099 / ERROR-13  -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '512101 / 5310000003-IdIxTxN                               ',
+         '512102 / 5310000003-ETAIPEIxN                             ',
+         '512103 / 5311000007-dHMOrIxN OPcANIrMxN                   ',
+         '512104 / 5312000001-dHMOrIxN EpIXEIPHrExN                 ',
+         '512199 / ERROR-14  -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '512201 / 5001000009-pPONOMIAKOr EpIXEIPHrExN              ',
+         '512299 / ERROR-15  -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '515001 / 5100000007-IdIxTxN                               ',
+         '515002 / 5001000009-ETAIPEIxN                             ',
+         '515003 / 5002000002-dHMOrIxN OPcANIrMxN                   ',
+         '515004 / 5003000006-dHMOrIxN EpIXEIPHrExN                 ',
+         '515005 / 5004000000-pIrTxTIKxN IdPYMATxN-TPApEZxN         ',
+         '515006 / 5004000018-rYNdEdEMENxN TPApEZxN-IdPYMATxN       ',
+         '515007 / 5004000026-TPApEZxN EnxTEP.METETPEw.rE dPX       ',
+         '515099 / ERROR-16  -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '530001 / 5100000007-TAMIEYTHPIOY                          ',
+         '530099 / ERROR-17  -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ');
+
+ DCL LAT      CHAR(24) INIT ('ABcdEZHhIKkMNnOpPrTYuXwx');
+ DCL GRE      CHAR(24) INIT ('абцдефгхийклмнопястужвьы');
+
+   T20KATHO = T20KATHOF; /* MAKE THE FIXED PIC */
+   NEWKAT1  = T20KATHO ;
+   NEWKAT2  = 99 ;
+
+   IF  T20KATHO=5060 ! T20KATHO=5080 !
+       T20KATHO=5116             THEN DO ;
+       IF  T20FN = 'u' THEN DO ;
+           NEWKAT2  = 01 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA <= '34'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '92' & T20EPAGELMA <= '99'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '82' & T20EPAGELMA <  '84'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '39' & T20EPAGELMA <= '42'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '45' & T20EPAGELMA <= '81'   THEN DO ;
+           NEWKAT2  = 03 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '35' & T20EPAGELMA <= '38'   THEN DO ;
+           NEWKAT2  = 04 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA = '43'  THEN DO ;
+           NEWKAT2  = 04 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '85' & T20EPAGELMA <= '86'   THEN DO ;
+           NEWKAT2  = 05 ;
+           GOTO  CONT ;
+       END ;
+
+       IF  (T20EPAGELMA = '84' !
+           T20EPAGELMA = '90' ! T20EPAGELMA = '91')   THEN DO ;
+           NEWKAT2  = 05 ;
+           GOTO  CONT ;
+       END ;
+
+       IF  T20EPAGELMA >= '88' & T20EPAGELMA <= '89'   THEN DO ;
+           NEWKAT2  = 06 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA  = '87'   THEN DO ;
+           NEWKAT2  = 07 ;
+           GOTO  CONT ;
+       END ;
+       GOTO  CONT ;
+   END ;
+
+   IF  T20KATHO=5068 ! T20KATHO=5078 ! T20KATHO=5300 !
+       T20KATHO=5122                                   THEN DO ;
+       NEWKAT2  = 01 ;
+       GOTO  CONT ;
+   END ;
+
+   IF  T20KATHO=5090   THEN DO ;
+       IF  T20EPAGELMA >= '85' & T20EPAGELMA <= '86'   THEN DO ;
+           NEWKAT2  = 05 ;
+           GOTO  CONT ;
+       END ;
+
+       /*** AkkAcH   21.01.98    r.A.  ***/
+       IF  (T20EPAGELMA = '84' !
+           T20EPAGELMA = '90' ! T20EPAGELMA = '91')   THEN DO ;
+           NEWKAT2  = 05 ;
+           GOTO  CONT ;
+       END ;
+       /***                            ***/
+
+       IF  T20EPAGELMA >= '88' & T20EPAGELMA <= '89'   THEN DO ;
+           NEWKAT2  = 06 ;
+           GOTO  CONT ;
+       END ;
+       GOTO  CONT ;
+   END ;
+   /*
+   IF  T20KATHO=5100   THEN DO ;
+       IF  T20FN = 'u' THEN DO ;
+           NEWKAT2  = 01 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA <= '34'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '92' & T20EPAGELMA <= '99'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '82' & T20EPAGELMA <  '84'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '39' & T20EPAGELMA <= '42'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       GOTO  CONT ;
+   END ;
+   */
+   IF  T20KATHO=5114 ! T20KATHO=5115 !    /* T20KATHO=5116 ! 16.09.99 */
+       T20KATHO=5117                   THEN DO ;
+       NEWKAT2  = 01 ;
+       GOTO  CONT ;
+   END ;
+
+   /*START пяосхгйг меым йахокийым 5114 йаи 5150   31-03-2004  */
+   /*NPK пяосхгйг меым йахокийым     5100   01-09-2008  */
+   IF  T20KATHO=5114 ! T20KATHO=5150 ! T20KATHO=5100   THEN DO ;
+       NEWKAT2  = 01 ;
+       GOTO  CONT ;
+   END ;
+   /*END   пяосхгйг меым йахокийым 5114 йаи 5150   31-03-2004  */
+
+   IF  T20KATHO=5120 ! T20KATHO=5121   THEN DO ;
+       IF  T20FN = 'u' THEN DO ;
+           NEWKAT2  = 01 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA <= '34'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '92' & T20EPAGELMA <= '99'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '82' & T20EPAGELMA <  '84'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '39' & T20EPAGELMA <= '42'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '45' & T20EPAGELMA <= '81'   THEN DO ;
+           NEWKAT2  = 03 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '35' & T20EPAGELMA <= '38'   THEN DO ;
+           NEWKAT2  = 04 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA = '43'  THEN DO ;
+           NEWKAT2  = 04 ;
+           GOTO  CONT ;
+       END ;
+       GOTO  CONT ;
+   END ;
+
+ CONT :
+
+  IF (NEWKAT2 = 99 & T20KATHO = 5090) THEN
+           NEWKAT2 = 05;
+
+  IF NEWKAT2 = 99 THEN
+          NEWKAT2 = 01;
+
+  KATHOL6 = NEWKATOL  ;    /* целисе то 6-ьгжио йахокийо */
+  CALL  FIND_KATHOLIKO_10 ;/* целисE то 10-ьгжио йахокийо коцистгяиоу*/
+
+  /**************************************************************
+  *  FIND_KATHOLIKO_10      START                               *
+  *                                                             *
+  **************************************************************/
+     FIND_KATHOLIKO_10      : PROC;
+        DCL I      PIC  '99'  INIT (0);
+        DCL KATHOL10_PIC  PIC '9999999999' INIT(0);/*йахокийо 10ЬГЖИО */
+
+        DO I = 1 TO ORIO1 ;
+            IF NEWKATOL = SUBSTR(P1KATHOL(I),1,6) THEN DO;
+               KATHOL10_PIC = SUBSTR(P1KATHOL(I),10,10);
+               KATHOL10 = KATHOL10_PIC ;/*CONVERT*/
+               GO TO OUT;
+            END;
+        END;
+     OUT: ;
+     END  FIND_KATHOLIKO_10     ;
+  /**************************************************************
+  *  FIND_KATHOLIKO_10               END                        *
+  **************************************************************/
+
+ END  DKR4L10          ;
+

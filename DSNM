@@ -1,0 +1,57 @@
+
+         TITLE 'DSN - MODULE TO EXTRACT THE DSN FOR A DDNAME'
+DSN   CSECT ,
+*********************************************************************
+** PROGRAM:    GSN
+** PARAMETERS: (2) PASSED AS STANDARD FORMAT CALL SEQUENCE
+**             DDNAME   CL8  (input)
+**             DSNAME   CL44 (output)
+** FUNCTION:   CHECK DDNAME EXISTS IN TASK INPUT/OUTPUT TABLE (TIOT).
+**             READS JFCB TO EXTRACT DSNAME, RETURN THE DATASET NAME.
+** RET CODE:   15 = 0 IF OK, 15 = 4 IF DDNAME NOT IN TIOT.
+*********************************************************************
+         STM   14,12,12(13)             SAVE REGS
+         LR    12,15                    SET BASE REG
+         USING DSN,12
+         ST    13,SAVEAREA+4            BACKWARD CHAIN
+         LR    11,13
+         LA    13,SAVEAREA              POINT TO OUR SAVE AREA ADDR
+         ST    13,8(,11)                FORWARD CHAIN
+         TITLE 'DSN - START OF PROCESSING CODE'
+         LM    2,3,0(1)                LOAD PARAMETER LIST
+         EXTRACT TIOTADDR,FIELDS=(TIOT) GET TIOT ADDR
+         MVC   DDNAME,0(2)              MOVE DDNAME
+         L     1,TIOTADDR               SEARCH TIOT FOR DDNAME
+         LA    1,24(,1)                 STEP TO DD ENTRIES
+         XR    0,0                      CLEAR LENGTH REGISTER
+LOOP1    IC    0,0(1)                   GET LENGTH OF THIS ENTRY
+         LTR   0,0                      IS LENGTH ZERO?
+         BZ    NOTFOUND                 YES THEN NOTFOUND
+         CLC   4(8,1),DDNAME            IS DDNAME THE SAME?
+         BE    FOUND                    YES THEN FOUND
+         CLC   36(4,1),=F'0'            END OF TIOT?
+         BE    NOTFOUND                 YES THEN NOTFOUND
+         AR    1,0                      POINT TO NEXT ENTRY
+         B     LOOP1                    AND PROCESS IT
+NOTFOUND LA    15,4                     SET RET CODE FOR BAD DDNAME
+         B     OUT                      AND GOTO EXIT
+FOUND    LA    15,0                     SET RET CODE FOR GOOD DDNAME
+         LA    11,DUMDCB                FIND OUR DCB
+         MVC   40(8,11),DDNAME          MOVE IN THE DDNAME
+         RDJFCB DUMDCB                  READ JFCB
+         MVC   0(44,3),JFCBAREA         MOVE IT
+         XC    JFCBAREA,JFCBAREA        CLEAR JFCB
+         XC    DDNAME,DDNAME            CLEAR DDNAME
+         B     OUT                      AND GOTO EXIT
+OUT      L     13,4(13)                 RELOAD SAVE AREA ADDR
+         RETURN (14,12),RC=(15)         RETURN TO CALLER
+         LTORG
+SAVEAREA DC    18F'0'
+TIOTADDR DC    F'0'
+DDNAME   DC    CL8' '
+DUMDCB   DCB   DDNAME=NOTSET,DSORG=PS,MACRF=PL,EXLST=EXLST
+EXLST    DS    0F
+         DC    X'87',AL3(JFCBAREA)      FUNCTION,AREA
+JFCBAREA DC    176X'00'                 JFCB AREA
+         END
+

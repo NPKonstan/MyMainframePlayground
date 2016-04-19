@@ -1,0 +1,515 @@
+ DDD:     PROCEDURE OPTIONS(MAIN);
+ /********************************************************************/
+ /* –—œ√—¡ÃÃ¡ PLI KAI DB2                                            */
+ /********************************************************************/
+ /*–—œ√—¡ÃÃ¡                                                         */
+ /********************************************************************/
+ /********************************************************************/
+ /* Input :                                                          */
+ /*      AÒ˜ÂﬂÔ                                                     */
+ /*  Output:                                                         */
+ /*                                                                  */
+ /*                                                                  */
+ /********************************************************************/
+ /********************************************************************/
+ /*           PROGRAM NAME: DDD        LOAD MODULE: DDD              */
+ /********************************************************************/
+ /* 13-03-2009 NPK                                                   */
+ /********************************************************************/
+ DCL PLIXOPT CHAR(39) VAR EXT  INIT ('ERRCOUNT(0)');
+ DCL CZX3VDAT CHAR(6); FETCH CZXDATEP;
+ DCL CZXDATEP ENTRY OPTIONS(INTER,ASM) ;
+ DCL   NULL      BUILTIN;
+ DATE: PROC IRREDUCIBLE RETURNS(CHAR(6)) ;
+         CALL CZXDATEP          ( CZX3VDAT) ;
+         RETURN (CZX3VDAT) ;
+         END DATE ;
+       /*DDD
+ % INCLUDE  FDOCOPY ; */
+ /*DCL RISBPD2A ENTRY (PTR) ; FETCH RISBPD2A ;*/
+   /*DATA APO RISPB2AF*/
+
+ DCL     PRT FILE     SEQUENTIAL OUTPUT ENV(FB RECSIZE(133) CTLASA);
+ DCL     LINE                CHAR (133);
+ DCL 1   LNX                 BASED(ADDR(LINE)),
+      2  CTLCHR              CHAR(1)      INIT('1'),
+      2  GRAMH               CHAR(132)    INIT(' ');
+
+ DCL 1   ERLINE              ,
+      2  ERLIN1       CHAR(1)      INIT('1'),
+      2  ERLIN2       CHAR(132)    INIT(' ');
+
+ DCL     WS_MSG              CHAR (132);
+ /********************************************************************/
+ /*œÕœÃ¡  ¡… –≈—…√—¡÷π INPUT           ¡—◊≈∫ŸÕ*/
+ /********************************************************************/
+ /*                                                                */
+ DCL   FDO FILE      SEQUENTIAL INPUT  ENV(FB RECSIZE(1480));
+ /********************************************************************/
+ /*œÕœÃ¡  ¡… –≈—…√—¡÷π OUTPUT          ¡—◊≈IOY*/
+ /********************************************************************/
+ /*                                     */
+ /*
+ DCL   OUTFILE FILE  SEQUENTIAL OUTPUT ENV(FB RECSIZE(180));
+ */
+
+ /********************************************************************/
+ /***************************/
+ /*DB2 DECLARATIONS         */
+ /***************************/
+ /*
+ EXEC SQL INCLUDE FDOTABLE;
+ EXEC SQL INCLUDE SQLCA; DDD */                                         01510500
+ /********************************************************************/
+ /* –ÂÒÈ„Ò·ˆﬁ records ÙÔı                                           */
+ /********************************************************************/
+ /*DDD DCL      FDO_REC   CHAR(1480); */
+  DCL      FDO_REC   CHAR(80);
+ /* READ                                                            */
+ DCL  1   FDO_RECF  BASED(ADDR(FDO_REC)) ,
+          2 REC_TYPE PIC'9'  ,
+          2 FILLER  CHAR(79);
+
+ DCL TYPE_CURR PIC'9'  INIT(0);
+ DCL TYPE_PREV PIC'9'  INIT(0);
+ DCL Count     PIC'99'  INIT(0);
+ /********************************************************************/
+ DCL FDO_EOF    FIXED (1) INIT(0);
+
+ DCL  F1_RECS  FIXED(15) INIT(0);
+ DCL  F2_RECS  FIXED(15) INIT(0);
+ DCL  F3_RECS  FIXED(15) INIT(0);
+ DCL  DB2_RECS FIXED(15) INIT(0);
+ DCL  F1_REJECTED_RECS FIXED(15) INIT(0);
+ DCL  F2_REJECTED_RECS FIXED(15) INIT(0);
+ DCL  F3_REJECTED_RECS FIXED(15) INIT(0);
+ DCL 1   REC_COUNTERS,
+      2  REC_APO             FIXED (15)  INIT(0),
+      2  REC_CNT             FIXED (15)  INIT(0),
+      2  REC_ROOT            FIXED (15)  INIT(0),
+      2  REC_TOT             FIXED (15)  INIT(0),
+      2  REC_ERROR           FIXED (15)  INIT(0),
+      2  REC_CONTROL         FIXED (15)  INIT(0),
+      2  TOT_NORMAL_REC      FIXED (15)  INIT(0);
+
+ DCL     WS_LAST_DATE      CHAR(10) INIT('');
+ DCL     MY_DATETIME         CHAR (17)         ;
+ DCL     MY_DATE             PIC '(7)9' INIT(0);
+ DCL 1   MY_DATEX            BASED(ADDR(MY_DATE)),
+      2  MY_CENTURY         CHAR(01),
+      2  MY_YEAR            CHAR(02),
+      2  MY_MONTH           PIC '99',
+      2  MY_DAY             CHAR(02);
+
+   DCL    WS_KEY_ACCN1      DEC FIXED(9,0);
+   DCL    WS_KEY_YEAR       DEC FIXED(5,0);
+   DCL    WS_KEY_MONTH      DEC FIXED(3,0);
+   DCL    WS_KEY_YEAR_PREV  DEC FIXED(5,0);
+   DCL    WS_KEY_MONTH_PREV DEC FIXED(3,0);
+  /**                                                   *****/
+   DCL 1 WW_DATE_WRK,
+        2   WS_DD_WRK PIC '(2)9',
+        2   F1                  CHAR(1)              INIT('.'),
+        2   WS_MM_WRK PIC '(2)9',
+        2   F2                  CHAR(1)              INIT('.'),
+        2   WS_YY_WRK PIC '(4)9';
+  /** LAST WORKING DATE OF A GIVEN MONTH ********************/
+   DCL WS_DATE_WRK CHAR(10) BASED(ADDR(WW_DATE_WRK));
+
+  /** LAST WORKING DATE OF A GIVEN MONTH IN 7 CHARS FORMAT **/
+ /* A YYMMDD A=1-->2000 A=0-->1900  */
+  DCL MYDATE      PIC'(7)9' BASED(ADDR(PIC_MYDATE));
+  DCL 1 PIC_MYDATE  ,
+             2 PFF  PIC'9' ,
+             2 PYY  PIC'99',
+             2 PMM  PIC'99',
+             2 PDD  PIC'99';
+ /*ÃﬁÌ·Ú ≈ÙÔÚ ¡Ì·ˆÔÒ‹Ú -”ıÌﬁË˘Ú Ô ÒÔÁ„Ô˝ÏÂÌÔÚ ÏﬁÌ·Ú ÙÔı ÏﬁÌ· ÒÔﬁÚ*/
+ DCL   WS_MNTH       FIXED DEC(2,0)   INIT(0);
+ DCL   WS_YEAR       FIXED DEC(5,0)   INIT(0);
+ DCL TODAYX      CHAR(8);
+ DCL  1 SYSDATE  BASED(ADDR(TODAYX)),
+             2 SYSYY  CHAR(4),
+             2 SYSMM  CHAR(2),
+             2 SYSDD  CHAR(2);
+ DCL  1 PICDATE  BASED(ADDR(SYSDATE)),
+             2 PICYY  PIC'(4)9',
+             2 PICMM  PIC'(2)9',
+             2 PICDD  PIC'(2)9';
+ /****************************************/
+ /*Variables For Contolling Test-Printing*/
+ /****************************************/
+  DCL TEST_COUNT FIXED(3) INIT(0);
+  DCL TEST_LIMIT FIXED(3) INIT(10);
+
+
+ DCL     SUBSTR    BUILTIN;
+ DCL     TRANSLATE BUILTIN;
+ DCL     ADDR      BUILTIN;
+ DCL     ABS       BUILTIN;
+ DCL     DIVIDE    BUILTIN;
+ DCL     ROUND     BUILTIN;
+ DCL     DATETIME  BUILTIN;
+                                                                        01510400
+      ON ENDFILE(FDO)
+           BEGIN ;
+            FDO_EOF    = 1;
+            CLOSE FILE(FDO);
+           END;
+
+    /*----------------------------------------------------------*/
+    /*                    MAIN  PROGRAM                         */
+    /*----------------------------------------------------------*/
+    OPEN FILE(FDO);
+    /*OPEN FILE(OUTFILE); */
+    OPEN FILE(PRT) ;
+    /**
+    CALL FIND_PERIOD_REFER ;
+    CALL FIND_LAST_DAY(WS_KEY_YEAR, WS_KEY_MONTH);*/
+    CALL PROC_FDO ;
+ /**************************************************************
+ *   PROC_FDO                       START                      *
+ **************************************************************/
+  PROC_FDO                 :PROC ;
+     FDO_EOF    = 0   ;
+     READ FILE(FDO)      INTO(FDO_REC);
+     DO WHILE (FDO_EOF    = 0 ) ;
+          IF  REC_TYPE <> TYPE_CURR THEN DO;
+               TYPE_PREV =  TYPE_CURR;
+               TYPE_CURR =  REC_TYPE ;
+          END;
+          SELECT(REC_TYPE);
+               WHEN (1)  THEN DO;
+                  CALL File_Header ;
+               END;
+               WHEN (2)  THEN DO;
+                  CALL GROUP_Header ;
+               END;
+               WHEN (4  )  THEN DO;
+                  CALL Detail_Record ;
+               END;
+               WHEN (5  )  THEN DO;
+                  CALL Detail_Record_Sup ;
+               END;
+               WHEN (8)  THEN DO;
+                  CALL Group_Trailer ;
+               END;
+               WHEN (9)  THEN DO;
+                  CALL FILE_Trailer ;
+               END;
+          END;/*SELECT   END*/
+      READ FILE(FDO) INTO (FDO_REC);
+     END; /*DO WHILE END*/
+  END  PROC_FDO;
+  /**************************************************************
+  *   PROC_FDO                       END                        *
+  **************************************************************/
+ /**************************************************************
+ *     FILE_Trailer                 START                      *
+ **************************************************************/
+  FILE_Trailer   :PROC   ;
+  count = 0;
+  put skip list(count' '!!"FILE_Trailer");
+  END FILE_Trailer       ;
+  /**************************************************************
+  *   FILE_Trailer                   END                        *
+  **************************************************************/
+ /**************************************************************
+ *     Group_Trailer                START                      *
+ **************************************************************/
+  Group_Trailer  :PROC   ;
+  count = 3;
+  put skip list(count' '!!"Group_Trailer"                   );
+  END Group_Trailer      ;
+  /**************************************************************
+  *   Group_Trailer                  END                        *
+  **************************************************************/
+ /**************************************************************
+ *    Detail_Record                 START                      *
+ **************************************************************/
+  Detail_Record   :PROC   ;
+  count = 6;
+  put skip list(count' '!!"Detail_Record"                   );
+
+  END Detail_Record       ;
+  /**************************************************************
+  *  Detail_Record                   END                        *
+  **************************************************************/
+ /**************************************************************
+ *    Detail_Record_Sup             START                      *
+ **************************************************************/
+  Detail_Record_Sup :PROC   ;
+  count = 9;
+  put skip list(count' '!!"Detail_Record_Sup"               );
+
+  END Detail_Record_Sup   ;
+  /**************************************************************
+  *  Detail_Record_Sup               END                        *
+  **************************************************************/
+ /**************************************************************
+ *    GROUP_Header                  START                      *
+ **************************************************************/
+  GROUP_Header    :PROC   ;
+  count = 3;
+  put skip list(count' '!!"GROUP_Header"                    );
+
+  END GROUP_Header        ;
+  /**************************************************************
+  *  GROUP_Header                    END                        *
+  **************************************************************/
+ /**************************************************************
+ *    File_Header                   START                      *
+ **************************************************************/
+  File_Header     :PROC   ;
+  count = 0;
+  put skip list(count' '!!"File_Header "                    );
+
+  END File_Header         ;
+  /**************************************************************
+  *  File_Header                     END                        *
+  **************************************************************/
+ /**************************************************************
+ *  ERROR                           START                      *
+ **************************************************************/
+ ERROR        :PROC (MSG     ) ;
+    DCL MSG      CHAR  (132)  ;
+
+    DCL WS_BOOM   FIXED(1) INIT(1);
+    DCL WS_ZERO   FIXED(1) INIT(0);
+
+       ERLIN1='1';
+       ERLIN2='***************************************************';
+       WRITE FILE(PRT) FROM(ERLINE);
+       ERLIN1='0';
+
+       ERLIN2=' * DDD  «Ã≈—¡ —œ«”         = '!!DATE ();
+       WRITE FILE(PRT) FROM(ERLINE);
+
+       ERLIN2='–—œ¬À«Ã¡ ”‘œ –—œ√—¡ÃÃ¡ DDD ‘œ –—œ√—¡ÃÃ¡ »¡ ” ¡”≈…';
+       WRITE FILE(PRT) FROM(ERLINE);
+
+       ERLIN2=MSG;
+       WRITE FILE(PRT) FROM(ERLINE);
+
+       ERLIN2='***************************************************';
+       WRITE FILE(PRT) FROM(ERLINE);
+
+       WS_BOOM = WS_BOOM /  WS_ZERO  ; /*JUST CRASH*/
+
+   END ERROR        ;
+  /**************************************************************
+  *  ERROR                           END                        *
+  **************************************************************/
+ EXIT1:
+   CTLCHR = '1';
+   GRAMH =' *”’ÕœÀ¡ –—œ√—¡ÃÃ¡‘œ” DDD *';
+   WRITE FILE(PRT) FROM(LINE);
+   CTLCHR = ' ';
+
+   GRAMH =' *«Ã≈—¡  ¡… Ÿ—¡ —œ«” :  '!!MY_DATETIME;
+   WRITE FILE(PRT) FROM(LINE);
+  END  DDD;
+        EXEC SQL INCLUDE SQLCA;
+       DCL 01  ERROR_FIELDS_DB2,
+           02 LT_ASTER            CHAR(20)     INIT((20)'*'),
+           02 LT_SQLSTATE_ERR     CHAR(10)     INIT('SQLSTATE: '),
+           02 LT_SQLCODE_ERR      CHAR(10)     INIT('SQLCODE: '),
+           02 RET_COD             PIC'S99999'  INIT(0),
+           02 LT_TABLE_NAME       CHAR(10)     INIT('TABLE:'),
+           02 TABLE_NAME          CHAR(10)     INIT(' '),
+           02 LT_ACTION           CHAR(10)     INIT('ACTION:'),
+           02 ACTION              CHAR(20)     INIT(' '),
+           02 LT_PERSON           CHAR(10)     INIT('KEY:');
+
+ DCL   DB_NAME CHAR(3)  ;
+ DCL   SPACE50 CHAR(50) INIT((50)' ') ;
+ DCL   MY_STATETMENT CHAR(30000) VARYING;
+
+  EXEC SQL INCLUDE SQLDA;
+  EXEC SQL DECLARE  OBJECT_STATEMENT STATEMENT;
+  EXEC SQL DECLARE  CURSOR1 CURSOR WITH HOLD FOR OBJECT_STATEMENT;
+
+  MY_STATETMENT =
+ 'SELECT CENTER, COD_AREA FROM (                                    '!!
+ 'SELECT C1 AS CENTER,                                              '!!
+ ' CASE WHEN BC IS NULL THEN C1                                     '!!
+ '      WHEN CC IS NULL THEN BC1                                    '!!
+ '      WHEN DC IS NULL THEN CC1                                    '!!
+ '                      ELSE DC1 END AS COD_AREA                    '!!
+ ' FROM (                                                           '!!
+ 'SELECT * FROM                                                     '!!
+ '(                                                                 '!!
+ 'SELECT * FROM                                                     '!!
+ ' (                                                                '!!
+ '  SELECT * FROM                                                   '!!
+ ' (                                                                '!!
+ '  SELECT COD_CENTRO AS C1, CODIGO_CENTRO_2 AS AC, COD_EMPRESA_2 AS'!!
+ '  AE FROM PCBOGDB2.T06TC008                                       '!!
+ '  WHERE                                                           '!!
+ '        COD_ESTRUC_JERARQ = ''31''                                '!!
+ '  AND   COD_NIVEL_JERARQUI <= ''04'' ) AS A                       '!!
+ '  LEFT OUTER JOIN                                                 '!!
+ '  (                                                               '!!
+ '  SELECT COD_CENTRO AS BC1, COD_EMPRESA AS BE1,                   '!!
+ '         CODIGO_CENTRO_2 AS BC, COD_EMPRESA_2 AS BE               '!!
+ '  FROM PCBOGDB2.T06TC008                                          '!!
+ '  WHERE                                                           '!!
+ '        COD_ESTRUC_JERARQ = ''31''                                '!!
+ '  AND   COD_NIVEL_JERARQUI <= ''04''                              '!!
+ '   ) AS B                                                         '!!
+ '  ON A.AC = B.BC1 AND                                             '!!
+ '     A.AE = B.BE1) AS AB LEFT OUTER JOIN                          '!!
+ '(                                                                 '!!
+ ' SELECT COD_CENTRO AS CC1, COD_EMPRESA AS CE1,                    '!!
+ '       CODIGO_CENTRO_2 AS CC, COD_EMPRESA_2 AS CE                 '!!
+ ' FROM PCBOGDB2.T06TC008                                           '!!
+ ' WHERE                                                            '!!
+ '       COD_ESTRUC_JERARQ = ''31''                                 '!!
+ ' AND   COD_NIVEL_JERARQUI <= ''04''              ) AS C           '!!
+ 'ON AB.BC = C.CC1     AND                                          '!!
+ 'AB.BE = C.CE1) AS ABC LEFT OUTER JOIN                             '!!
+ '(                                                                 '!!
+ ' SELECT COD_CENTRO AS DC1, COD_EMPRESA AS DE1,                    '!!
+ '       CODIGO_CENTRO_2 AS DC, COD_EMPRESA_2 AS DE                 '!!
+ ' FROM PCBOGDB2.T06TC008                                           '!!
+ ' WHERE                                                            '!!
+ '       COD_ESTRUC_JERARQ = ''31''                                 '!!
+ ' AND   COD_NIVEL_JERARQUI <= ''04''    ) AS D                     '!!
+ 'ON ABC.CC = D.DC1 AND                                             '!!
+ '    ABC.CE = D.DE1) AS ABCD                                       '!!
+ ' ) AS FINAL                                                       '!!
+ 'WHERE                                                             '!!
+ ' CENTER < ''0900''' ;
+
+ EXEC SQL PREPARE OBJECT_STATEMENT FROM :MY_STATETMENT;
+
+ /* SQLN=0;*/
+ /*-------------------------------------------------------*/
+ EXEC SQL DESCRIBE OBJECT_STATEMENT INTO :SQLDA;
+ IF SQLD >= 0 THEN
+    SQLD=SQLN;
+ ELSE DO;
+       ACTION       = 'PROBLEM IN DESCRIPT.';
+       TABLE_NAME = 'CURSOR1   ';
+       CALL ROUT_DB2_ERROR;
+       CALL PLIRETC(36);
+       GOTO TELOS;
+    END;
+ EXEC SQL DESCRIBE OBJECT_STATEMENT INTO :SQLDA;
+    EXEC SQL
+       OPEN CURSOR1;
+    IF SQLCODE ^= 0 THEN DO;
+       ACTION       = 'PROBLEM IN OPEN CURS';
+       TABLE_NAME = 'CTCRKAPE';
+       CALL ROUT_DB2_ERROR;
+       CALL PLIRETC(36);
+       GOTO TELOS;
+    END;
+ /*------------------------------------------------------------------*/
+ /*                  INSERT ”‘œN CTCRKAPE                            */
+ /*------------------------------------------------------------------*/
+ ROUT_CTCRKAPE       : PROC;
+       CRKAPE.KEY_COD_KATMA    =CENTRO;
+       CRKAPE.COD_PERIF        =COD_AREA;
+
+       EXEC SQL
+         INSERT INTO CTCRKAPE
+           ( KEY_COD_KATMA ,
+             COD_PERIF )
+         VALUES
+           (
+       :CRKAPE.KEY_COD_KATMA,
+       :CRKAPE.COD_PERIF    );
+
+
+       IF SQLCODE < 0 THEN DO;
+          ACTION       = 'PROBLEM IN INSERT   ';
+          TABLE_NAME = 'CTCRKAPE';
+          CALL ROUT_DB2_ERROR;
+          CALL PLIRETC(35);
+          GOTO TELOS;
+       END;
+
+       IF SQLCODE > 0 THEN DO;
+          ACTION       = 'PROBLEM IN INSERT   ';
+          TABLE_NAME = 'CTCRKAPE';
+          CALL ROUT_DB2_ERROR;
+          CALL PLIRETC(36);
+          GOTO TELOS;
+       END;
+
+       TOT_TBL   = TOT_TBL + 1;       /*  ”YNOÀO RECS CRKAPE     */
+
+ EXIT_ROUT_CTCRKAPE:
+      END ROUT_CTCRKAPE;
+ /*------------------------------------------------------------------*/
+
+ /*------------------------------------------------------------------*/
+ ROUT_FETCH : PROC;
+
+       EXEC SQL
+         FETCH CURSOR1 USING DESCRIPTOR :SQLDA;
+       /*  INTO
+             :CRKAPE.KEY_COD_KATMA,
+             :CRKAPE.COD_PERIF     ; /
+
+
+       IF SQLCODE < 0 THEN DO;
+          ACTION       = 'PROBLEM IN FETCH   ';
+          TABLE_NAME = 'CTCRKAPE';
+          CALL ROUT_DB2_ERROR;
+          CALL PLIRETC(36);
+          GOTO TELOS;
+       END;
+
+       IF SQLCODE > 0 THEN DO;
+          ACTION       = 'PROBLEM IN FETCH    ';
+          TABLE_NAME = 'CTCRKAPE';
+          CALL ROUT_DB2_ERROR;
+          CALL PLIRETC(36);
+          GOTO TELOS;
+       END;
+
+       TOT_FETCH = TOT_FETCH+1;       /*  ”YNOÀO RECS CRPEL      */
+
+ EXIT_ROUT_FETCH   :
+      END ROUT_FETCH   ;
+ /*------------------------------------------------------------------*/
+ /*------------------------------------------------------------------*/
+ /*                  COMMIT œÀŸÕ ‘ŸÕ –…Õ¡ ŸÕ                         */
+ /*------------------------------------------------------------------*/
+ ROUT_COMMIT: PROC;
+
+    EXEC SQL COMMIT;
+
+    IF SQLCODE ^= 0 THEN DO;
+       ACTION       = 'PROBLEM IN COMMIT   ';
+       TABLE_NAME = '        ';
+       CALL ROUT_DB2_ERROR;
+       GO TO TELOS;
+    END;
+    TOT_COMMIT=TOT_COMMIT+1;
+ END ROUT_COMMIT;
+
+     /*------------------------------------*/
+     /*    SYSOUT ERRORS IN DB2            */
+     /*------------------------------------*/
+ ROUT_DB2_ERROR: PROC;
+
+      /**************************************
+       *    SQLSTATE IS DISPLAYED           *
+       **************************************/
+
+           RET_COD = SQLCODE;
+           LINEOUT   = LT_ASTER !!
+                       LT_SQLSTATE_ERR !! SQLSTATE !!' '!!
+                       LT_SQLCODE_ERR !! RET_COD !!' '!!
+                       LT_TABLE_NAME !! TABLE_NAME !!
+                       LT_ACTION !! ACTION !!
+                       LT_PERSON ;
+          WRITE FILE(SYSOUT) FROM(LINE);                                01500037
+           LINEOUT   =     'KATMA :'!!CENTRO !!' '!!
+                           '–≈—…÷.:'!!COD_AREA;
+          WRITE FILE(SYSOUT) FROM(LINE);                                01500037
+ END ROUT_DB2_ERROR;
+

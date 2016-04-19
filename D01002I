@@ -1,0 +1,52 @@
+      *****************************************************************
+      **                                                             **
+      **           FOUNDATION FOR COOPERATIVE PROCESSING             **
+      **                                                             **
+      **                     COBOL  COPYBOOK                         **
+      **                                                             **
+      **           COPYRIGHT (C) 1996 ANDERSEN CONSULTING.           **
+      **                    ALL RIGHTS RESERVED.                     **
+      **                                                             **
+      *****************************************************************
+      **                                                             **
+      **      COPYBOOK: DD01002I                                     **
+      **                                                             **
+      **  COPYBOOK FOR: Message.DD01002                              **
+      **                                                             **
+      **  GENERATED ON: Sat Oct 24 12:09:56 2009                     **
+      **                                                             **
+      **  SHORT DESCRIPTION:                                         **
+      **                                                             **
+      **            BY: NPK                                          **
+      **                                                             **
+      *****************************************************************
+       02  DD01002I.
+         04  CHR-CR-ADDR-LINE2                   PIC X(70).
+         04  AMT-LIMIT                           PIC 9(13).
+         04  CHR-CR-ADDR-CNTRY                   PIC X(2).
+         04  CHR-C-S-I-I-517                     PIC X(35).
+         04  CHR-CR-NAME                         PIC X(70).
+         04  CHR-CR-ADDR-LINE1                   PIC X(70).
+         04  CHR-DB-ADDR-LINE1                   PIC X(70).
+         04  CHR-DB-ADDR-LINE2                   PIC X(70).
+         04  CHR-DB-ADDR-CNTRY                   PIC X(2).
+         04  DD-COD-PERSONA                      PIC 9(9).
+         04  CHR-DB-ACC-IBAN                     PIC X(34).
+         04  CHR-DB-ID                           PIC X(37).
+         04  CHR-DB-NAME                         PIC X(70).
+         04  CHR-MANDAT-ID                       PIC X(35).
+         04  DDPRODUCT                           PIC X(4).
+         04  CHR-DB-AG                           PIC X(11).
+         04  CHR-SEQ-TYPE                        PIC X(4).
+           88  FRST                                VALUE 'FRST'.
+           88  RCUR                                VALUE 'RCUR'.
+           88  OOFF                                VALUE 'OOFF'.
+           88  FNAL                                VALUE 'FNAL'.
+         04  CHR-ULT-DB-NAME                     PIC X(70).
+         04  CHR-ULT-DB-ID                       PIC X(37).
+         04  COD-BRANCH                          PIC X(4).
+         04  SHDTERID                            PIC X(5).
+         04  COD-TERMINAL-TRX                    PIC 9(4).
+         04  COD-USERID-TRX                      PIC X(8).
+
+

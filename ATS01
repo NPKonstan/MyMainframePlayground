@@ -1,0 +1,145 @@
+      ****************************************************************
+      **                                                            **
+      **           FOUNDATION FOR COOPERATIVE PROCESSING            **
+      **                                                            **
+      **                     COBOL CICS PROGRAM                     **
+      **                                                            **
+      **          COPYRIGHT (C) 1997  ANDERSEN CONSULTING.          **
+      **                   ALL RIGHTS RESERVED.                     **
+      **                                                            **
+      ****************************************************************
+      **                                                            **
+      **  PROGRAM NAME:   ATS01                                     **
+      **                                                            **
+      **  DATE GENERATED: Thu Mar 22 11:48:24 2012                  **
+      **                                                            **
+      **  BY USER:        NPK                                       **
+      **                                                            **
+      **  SHORT DESCRIPTION:                                        **
+      ****************************************************************
+
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. ATS01.
+
+       ENVIRONMENT DIVISION.
+      ****************************************************************
+      ** ENVIRONMENT DIVISION                                       **
+      ****************************************************************
+
+       DATA DIVISION.
+      ****************************************************************
+      ** DATA DIVISION                                              **
+      ****************************************************************
+       WORKING-STORAGE SECTION.
+
+      ****************************************************************
+      ** BUSINESS FUNCTION CONTEXT DATA                             **
+      ****************************************************************
+       01  BFCD.
+           05  FND-BFCD-SIZE             PIC S9(9) COMP VALUE 1.
+
+      ****************************************************************
+      **  CUSTOM INITIALIZATION AND TERMINATION ROUTINE             **
+      ****************************************************************
+       01  WS-CUST-INITPROC              PIC X(8) VALUE SPACES.
+       01  WS-CUST-TERMPROC              PIC X(8) VALUE SPACES.
+
+      ****************************************************************
+      **  SERVER NAME                                               **
+      ****************************************************************
+       01  FND-APPLICATION-ID            PIC S9(9) COMP
+           VALUE 2401.
+
+      ****************************************************************
+      **  NUMBER OF SERVICES                                        **
+      ****************************************************************
+       01  LT-TABLE-MAX-ENTRIES          PIC 9(3) VALUE 1.
+
+      ****************************************************************
+      **  SERVICE DISPATCH TABLE                                    **
+      ****************************************************************
+       01  WS-DISPATCH-TABLE.
+           05  FILLER-REC-VER              PIC X(02) VALUE '00'.
+           05  FILLER-SERVICE-ID           PIC S9(4) COMP VALUE 0.
+           05  FILLER-SERVICE-VERSION      PIC X(02) VALUE SPACES.
+           05  FILLER-SERVICE-FUNCTION     PIC X(08) VALUE SPACES.
+           05  FILLER-SERVICE-TYPE         PIC X(01) VALUE SPACES.
+           05  FILLER-INVOCATION-TYPE      PIC X(01) VALUE SPACES.
+           05  FILLER-REGISTER-SERVICE     PIC X(01) VALUE SPACES.
+           05  FILLER-RU-FLAG              PIC X(01) VALUE SPACES.
+           05  FILLER-REPLY-FLAG           PIC X(01) VALUE SPACES.
+           05  FILLER-MAX-REPLY-LENGTH     PIC S9(9) COMP VALUE 0.
+           05  FILLER-CALL-TYPE            PIC X(01) VALUE SPACES.
+           05  FILLER-SECURITY-FLG         PIC X(01) VALUE SPACES.
+           05  FILLER-DBMS-NAME            PIC X(32) VALUE SPACES.
+           05  FILLER-FILLER               PIC X(100) VALUE SPACES.
+
+      ****************************************************************
+      ** FOUNDATION PROGRAM CONSTANTS                               **
+      ****************************************************************
+       01  WS-PROGRAM-CONSTANTS.
+           05  FND-EXECARCH-VER         PIC X(02).
+               88 FND-EXECARCH-LU62-VER           VALUE '03'.
+               88 FND-EXECARCH-CONV-VER           VALUE '04'.
+           05  WS-DS-REG-FLG            PIC X(01) VALUE SPACES.
+           05  WS-MN-REG-FLG            PIC X(01) VALUE SPACES.
+           05  FND-PROGRAM-NAME         PIC X(08) VALUE 'ATS01'.
+           05  FND-APPL-VERSION         PIC X(02) VALUE '21'.
+           05  FND-APPL-QUEUE           PIC X(10) VALUE 'AU'.
+           05  FND-PROGRAM-TYPE         PIC X(01) VALUE 'S'.
+           05  FND-ENVIRONMENT          PIC X(02) VALUE 'D1'.
+           05  APPL-MAX-RECV-LEN        PIC S9(9) COMP VALUE 32000.
+
+       01  WS-CONSTANTS.
+           05  FND-APPLICATION          PIC X(08) VALUE 'ADFE0P00'.
+
+       01  WS-INVOKING-PROG             PIC X(08).
+
+       01  APPL-INIT-DATA.
+       COPY ADFEZK05.
+
+       LINKAGE SECTION.
+       01 DFHCOMMAREA.
+          COPY ADSMK220.
+          COPY ADSFC201.
+          03 MSG-DATA                    PIC X(32000).
+
+      ****************************************************************
+      ** FOUNDATION PROGRAM PROCEDURES                              **
+      ****************************************************************
+       PROCEDURE DIVISION.
+
+           MOVE SPACES TO WS-INVOKING-PROG.
+           EXEC CICS
+               ASSIGN INVOKINGPROG(WS-INVOKING-PROG)
+           END-EXEC.
+
+           IF WS-INVOKING-PROG = SPACES
+               SET FND-EXECARCH-LU62-VER TO TRUE
+           ELSE
+               SET FND-EXECARCH-CONV-VER TO TRUE
+           END-IF.
+
+           MOVE FND-EXECARCH-VER     TO APPL-EXECARCH-VER.
+           MOVE WS-DS-REG-FLG        TO APPL-DS-REG-FLG.
+           MOVE WS-MN-REG-FLG        TO APPL-MN-REG-FLG.
+           MOVE FND-PROGRAM-NAME     TO APPL-PROGRAM-NAME.
+           MOVE FND-APPL-VERSION     TO APPL-VERSION.
+           MOVE FND-APPL-QUEUE       TO APPL-QUEUE-TYPE.
+           MOVE FND-PROGRAM-TYPE     TO APPL-PROGRAM-TYPE.
+           MOVE FND-ENVIRONMENT      TO APPL-ENVIRONMENT.
+           MOVE APPL-MAX-RECV-LEN    TO APPL-MAX-RECV-LENGTH.
+           MOVE LENGTH OF BFCD       TO APPL-BFCD-SIZE.
+           MOVE FND-APPLICATION-ID   TO APPL-ID.
+           MOVE LT-TABLE-MAX-ENTRIES TO APPL-MAX-NUM-SERVICES.
+           MOVE WS-CUST-INITPROC     TO APPL-CUST-INITPROC.
+           MOVE WS-CUST-TERMPROC     TO APPL-CUST-TERMPROC.
+
+           CALL FND-APPLICATION USING DFHEIBLK,
+                                      DFHCOMMAREA,
+                                      WS-DISPATCH-TABLE,
+                                      APPL-INIT-DATA.
+
+           EXEC CICS RETURN
+           END-EXEC.
+

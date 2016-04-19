@@ -1,0 +1,36 @@
+      *****************************************************************
+      **                                                             **
+      **           FOUNDATION FOR COOPERATIVE PROCESSING             **
+      **                                                             **
+      **                     COBOL  COPYBOOK                         **
+      **                                                             **
+      **           COPYRIGHT (C) 1996 ANDERSEN CONSULTING.           **
+      **                    ALL RIGHTS RESERVED.                     **
+      **                                                             **
+      *****************************************************************
+      **                                                             **
+      **      COPYBOOK: DD01001O                                     **
+      **                                                             **
+      **  COPYBOOK FOR: Message.DD01001                              **
+      **                                                             **
+      **  GENERATED ON: Mon Apr 09 11:57:18 2012                     **
+      **                                                             **
+      **  SHORT DESCRIPTION:                                         **
+      **                                                             **
+      **            BY: NPK                                          **
+      **                                                             **
+      *****************************************************************
+       02  DD01001O.
+         04  DTCOUNT                             PIC 9(5).
+         04  DDCREDITORS
+                            OCCURS 150 TIMES.
+           06  CHR-C-S-I-I-517                   PIC X(35).
+           06  DDCREDITORSSTREET                 PIC X(30).
+           06  DDCREDITORSTOWN                   PIC X(30).
+           06  DDCREDITORSTT                     PIC X(5).
+           06  DDCREDITORSNUM                    PIC X(4).
+           06  CHR-CR-NAME                       PIC X(70).
+           06  CHR-CR-ADDR-CNTRY                 PIC X(2).
+           06  DDPRODUCT                         PIC X(4).
+
+

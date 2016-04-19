@@ -1,0 +1,1180 @@
+      ****************************************************************
+      **                                                            **
+      **           FOUNDATION FOR COOPERATIVE PROCESSING            **
+      **                                                            **
+      **                       COBOL CICS                           **
+      **                   SERVICE MODULE FILE                      **
+      **                                                            **
+      **           COPYRIGHT (C) 1996 ANDERSEN CONSULTING.          **
+      **                    ALL RIGHTS RESERVED.                    **
+      **                                                            **
+      ****************************************************************
+      **                                                            **
+      **  MODULE NAME:       DDS01002                               **
+      **                                                            **
+      **  DATE GENERATED:                                           **
+      **                                                            **
+      **  BY USER:           NPK                                    **
+      **                                                            **
+      **  DESIGNER:                                                 **
+      **                                                            **
+      **  PROGRAMMER:                                               **
+      **                                                            **
+      **  SHORT DESCRIPTION:дглиоуяциа емтокгс амахесгс SEPA
+      ****************************************************************
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. DDS01002.
+       ENVIRONMENT DIVISION.
+
+       DATA DIVISION.
+
+       WORKING-STORAGE SECTION.
+      ****************************************************************
+      ** REPOSITORY WORKING STORAGE                                 **
+      ****************************************************************
+
+      *--> WS - VARIABLES
+       01 WS-VARIABLES.
+           05 WS-ACCN               PIC 9(8)   VALUE ZEROS.
+           05 WS-COD-EFARM          PIC X(2)   VALUE SPACES.
+           05 WS-ERRORS             PIC 9(6)   VALUE ZEROS.
+           05 WS-COUNT              PIC S9(6)V USAGE COMP-3 VALUE ZEROS.
+
+       01 WS-NPK-RESULT        PIC X(04)       VALUE SPACES.
+       01 WS-COUNTER           PIC 9(05)       VALUE ZEROS.
+       01 WS-COD-FLAG          PIC X(02)       VALUE SPACES.
+       01 WS-COD-BANK          PIC X(04)       VALUE SPACES.
+       01 WS-COD-BRANCH        PIC X(04)       VALUE SPACES.
+       01 WS-COD-BRANCH1       PIC X(04)       VALUE SPACES.
+       01 WS-IND-NULL-1        PIC S9(4)V COMP.
+
+      *--> LT - VARIABLES
+       01 LTN-MAX-ANSWERS          PIC 9(05)       VALUE 1000.
+       01 LTA-01                   PIC X(02)       VALUE '01'.
+       01 LTA-02                   PIC X(02)       VALUE '02'.
+       01 LTA-0012                 PIC X(04)       VALUE '0012'.
+
+      ****************************************************************
+      *  LITERALS                                                    *
+      ****************************************************************
+
+        01 LT-NUMERICS.
+           05 LT-N-ERROR               PIC S9(4) COMP-3 VALUE 8.
+
+        01 LT-ALPHANUMERICS.
+           05 LT-A-ACCN-NOT-FOUND      PIC X(30) VALUE
+                'амупаяйтос коцаяиаслос '.
+           05 LT-A-ACCN-CLOSED         PIC X(30) VALUE
+                ' коцаяиаслос  йкеистос'.
+           05 LT-A-ACCN-OROYS          PIC X(30) VALUE
+                'коцаяиаслос ле еидийоус ояоус'.
+           05 LT-A-ERR-KATHOLIKO       PIC X(30) VALUE
+                'лг епитяепто йахокийо '.
+           05 LT-A-ERR-KATMA           PIC X(30) VALUE
+                'лг епитяепто йатастгла  '.
+           05 LT-A-01                  PIC X(2)  VALUE
+                '01'.
+           05 LT-A-0                   PIC X(1)  VALUE
+                '0'.
+
+        01  BKERROR           PIC   X(50) .
+        01  BKERROR-R   REDEFINES  BKERROR     .
+            05  BKREASON    PIC     X(30) .
+            05  F1          PIC     X(2)  .
+            05  BKACCN              PIC 9(8).
+            05  F2          PIC     X(30) .
+
+      ****************************************************************
+      **  SWITCHES                                                  **
+      ****************************************************************
+
+        01 SW-SWITCH.
+           05 SW-DISPLAY              PIC X.
+              88 DISPLAY-NO                      VALUE '0'.
+              88 DISPLAY-YES                     VALUE '1'.
+
+
+      ****************************************************************
+      ** INCLUDE TABLES - CURSORS                                   **
+      ****************************************************************
+           EXEC SQL INCLUDE T04CNV97  END-EXEC.
+           EXEC SQL INCLUDE CTDDMD10  END-EXEC.
+           EXEC SQL  INCLUDE CTDDMD15  END-EXEC.
+      ****************************************************************
+      **     CONSTANTS OF DIASTRANSFER ERRORS                       **
+      ****************************************************************
+       COPY DTERRORS.
+       COPY BKERRORS.
+      ****************************************************************
+      **     COPY                 FOR  AQERROR.                     **
+      ****************************************************************
+       COPY BKERRORP.
+      ****************************************************************
+      ** WORKING ARQUITECTURA                                       **
+      ****************************************************************
+       COPY ADSIK200.
+       COPY ADSAK001.
+
+       COPY AQSRV001.
+           05  LT-MODULO-SERV-V2         PIC X(8) VALUE 'DDS01002'.
+
+       LINKAGE SECTION.
+      ****************************************************************
+      ** FOUNDATION LINKAGE SECTION                                 **
+      ****************************************************************
+
+      ****************************************************************
+      ** BUSINESS FUNCTION CONTEXT DATA                             **
+      ****************************************************************
+       COPY AQBEBF.
+
+      ****************************************************************
+      ** INPUT MESSAGE PARMBLOCK                                    **
+      ****************************************************************
+       01  SRV-TXN-PB.
+           COPY WAPIMSG.
+
+      ****************************************************************
+      ** REPLY MESSAGE PARMBLOCK                                    **
+      ****************************************************************
+       01  RTAF-TXN-PB.
+           COPY WAPIMSG.
+
+      ****************************************************************
+      ** INPUT MESSAGE DATA                                         **
+      ****************************************************************
+       01  INPUT-TXN.
+           COPY DD01002I.
+
+
+      ****************************************************************
+      ** OUTPUT MESSAGE DATA                                       **
+      ****************************************************************
+       01  OUTPUT-TXN.
+           COPY DD01002O.
+
+
+      ****************************************************************
+      ** USER LINKAGE COPYBOOKS                                     **
+      ****************************************************************
+
+
+
+      ****************************************************************
+      ** USER PROCEDURE DIVISION                                    **
+      ****************************************************************
+       PROCEDURE DIVISION USING
+                                 &AQPROC1(),
+                                 &AQPROC2(),
+                                 &AQPROC3(),
+                                 AQBF-AQBEBF,
+                                 &AQPROC4(),
+                                 SRV-TXN-PB,
+                                 INPUT-TXN,
+                                 RTAF-TXN-PB,
+                                 OUTPUT-TXN.
+
+       0000-MAINLINE.
+      * START CODE PROCEDURE
+
+           PERFORM A1000-HOUSEKEEPING.
+           PERFORM A2000-PROCESS.
+           PERFORM A8000-WRAP-UP.
+
+
+       A1000-HOUSEKEEPING.
+      *****************************************************************
+      **  A1000-HOUSEKEEPING                                         **
+      *****************************************************************
+
+            &AQOPCION(NO-ERROSQL)
+           INITIALIZE OUTPUT-TXN
+                      CTDDMD10
+                      T04CNV97
+           MOVE CHR-DB-ACC-IBAN  OF INPUT-TXN (20:8)
+           TO   WS-ACCN                  OF WS-VARIABLES
+      *    DISPLAY 'START DDS01002 WS-ACCN = ' WS-ACCN
+      *    невма то йатастгла поу амгйеи о коцаяиаслос циа тыяа мпй.
+      *    PERFORM  A1001-GET-BRANCH мпй28-10-2009
+           .
+
+       A2000-PROCESS.
+      *****************************************************************
+      **  A2000-PROCESS                                              **
+      *****************************************************************
+      *        DISPLAY 'A2000'
+               PERFORM  A2001-LOAD-DATA.
+               PERFORM  IO0001-INSERT-ENTOLI.
+               PERFORM  A2100-LOAD-ISTORIKO    .
+               PERFORM  A2200-INSERT-ISTORIKO  .
+
+      ****************************************************************
+      ** A1001-GET-BRANCH                                            **
+      ****************************************************************
+       A1001-GET-BRANCH .
+           DISPLAY 'A1001-GET-BRANCH  START   '
+           INITIALIZE T04CNV97
+           IF WS-ACCN                 >= 80000000
+              MOVE '70'
+              TO COD-EFARM OF T04CNV97
+              MOVE WS-ACCN  OF WS-VARIABLES
+              TO NUM-AR-LOGAR  OF T04CNV97 ( 1:8 )
+              MOVE LT-A-01
+              TO NUM-AR-LOGAR  OF T04CNV97 (17:2 )
+           ELSE
+              MOVE '90'
+              TO COD-EFARM OF T04CNV97
+              MOVE LT-A-0
+              TO NUM-AR-LOGAR  OF T04CNV97 ( 1:1 )
+              MOVE WS-ACCN  OF WS-VARIABLES
+              TO NUM-AR-LOGAR  OF T04CNV97 ( 2:8 )
+              MOVE LT-A-01
+              TO NUM-AR-LOGAR  OF T04CNV97 (17:2 )
+           END-IF
+
+           MOVE  0
+           TO    IND-OPEN-CLOSE      OF T04CNV97
+
+           MOVE '0012'
+           TO   COD-EMPRESA          OF T04CNV97
+
+           MOVE DD-COD-PERSONA       OF INPUT-TXN
+           TO   COD-PELATH           OF T04CNV97
+
+
+      *     DISPLAY 'COD_EMPRESA    = ' COD-EMPRESA   OF T04CNV97
+      *     DISPLAY 'COD_PELATH     = ' COD-PELATH    OF T04CNV97
+      *     DISPLAY 'COD_EFARM      = ' COD-EFARM     OF T04CNV97
+      *     DISPLAY 'IND_OPEN_CLOSE = ' IND-OPEN-CLOSE OF T04CNV97
+      *     DISPLAY 'NUM_AR_LOGAR   = ' NUM-AR-LOGAR  OF T04CNV97
+
+
+           EXEC SQL
+             SELECT COD_KATMA
+             INTO   :T04CNV97.COD-KATMA
+             FROM    T04CNV97
+             WHERE  COD_EMPRESA    = :T04CNV97.COD-EMPRESA
+               AND  COD_PELATH     = :T04CNV97.COD-PELATH
+               AND  COD_EFARM      = :T04CNV97.COD-EFARM
+               AND  IND_OPEN_CLOSE = :T04CNV97.IND-OPEN-CLOSE
+               AND  NUM_AR_LOGAR   = :T04CNV97.NUM-AR-LOGAR
+           END-EXEC
+
+           MOVE SQLSTATE TO SQLSTATE-SIGLO.
+           IF NOT IND-SQL-CORRECTO
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                MOVE 'A1001-GET-BRANCH ' TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'дем упаявеи тетоио йат/ла'
+                TO   ERR-COMMENTS    OF BKERRORP
+                MOVE   'T04CNV97'
+                TO     ERR-TABLE                   OF BKERRORP
+                  &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)
+           END-IF.
+           MOVE COD-KATMA   OF T04CNV97
+           TO   WS-COD-BRANCH
+                         .
+      ****************************************************************
+      ** A2001-LOAD-DATA                                             **
+      ****************************************************************
+       A2001-LOAD-DATA.
+      *    DISPLAY 'A2001-LOAD-DATA      '
+           INITIALIZE CTDDMD10.
+
+      **********************************************************
+      * LOAD DATA FROM INPUT
+      **********************************************************
+           MOVE CHR-CR-ADDR-LINE1    OF INPUT-TXN
+           TO CHR-CR-ADDR-LINE1      OF CTDDMD10
+
+           MOVE CHR-CR-ADDR-LINE2    OF INPUT-TXN
+           TO CHR-CR-ADDR-LINE2      OF CTDDMD10
+
+           MOVE CHR-CR-ADDR-CNTRY    OF INPUT-TXN
+           TO CHR-CR-ADDR-CNTRY      OF CTDDMD10
+
+           MOVE CHR-C-S-I-I-517      OF INPUT-TXN
+           TO CHR-C-S-I-I-517        OF CTDDMD10
+
+           MOVE CHR-CR-NAME          OF INPUT-TXN
+           TO CHR-CR-NAME            OF CTDDMD10
+
+           MOVE CHR-DB-ADDR-LINE1    OF INPUT-TXN
+           TO CHR-DB-ADDR-LINE1      OF CTDDMD10
+
+           MOVE CHR-DB-ADDR-LINE2    OF INPUT-TXN
+           TO CHR-DB-ADDR-LINE2      OF CTDDMD10
+
+
+           MOVE CHR-DB-ACC-IBAN      OF INPUT-TXN
+           TO CHR-DB-ACC-IBAN        OF CTDDMD10
+
+
+           MOVE CHR-DB-ID            OF INPUT-TXN
+           TO CHR-DB-ID              OF CTDDMD10
+
+           MOVE CHR-DB-NAME          OF INPUT-TXN
+           TO CHR-DB-NAME            OF CTDDMD10
+
+           MOVE CHR-MANDAT-ID        OF INPUT-TXN
+           TO CHR-MANDAT-ID          OF CTDDMD10
+
+
+           MOVE DDPRODUCT            OF INPUT-TXN
+           TO CHR-LOCAL-INSTR        OF CTDDMD10
+
+           IF ( DDPRODUCT OF INPUT-TXN = 'CORE' ) OR
+              ( DDPRODUCT OF INPUT-TXN = 'B2B'  )
+               MOVE 'SEPA'
+               TO CHR-SERV-LEVEL  OF CTDDMD10
+           ELSE
+               MOVE 'DIAS'
+               TO CHR-SERV-LEVEL  OF CTDDMD10
+           END-IF
+
+
+
+           MOVE CHR-SEQ-TYPE         OF INPUT-TXN
+           TO CHR-SEQ-TYPE           OF CTDDMD10
+
+           MOVE CHR-ULT-DB-NAME      OF INPUT-TXN
+           TO CHR-ULT-DB-NAME        OF CTDDMD10
+
+           MOVE CHR-ULT-DB-ID        OF INPUT-TXN
+           TO CHR-ULT-DB-ID          OF CTDDMD10
+
+           MOVE COD-USERID-TRX      OF INPUT-TXN
+           TO CHR-USER              OF CTDDMD10
+      *
+      * йатастгла сумаккацгс
+           MOVE COD-BRANCH           OF INPUT-TXN
+           TO   CHR-DB-AG-BR-ID      OF CTDDMD10
+
+      * йатастгла коцаяиаслоу
+           MOVE WS-COD-BRANCH
+           TO   CHR-CODE-BRANCH       OF CTDDMD10
+
+           MOVE DD-COD-PERSONA       OF INPUT-TXN
+           TO DEC-CIDB-CUST          OF CTDDMD10
+
+
+           MOVE AMT-LIMIT            OF INPUT-TXN
+           TO AMT-LIMIT              OF CTDDMD10
+      *
+      *    MOVE COD-TERMINAL-TRX     OF INPUT-TXN
+      *    TO COD-TERMINAL-TRX       OF CTDDMD10
+
+      **********************************************************
+      * LOAD HARD-CODED DATA
+      **********************************************************
+           MOVE 'GR'
+           TO CHR-DB-ADDR-CNTRY      OF CTDDMD10
+
+           MOVE 'SEPA'
+           TO  CHR-C-S-I-I-T-518     OF CTDDMD10
+
+           MOVE 0
+           TO  DEC-FILL              OF CTDDMD10
+
+           MOVE 'EMPOGRAA   '
+           TO CHR-DB-AG              OF CTDDMD10
+
+           MOVE 'EMPOGRAA   '
+           TO  CHR-SEND-INST         OF CTDDMD10
+
+           MOVE 'DIASGRA1   '
+           TO  CHR-RECV-INST         OF CTDDMD10
+
+           MOVE 'DDD '
+           TO  CHR-SERV-ID           OF CTDDMD10
+
+           MOVE 'P'
+           TO  CHR-TEST-CODE         OF CTDDMD10
+
+           MOVE 'FDD'
+           TO  CHR-FILE-TYPE         OF CTDDMD10
+
+      ******************************************
+      *    ха сулпкгяыхеи сто BATCH
+      ******************************************
+      *
+      *    MOVE
+      *    TO  CHR-FILE-ID           OF CTDDMD10
+
+           MOVE '040'
+           TO  DEC-GROUP-TYPE        OF CTDDMD10
+
+      ******************************************
+      *    ха сулпкгяыхеи сто BATCH
+      ******************************************
+      *
+      *    MOVE
+      *    TO  DEC-CREAT-DAT-TIME    OF CTDDMD10
+
+      ******************************************
+      *    дем сулпкгяыметаи ста DMF
+      ******************************************
+      *
+      *    MOVE
+      *    TO  DEC-INTRB-SETL-DAT    OF CTDDMD10
+      *    MOVE
+      *    TO  CHR-SETTL-METHOD      OF CTDDMD10
+      *    MOVE
+      *    TO  CHR-CLEAR-SYSTEM      OF CTDDMD10
+
+           MOVE 'EMPOGRAA   '
+           TO  CHR-INSTRN-AG         OF CTDDMD10
+
+
+      ******************************************
+      *    дем сулпкгяыметаи дес ц.4
+      ******************************************
+      *
+      *    MOVE
+      *    TO  CHR-INSTRT-AG         OF CTDDMD10
+
+           MOVE 40
+           TO  DEC-MSG-TYPE          OF CTDDMD10
+
+           MOVE 0
+           TO  DEC-RECORD-TYPE       OF CTDDMD10
+
+           MOVE 'F'
+           TO  CHR-AMEND-IND         OF CTDDMD10
+
+      * STATUS аявий╧с еисацыц╧с ам╒хесгс
+           MOVE '0'
+           TO  FLG-STATUS-PROCESS   OF CTDDMD10
+
+           MOVE 'I'
+           TO  FLG-DIRECTION        OF CTDDMD10
+
+               .
+       IO0001-INSERT-ENTOLI.
+      ****************************************************************
+      ** IO0001-INSERT-ENTOLI.                                       **
+      ****************************************************************
+      *    DISPLAY 'IO0001-INSERT-ENTOLI  '
+           EXEC SQL INSERT INTO CTDDMD10
+            (
+               DEC_FILL            ,
+               CHR_SEND_INST       ,
+               CHR_RECV_INST       ,
+               CHR_SERV_ID         ,
+               CHR_TEST_CODE       ,
+               CHR_FILE_TYPE       ,
+               CHR_FILE_ID         ,
+               DEC_GROUP_TYPE      ,
+               DEC_CREAT_DAT_TIME  ,
+               DEC_INTRB_SETL_DAT  ,
+               CHR_SETTL_METHOD    ,
+               CHR_CLEAR_SYSTEM    ,
+               CHR_INSTRN_AG       ,
+               CHR_INSTRT_AG       ,
+               DEC_MSG_TYPE        ,
+               DEC_RECORD_TYPE     ,
+               CHR_INSTR_ID        ,
+               CHR_TR_ID           ,
+               CHR_SERV_LEVEL      ,
+               CHR_LOCAL_INSTR     ,
+               CHR_SEQ_TYPE        ,
+               CHR_MANDAT_ID       ,
+               DEC_DAT_OF_SIGN     ,
+               CHR_AMEND_IND       ,
+               CHR_O_M_I_511       ,
+               CHR_O_C_S_I_N_512   ,
+               CHR_O_C_S_I_I_513   ,
+               CHR_O_C_S_I_I_514   ,
+               CHR_O_D_A_IBAN_515  ,
+               CHR_O_D_A_PROP_516  ,
+               CHR_C_S_I_I_517     ,
+               CHR_C_S_I_I_T_518   ,
+               CHR_CR_NAME         ,
+               CHR_CR_ADDR_LINE1   ,
+               CHR_CR_ADDR_LINE2   ,
+               CHR_CR_ADDR_CNTRY   ,
+               CHR_ULT_CR_NAME     ,
+               CHR_ULT_CR_ID       ,
+               CHR_DB_NAME         ,
+               CHR_DB_ADDR_LINE1   ,
+               CHR_DB_ADDR_LINE2   ,
+               CHR_DB_ADDR_CNTRY   ,
+               CHR_DB_ID           ,
+               CHR_DB_ACC_IBAN     ,
+               CHR_DB_AG           ,
+               CHR_DB_AG_BR_ID     ,
+               CHR_ULT_DB_NAME     ,
+               CHR_ULT_DB_ID       ,
+               DEC_CIDB_CUST       ,
+               CHR_USER           ,
+               FLG_DIRECTION       ,
+               FLG_STATUS_PROCESS  ,
+               FLG_CANCEL          ,
+               CHR_ERROR_DIAS      ,
+               CHR_ERROR_CBOG      ,
+               CHR_FILE_ID_TODIAS ,
+               CHR_CODE_BRANCH    ,
+               AMT_LIMIT          ,
+               DAT_DATETIME_INIT   ,
+               DAT_DATETIME_PROC
+            )
+            VALUES
+           (
+            :CTDDMD10.DEC-FILL            ,
+            :CTDDMD10.CHR-SEND-INST       ,
+            :CTDDMD10.CHR-RECV-INST       ,
+            :CTDDMD10.CHR-SERV-ID         ,
+            :CTDDMD10.CHR-TEST-CODE       ,
+            :CTDDMD10.CHR-FILE-TYPE       ,
+            :CTDDMD10.CHR-FILE-ID         ,
+            :CTDDMD10.DEC-GROUP-TYPE      ,
+      *     :CTDDMD10.DEC-CREAT-DAT-TIME  ,
+             SUBSTR(CHAR(CURRENT DATE),7,4)!!
+             SUBSTR(CHAR(CURRENT DATE),4,2)!!
+             SUBSTR(CHAR(CURRENT DATE),1,2)!!
+             SUBSTR(CHAR(CURRENT TIME),1,2)!!
+             SUBSTR(CHAR(CURRENT TIME),4,2)!!
+             SUBSTR(CHAR(CURRENT TIME),5,2),
+            :CTDDMD10.DEC-INTRB-SETL-DAT   ,
+            :CTDDMD10.CHR-SETTL-METHOD    ,
+            :CTDDMD10.CHR-CLEAR-SYSTEM    ,
+            :CTDDMD10.CHR-INSTRN-AG       ,
+            :CTDDMD10.CHR-INSTRT-AG       ,
+            :CTDDMD10.DEC-MSG-TYPE        ,
+            :CTDDMD10.DEC-RECORD-TYPE     ,
+            :CTDDMD10.CHR-INSTR-ID        ,
+            :CTDDMD10.CHR-TR-ID           ,
+            :CTDDMD10.CHR-SERV-LEVEL      ,
+            :CTDDMD10.CHR-LOCAL-INSTR     ,
+            :CTDDMD10.CHR-SEQ-TYPE        ,
+            :CTDDMD10.CHR-MANDAT-ID       ,
+      *     :CTDDMD10.DEC-DAT-OF-SIGN     ,
+             DEC(
+             SUBSTR(CHAR(CURRENT DATE),7,4)!!
+             SUBSTR(CHAR(CURRENT DATE),4,2)!!
+             SUBSTR(CHAR(CURRENT DATE),1,2),8),
+            :CTDDMD10.CHR-AMEND-IND       ,
+            :CTDDMD10.CHR-O-M-I-511       ,
+            :CTDDMD10.CHR-O-C-S-I-N-512   ,
+            :CTDDMD10.CHR-O-C-S-I-I-513   ,
+            :CTDDMD10.CHR-O-C-S-I-I-514   ,
+            :CTDDMD10.CHR-O-D-A-IBAN-515  ,
+            :CTDDMD10.CHR-O-D-A-PROP-516  ,
+            :CTDDMD10.CHR-C-S-I-I-517     ,
+            :CTDDMD10.CHR-C-S-I-I-T-518   ,
+            :CTDDMD10.CHR-CR-NAME         ,
+            :CTDDMD10.CHR-CR-ADDR-LINE1   ,
+            :CTDDMD10.CHR-CR-ADDR-LINE2   ,
+            :CTDDMD10.CHR-CR-ADDR-CNTRY   ,
+            :CTDDMD10.CHR-ULT-CR-NAME     ,
+            :CTDDMD10.CHR-ULT-CR-ID       ,
+            :CTDDMD10.CHR-DB-NAME         ,
+            :CTDDMD10.CHR-DB-ADDR-LINE1   ,
+            :CTDDMD10.CHR-DB-ADDR-LINE2   ,
+            :CTDDMD10.CHR-DB-ADDR-CNTRY   ,
+            :CTDDMD10.CHR-DB-ID           ,
+            :CTDDMD10.CHR-DB-ACC-IBAN     ,
+            :CTDDMD10.CHR-DB-AG           ,
+            :CTDDMD10.CHR-DB-AG-BR-ID     ,
+            :CTDDMD10.CHR-ULT-DB-NAME     ,
+            :CTDDMD10.CHR-ULT-DB-ID       ,
+            :CTDDMD10.DEC-CIDB-CUST       ,
+            :CTDDMD10.CHR-USER           ,
+            :CTDDMD10.FLG-DIRECTION       ,
+            :CTDDMD10.FLG-STATUS-PROCESS  ,
+            :CTDDMD10.FLG-CANCEL          ,
+            :CTDDMD10.CHR-ERROR-DIAS      ,
+            :CTDDMD10.CHR-ERROR-CBOG      ,
+            :CTDDMD10.CHR-FILE-ID-TODIAS ,
+            :CTDDMD10.CHR-CODE-BRANCH    ,
+            :CTDDMD10.AMT-LIMIT          ,
+            CURRENT TIMESTAMP,
+            CURRENT TIMESTAMP
+            )
+           END-EXEC.
+
+           MOVE SQLSTATE TO SQLSTATE-SIGLO.
+           IF NOT IND-SQL-CORRECTO
+      *    DISPLAY 'BK03 SQLSTATE=  ' SQLSTATE
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                MOVE 'IO1001-INSERT'   TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'кахос стгм еисацыцг амахесгс      '
+                TO      ERR-COMMENTS    OF BKERRORP
+                MOVE   'CTDDMD10'
+                TO     ERR-TABLE                   OF BKERRORP
+                  &AQERROR(ERROR,LT-ERR-INS-ANA          ,BKERRORP)
+           END-IF.
+
+       A2100-LOAD-ISTORIKO  .
+      *****************************************************************
+      **  A2100-LOAD-ISTORIKO                                        **
+      *****************************************************************
+      *     DISPLAY 'A2100-LOAD-ISTORIKO  '
+
+           EXEC SQL SELECT
+              DEC_FILL                        ,
+              CHR_SEND_INST                   ,
+              CHR_RECV_INST                   ,
+              CHR_SERV_ID                     ,
+              CHR_TEST_CODE                   ,
+              CHR_FILE_TYPE                   ,
+              CHR_FILE_ID                     ,
+              DEC_GROUP_TYPE                  ,
+              DEC_CREAT_DAT_TIME              ,
+              DEC_INTRB_SETL_DAT              ,
+              CHR_SETTL_METHOD                ,
+              CHR_CLEAR_SYSTEM                ,
+              CHR_INSTRN_AG                   ,
+              CHR_INSTRT_AG                   ,
+              DEC_RECORD_TYPE                 ,
+              DEC_MSG_TYPE                    ,
+              CHR_INSTR_ID                    ,
+              CHR_TR_ID                       ,
+              CHR_SERV_LEVEL                  ,
+              CHR_LOCAL_INSTR                 ,
+              CHR_SEQ_TYPE                    ,
+              CHR_MANDAT_ID                   ,
+              DEC_DAT_OF_SIGN                 ,
+              CHR_AMEND_IND                   ,
+              CHR_O_M_I_511                   ,
+              CHR_O_C_S_I_N_512               ,
+              CHR_O_C_S_I_I_513               ,
+              CHR_O_C_S_I_I_514               ,
+              CHR_O_D_A_IBAN_515              ,
+              CHR_O_D_A_PROP_516              ,
+              CHR_C_S_I_I_517                 ,
+              CHR_C_S_I_I_T_518               ,
+              CHR_CR_NAME                     ,
+              CHR_CR_ADDR_LINE1               ,
+              CHR_CR_ADDR_LINE2               ,
+              CHR_CR_ADDR_CNTRY               ,
+              CHR_ULT_CR_NAME                 ,
+              CHR_ULT_CR_ID                   ,
+              CHR_DB_NAME                     ,
+              CHR_DB_ADDR_LINE1               ,
+              CHR_DB_ADDR_LINE2               ,
+              CHR_DB_ADDR_CNTRY               ,
+              CHR_DB_ID                       ,
+              CHR_DB_ACC_IBAN                 ,
+              CHR_DB_AG                       ,
+              CHR_DB_AG_BR_ID                 ,
+              CHR_ULT_DB_NAME                 ,
+              CHR_ULT_DB_ID                   ,
+              DEC_CIDB_CUST                   ,
+              CHR_USER                        ,
+              FLG_DIRECTION                   ,
+              FLG_STATUS_PROCESS              ,
+              FLG_CANCEL                      ,
+              CHR_ERROR_DIAS                  ,
+              CHR_ERROR_CBOG                  ,
+              CHR_FILE_ID_TODIAS              ,
+              DAT_DATETIME_INIT               ,
+              DAT_DATETIME_PROC               ,
+              DEC_AA                          ,
+              DEC_AA_RM20                     ,
+              AMT_LIMIT                       ,
+              CHR_TERMID_REFUSAL              ,
+              CHR_TERMID_REFUND               ,
+              CHR_TERMID_AUTHOR               ,
+              CHR_INFORM                      ,
+              DEC_DAT_REFUSAL                 ,
+              DEC_DAT_REFUND                  ,
+              DEC_DAT_AUTHOR                  ,
+              DEC_TIME_REFUSAL                ,
+              DEC_TIME_REFUND                 ,
+              DEC_TIME_AUTHOR                 ,
+              FLG_STATUS_REFUSAL              ,
+              FLG_STATUS_REFUND               ,
+              FLG_STATUS_AUTHOR               ,
+              CHR_VALID                       ,
+              DEC_NUM_REFUSAL                 ,
+              CHR_OK_REFUSAL                  ,
+              CHR_CODE_BRANCH,
+              CHR_OK_AUTHOR
+             INTO
+             :CTDDMD15.DEC-FILL               ,
+             :CTDDMD15.CHR-SEND-INST          ,
+             :CTDDMD15.CHR-RECV-INST          ,
+             :CTDDMD15.CHR-SERV-ID            ,
+             :CTDDMD15.CHR-TEST-CODE          ,
+             :CTDDMD15.CHR-FILE-TYPE          ,
+             :CTDDMD15.CHR-FILE-ID            ,
+             :CTDDMD15.DEC-GROUP-TYPE         ,
+             :CTDDMD15.DEC-CREAT-DAT-TIME     ,
+             :CTDDMD15.DEC-INTRB-SETL-DAT     ,
+             :CTDDMD15.CHR-SETTL-METHOD       ,
+             :CTDDMD15.CHR-CLEAR-SYSTEM       ,
+             :CTDDMD15.CHR-INSTRN-AG          ,
+             :CTDDMD15.CHR-INSTRT-AG          ,
+             :CTDDMD15.DEC-RECORD-TYPE        ,
+             :CTDDMD15.DEC-MSG-TYPE           ,
+             :CTDDMD15.CHR-INSTR-ID           ,
+             :CTDDMD15.CHR-TR-ID              ,
+             :CTDDMD15.CHR-SERV-LEVEL         ,
+             :CTDDMD15.CHR-LOCAL-INSTR        ,
+             :CTDDMD15.CHR-SEQ-TYPE           ,
+             :CTDDMD15.CHR-MANDAT-ID          ,
+             :CTDDMD15.DEC-DAT-OF-SIGN        ,
+             :CTDDMD15.CHR-AMEND-IND          ,
+             :CTDDMD15.CHR-O-M-I-511          ,
+             :CTDDMD15.CHR-O-C-S-I-N-512      ,
+             :CTDDMD15.CHR-O-C-S-I-I-513      ,
+             :CTDDMD15.CHR-O-C-S-I-I-514      ,
+             :CTDDMD15.CHR-O-D-A-IBAN-515     ,
+             :CTDDMD15.CHR-O-D-A-PROP-516     ,
+             :CTDDMD15.CHR-C-S-I-I-517        ,
+             :CTDDMD15.CHR-C-S-I-I-T-518      ,
+             :CTDDMD15.CHR-CR-NAME            ,
+             :CTDDMD15.CHR-CR-ADDR-LINE1      ,
+             :CTDDMD15.CHR-CR-ADDR-LINE2      ,
+             :CTDDMD15.CHR-CR-ADDR-CNTRY      ,
+             :CTDDMD15.CHR-ULT-CR-NAME        ,
+             :CTDDMD15.CHR-ULT-CR-ID          ,
+             :CTDDMD15.CHR-DB-NAME            ,
+             :CTDDMD15.CHR-DB-ADDR-LINE1      ,
+             :CTDDMD15.CHR-DB-ADDR-LINE2      ,
+             :CTDDMD15.CHR-DB-ADDR-CNTRY      ,
+             :CTDDMD15.CHR-DB-ID              ,
+             :CTDDMD15.CHR-DB-ACC-IBAN        ,
+             :CTDDMD15.CHR-DB-AG              ,
+             :CTDDMD15.CHR-DB-AG-BR-ID        ,
+             :CTDDMD15.CHR-ULT-DB-NAME        ,
+             :CTDDMD15.CHR-ULT-DB-ID          ,
+             :CTDDMD15.DEC-CIDB-CUST          ,
+             :CTDDMD15.CHR-USER               ,
+             :CTDDMD15.FLG-DIRECTION          ,
+             :CTDDMD15.FLG-STATUS-PROCESS     ,
+             :CTDDMD15.FLG-CANCEL             ,
+             :CTDDMD15.CHR-ERROR-DIAS         ,
+             :CTDDMD15.CHR-ERROR-CBOG         ,
+             :CTDDMD15.CHR-FILE-ID-TODIAS     ,
+             :CTDDMD15.DAT-DATETIME-INIT      ,
+             :CTDDMD15.DAT-DATETIME-PROC      ,
+             :CTDDMD15.DEC-AA                 ,
+             :CTDDMD15.DEC-AA-RM20            ,
+             :CTDDMD15.AMT-LIMIT              ,
+             :CTDDMD15.CHR-TERMID-REFUSAL     ,
+             :CTDDMD15.CHR-TERMID-REFUND      ,
+             :CTDDMD15.CHR-TERMID-AUTHOR      ,
+             :CTDDMD15.CHR-INFORM             ,
+             :CTDDMD15.DEC-DAT-REFUSAL        ,
+             :CTDDMD15.DEC-DAT-REFUND         ,
+             :CTDDMD15.DEC-DAT-AUTHOR         ,
+             :CTDDMD15.DEC-TIME-REFUSAL       ,
+             :CTDDMD15.DEC-TIME-REFUND        ,
+             :CTDDMD15.DEC-TIME-AUTHOR        ,
+             :CTDDMD15.FLG-STATUS-REFUSAL     ,
+             :CTDDMD15.FLG-STATUS-REFUND      ,
+             :CTDDMD15.FLG-STATUS-AUTHOR      ,
+             :CTDDMD15.CHR-VALID              ,
+             :CTDDMD15.DEC-NUM-REFUSAL        ,
+             :CTDDMD15.CHR-OK-REFUSAL         ,
+             :CTDDMD15.CHR-CODE-BRANCH,
+             :CTDDMD15.CHR-OK-AUTHOR
+             FROM    CTDDMD10
+             WHERE
+                    FLG_STATUS_PROCESS  = :LT-A-0                  AND
+                    CHR_MANDAT_ID       = :CTDDMD10.CHR-MANDAT-ID  AND
+                    CHR_C_S_I_I_517     = :CTDDMD10.CHR-C-S-I-I-517 AND
+                    CHR_DB_ACC_IBAN     = :CTDDMD10.CHR-DB-ACC-IBAN
+           END-EXEC.
+
+           MOVE SQLSTATE TO SQLSTATE-SIGLO.
+           IF NOT IND-SQL-CORRECTO
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                MOVE 'A2100-LOAD '  TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'кахос SELECT  амахесгс      '
+                TO      ERR-COMMENTS    OF BKERRORP
+                MOVE   'CTDDMD10'
+                TO     ERR-TABLE                   OF BKERRORP
+                  &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)
+           END-IF.
+
+       A2200-INSERT-ISTORIKO  .
+      *****************************************************************
+      **  A2200-INSERT-ISTORIKO                                    **
+      *****************************************************************
+      *    DISPLAY 'A2200-INSERT-ISTORIKO  '
+           EXEC SQL INSERT INTO CTDDMD15
+           (
+             DEC_FILL               ,
+             CHR_SEND_INST          ,
+             CHR_RECV_INST          ,
+             CHR_SERV_ID            ,
+             CHR_TEST_CODE          ,
+             CHR_FILE_TYPE          ,
+             CHR_FILE_ID            ,
+             DEC_GROUP_TYPE         ,
+             DEC_CREAT_DAT_TIME     ,
+             DEC_INTRB_SETL_DAT     ,
+             CHR_SETTL_METHOD       ,
+             CHR_CLEAR_SYSTEM       ,
+             CHR_INSTRN_AG          ,
+             CHR_INSTRT_AG          ,
+             DEC_RECORD_TYPE        ,
+             DEC_MSG_TYPE           ,
+             CHR_INSTR_ID           ,
+             CHR_TR_ID              ,
+             CHR_SERV_LEVEL         ,
+             CHR_LOCAL_INSTR        ,
+             CHR_SEQ_TYPE           ,
+             CHR_MANDAT_ID          ,
+             DEC_DAT_OF_SIGN        ,
+             CHR_AMEND_IND          ,
+             CHR_O_M_I_511          ,
+             CHR_O_C_S_I_N_512      ,
+             CHR_O_C_S_I_I_513      ,
+             CHR_O_C_S_I_I_514      ,
+             CHR_O_D_A_IBAN_515     ,
+             CHR_O_D_A_PROP_516     ,
+             CHR_C_S_I_I_517        ,
+             CHR_C_S_I_I_T_518      ,
+             CHR_CR_NAME            ,
+             CHR_CR_ADDR_LINE1      ,
+             CHR_CR_ADDR_LINE2      ,
+             CHR_CR_ADDR_CNTRY      ,
+             CHR_ULT_CR_NAME        ,
+             CHR_ULT_CR_ID          ,
+             CHR_DB_NAME            ,
+             CHR_DB_ADDR_LINE1      ,
+             CHR_DB_ADDR_LINE2      ,
+             CHR_DB_ADDR_CNTRY      ,
+             CHR_DB_ID              ,
+             CHR_DB_ACC_IBAN        ,
+             CHR_DB_AG              ,
+             CHR_DB_AG_BR_ID        ,
+             CHR_ULT_DB_NAME        ,
+             CHR_ULT_DB_ID          ,
+             DEC_CIDB_CUST          ,
+             CHR_USER               ,
+             FLG_DIRECTION          ,
+             FLG_STATUS_PROCESS     ,
+             FLG_CANCEL             ,
+             CHR_ERROR_DIAS         ,
+             CHR_ERROR_CBOG         ,
+             CHR_FILE_ID_TODIAS     ,
+             DAT_DATETIME_INIT      ,
+             DAT_DATETIME_PROC      ,
+             DEC_AA                 ,
+             DEC_AA_RM20            ,
+             AMT_LIMIT              ,
+             CHR_TERMID_REFUSAL     ,
+             CHR_TERMID_REFUND      ,
+             CHR_TERMID_AUTHOR      ,
+             CHR_INFORM             ,
+             DEC_DAT_REFUSAL        ,
+             DEC_DAT_REFUND         ,
+             DEC_DAT_AUTHOR         ,
+             DEC_TIME_REFUSAL       ,
+             DEC_TIME_REFUND        ,
+             DEC_TIME_AUTHOR        ,
+             FLG_STATUS_REFUSAL     ,
+             FLG_STATUS_REFUND      ,
+             FLG_STATUS_AUTHOR      ,
+             CHR_VALID              ,
+             DEC_NUM_REFUSAL        ,
+             CHR_OK_REFUSAL         ,
+             CHR_CODE_BRANCH        ,
+             CHR_OK_AUTHOR
+            )
+             VALUES
+             (
+             :CTDDMD15.DEC-FILL               ,
+             :CTDDMD15.CHR-SEND-INST          ,
+             :CTDDMD15.CHR-RECV-INST          ,
+             :CTDDMD15.CHR-SERV-ID            ,
+             :CTDDMD15.CHR-TEST-CODE          ,
+             :CTDDMD15.CHR-FILE-TYPE          ,
+             :CTDDMD15.CHR-FILE-ID            ,
+             :CTDDMD15.DEC-GROUP-TYPE         ,
+             :CTDDMD15.DEC-CREAT-DAT-TIME     ,
+             :CTDDMD15.DEC-INTRB-SETL-DAT     ,
+             :CTDDMD15.CHR-SETTL-METHOD       ,
+             :CTDDMD15.CHR-CLEAR-SYSTEM       ,
+             :CTDDMD15.CHR-INSTRN-AG          ,
+             :CTDDMD15.CHR-INSTRT-AG          ,
+             :CTDDMD15.DEC-RECORD-TYPE        ,
+             :CTDDMD15.DEC-MSG-TYPE           ,
+             :CTDDMD15.CHR-INSTR-ID           ,
+             :CTDDMD15.CHR-TR-ID              ,
+             :CTDDMD15.CHR-SERV-LEVEL         ,
+             :CTDDMD15.CHR-LOCAL-INSTR        ,
+             :CTDDMD15.CHR-SEQ-TYPE           ,
+             :CTDDMD15.CHR-MANDAT-ID          ,
+             :CTDDMD15.DEC-DAT-OF-SIGN        ,
+             :CTDDMD15.CHR-AMEND-IND          ,
+             :CTDDMD15.CHR-O-M-I-511          ,
+             :CTDDMD15.CHR-O-C-S-I-N-512      ,
+             :CTDDMD15.CHR-O-C-S-I-I-513      ,
+             :CTDDMD15.CHR-O-C-S-I-I-514      ,
+             :CTDDMD15.CHR-O-D-A-IBAN-515     ,
+             :CTDDMD15.CHR-O-D-A-PROP-516     ,
+             :CTDDMD15.CHR-C-S-I-I-517        ,
+             :CTDDMD15.CHR-C-S-I-I-T-518      ,
+             :CTDDMD15.CHR-CR-NAME            ,
+             :CTDDMD15.CHR-CR-ADDR-LINE1      ,
+             :CTDDMD15.CHR-CR-ADDR-LINE2      ,
+             :CTDDMD15.CHR-CR-ADDR-CNTRY      ,
+             :CTDDMD15.CHR-ULT-CR-NAME        ,
+             :CTDDMD15.CHR-ULT-CR-ID          ,
+             :CTDDMD15.CHR-DB-NAME            ,
+             :CTDDMD15.CHR-DB-ADDR-LINE1      ,
+             :CTDDMD15.CHR-DB-ADDR-LINE2      ,
+             :CTDDMD15.CHR-DB-ADDR-CNTRY      ,
+             :CTDDMD15.CHR-DB-ID              ,
+             :CTDDMD15.CHR-DB-ACC-IBAN        ,
+             :CTDDMD15.CHR-DB-AG              ,
+             :CTDDMD15.CHR-DB-AG-BR-ID        ,
+             :CTDDMD15.CHR-ULT-DB-NAME        ,
+             :CTDDMD15.CHR-ULT-DB-ID          ,
+             :CTDDMD15.DEC-CIDB-CUST          ,
+             :CTDDMD15.CHR-USER               ,
+             :CTDDMD15.FLG-DIRECTION          ,
+             :CTDDMD15.FLG-STATUS-PROCESS     ,
+             :CTDDMD15.FLG-CANCEL             ,
+             :CTDDMD15.CHR-ERROR-DIAS         ,
+             :CTDDMD15.CHR-ERROR-CBOG         ,
+             :CTDDMD15.CHR-FILE-ID-TODIAS     ,
+             :CTDDMD15.DAT-DATETIME-INIT      ,
+             CURRENT TIMESTAMP                ,
+             :CTDDMD15.DEC-AA                 ,
+             :CTDDMD15.DEC-AA-RM20            ,
+             :CTDDMD15.AMT-LIMIT              ,
+             :CTDDMD15.CHR-TERMID-REFUSAL     ,
+             :CTDDMD15.CHR-TERMID-REFUND      ,
+             :CTDDMD15.CHR-TERMID-AUTHOR      ,
+             :CTDDMD15.CHR-INFORM             ,
+             :CTDDMD15.DEC-DAT-REFUSAL        ,
+             :CTDDMD15.DEC-DAT-REFUND         ,
+             :CTDDMD15.DEC-DAT-AUTHOR         ,
+             :CTDDMD15.DEC-TIME-REFUSAL       ,
+             :CTDDMD15.DEC-TIME-REFUND        ,
+             :CTDDMD15.DEC-TIME-AUTHOR        ,
+             :CTDDMD15.FLG-STATUS-REFUSAL     ,
+             :CTDDMD15.FLG-STATUS-REFUND      ,
+             :CTDDMD15.FLG-STATUS-AUTHOR      ,
+             :CTDDMD15.CHR-VALID              ,
+             :CTDDMD15.DEC-NUM-REFUSAL        ,
+             :CTDDMD15.CHR-OK-REFUSAL         ,
+             :CTDDMD15.CHR-CODE-BRANCH,
+             :CTDDMD15.CHR-OK-AUTHOR
+             )
+           END-EXEC.
+
+           MOVE SQLSTATE TO SQLSTATE-SIGLO.
+           IF NOT IND-SQL-CORRECTO
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                MOVE 'A2200-INSERT'   TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'кахос стгм еисацыцг амахесгс      '
+                TO      ERR-COMMENTS    OF BKERRORP
+                MOVE   'CTDDMD15'
+                TO     ERR-TABLE                   OF BKERRORP
+                 &AQERROR(ERROR,LT-ERR-INS-ANA          ,BKERRORP)
+           END-IF.
+       A8000-WRAP-UP.
+      *****************************************************************
+      **  A8000-WRAP-UP                                              **
+      *****************************************************************
+      *        DISPLAY 'A8000' .
+      *
+      *  04  CHR-CR-ADDR-LINE1                   PIC X(70).
+      *  04  CHR-CR-ADDR-LINE2                   PIC X(70).
+      *  04  CHR-CR-ADDR-CNTRY                   PIC X(2).
+      *  04  CHR-C-S-I-I-517                     PIC X(35).
+      *  04  CHR-CR-NAME                         PIC X(70).
+      *  04  CHR-DB-ADDR-LINE1                   PIC X(70).
+      *  04  CHR-DB-ADDR-LINE2                   PIC X(70).
+      *  04  CHR-DB-ADDR-CNTRY                   PIC X(2).
+      *  04  DD-COD-PERSONA                      PIC 9(9).
+      *  04  CHR-DB-ACC-IBAN                     PIC X(34).
+      *  04  CHR-DB-ID                           PIC X(37).
+      *  04  CHR-DB-NAME                         PIC X(70).
+      *  04  CHR-MANDAT-ID                       PIC X(35).
+      *  04  DDPRODUCT                           PIC X(4).
+      *  04  CHR-DB-AG                           PIC X(11).
+      *  04  CHR-SEQ-TYPE                        PIC X(4).
+      *    88  FRST                                VALUE 'FRST'.
+      *    88  RCUR                                VALUE 'RCUR'.
+      *    88  OOFF                                VALUE 'OOFF'.
+      *    88  FNAL                                VALUE 'FNAL'.
+      *  04  CHR-ULT-DB-NAME                     PIC X(70).
+      *  04  CHR-ULT-DB-ID                       PIC X(37).
+      *  04  COD-BRANCH                          PIC X(4).
+      *  04  SHDTERID                            PIC X(5).
+      *  04  COD-TERMINAL-TRX                    PIC 9(4).
+      *  04  COD-USERID-TRX                      PIC X(8).
+      *
+      ******************************************************************
+      * DCLGEN TABLE(DCBOGDB2.CTDDMD10)                                *
+      *        LIBRARY(CBGSG.DEVLP.COPYLIB(CTDDMD10))                  *
+      *        ACTION(REPLACE)                                         *
+      *        LANGUAGE(COBOL)                                         *
+      *        STRUCTURE(CTDDMD10)                                     *
+      *        APOST                                                   *
+      * ... IS THE DCLGEN COMMAND THAT MADE THE FOLLOWING STATEMENTS   *
+      ******************************************************************
+      *    EXEC SQL DECLARE          CTDDMD10 TABLE
+      *    ( DEC_FILL                       DECIMAL(3, 0) NOT NULL,
+      *      CHR_SEND_INST                  CHAR(11) NOT NULL,
+      *      CHR_RECV_INST                  CHAR(11) NOT NULL,
+      *      CHR_SERV_ID                    CHAR(4) NOT NULL,
+      *      CHR_TEST_CODE                  CHAR(1) NOT NULL,
+      *      CHR_FILE_TYPE                  CHAR(3) NOT NULL,
+      *      CHR_FILE_ID                    CHAR(8) NOT NULL,
+      *      DEC_GROUP_TYPE                 DECIMAL(3, 0) NOT NULL,
+      *      DEC_CREAT_DAT_TIME             CHAR(14) NOT NULL,
+      *      DEC_INTRB_SETL_DAT             CHAR(8) NOT NULL,
+      *      CHR_SETTL_METHOD               CHAR(4) NOT NULL,
+      *      CHR_CLEAR_SYSTEM               CHAR(35) NOT NULL,
+      *      CHR_INSTRN_AG                  CHAR(11) NOT NULL,
+      *      CHR_INSTRT_AG                  CHAR(11) NOT NULL,
+      *      DEC_RECORD_TYPE                DECIMAL(1, 0) NOT NULL,
+      *      DEC_MSG_TYPE                   DECIMAL(3, 0) NOT NULL,
+      *      CHR_INSTR_ID                   CHAR(35) NOT NULL,
+      *      CHR_TR_ID                      CHAR(35) NOT NULL,
+      *      CHR_SERV_LEVEL                 CHAR(4) NOT NULL,
+      *      CHR_LOCAL_INSTR                CHAR(35) NOT NULL,
+      *      CHR_SEQ_TYPE                   CHAR(4) NOT NULL,
+      *      CHR_MANDAT_ID                  CHAR(35) NOT NULL,
+      *      DEC_DAT_OF_SIGN                DECIMAL(8, 0) NOT NULL,
+      *      CHR_AMEND_IND                  CHAR(1) NOT NULL,
+      *      CHR_O_M_I_511                  CHAR(35) NOT NULL,
+      *      CHR_O_C_S_I_N_512              CHAR(70) NOT NULL,
+      *      CHR_O_C_S_I_I_513              CHAR(35) NOT NULL,
+      *      CHR_O_C_S_I_I_514              CHAR(4) NOT NULL,
+      *      CHR_O_D_A_IBAN_515             CHAR(34) NOT NULL,
+      *      CHR_O_D_A_PROP_516             CHAR(5) NOT NULL,
+      *      CHR_C_S_I_I_517                CHAR(35) NOT NULL,
+      *      CHR_C_S_I_I_T_518              CHAR(4) NOT NULL,
+      *      CHR_CR_NAME                    CHAR(70) NOT NULL,
+      *      CHR_CR_ADDR_LINE1              CHAR(70) NOT NULL,
+      *      CHR_CR_ADDR_LINE2              CHAR(70) NOT NULL,
+      *      CHR_CR_ADDR_CNTRY              CHAR(2) NOT NULL,
+      *      CHR_ULT_CR_NAME                CHAR(70) NOT NULL,
+      *      CHR_ULT_CR_ID                  CHAR(37) NOT NULL,
+      *      CHR_DB_NAME                    CHAR(70) NOT NULL,
+      *      CHR_DB_ADDR_LINE1              CHAR(70) NOT NULL,
+      *      CHR_DB_ADDR_LINE2              CHAR(70) NOT NULL,
+      *      CHR_DB_ADDR_CNTRY              CHAR(2) NOT NULL,
+      *      CHR_DB_ID                      CHAR(37) NOT NULL,
+      *      CHR_DB_ACC_IBAN                CHAR(34) NOT NULL,
+      *      CHR_DB_AG                      CHAR(11) NOT NULL,
+      *      CHR_DB_AG_BR_ID                CHAR(35) NOT NULL,
+      *      CHR_ULT_DB_NAME                CHAR(70) NOT NULL,
+      *      CHR_ULT_DB_ID                  CHAR(37) NOT NULL,
+      *      DEC_CIDB_CUST                  DECIMAL(9, 0) NOT NULL,
+      *      CHR_USER                       CHAR(8) NOT NULL,
+      *      FLG_DIRECTION                  CHAR(1) NOT NULL,
+      *      FLG_STATUS_PROCESS             CHAR(1) NOT NULL,
+      *      FLG_CANCEL                     CHAR(1) NOT NULL,
+      *      CHR_ERROR_DIAS                 CHAR(4) NOT NULL,
+      *      CHR_ERROR_CBOG                 CHAR(4) NOT NULL,
+      *      CHR_FILE_ID_TODIAS             CHAR(8) NOT NULL,
+      *      DAT_DATETIME_INIT              TIMESTAMP NOT NULL,
+      *      DAT_DATETIME_PROC              TIMESTAMP NOT NULL,
+      *      DEC_AA                         DECIMAL(17, 0) NOT NULL,
+      *      DEC_AA_RM20                    DECIMAL(17, 0) NOT NULL,
+      *      AMT_LIMIT                      DECIMAL(17, 0) NOT NULL,
+      *      CHR_TERMID_REFUSAL             CHAR(7) NOT NULL,
+      *      CHR_TERMID_REFUND              CHAR(7) NOT NULL,
+      *      CHR_TERMID_AUTHOR              CHAR(7) NOT NULL,
+      *      CHR_INFORM                     CHAR(50) NOT NULL,
+      *      DEC_DAT_REFUSAL                CHAR(8) NOT NULL,
+      *      DEC_DAT_REFUND                 CHAR(8) NOT NULL,
+      *      DEC_DAT_AUTHOR                 CHAR(8) NOT NULL,
+      *      DEC_TIME_REFUSAL               CHAR(6) NOT NULL,
+      *      DEC_TIME_REFUND                CHAR(6) NOT NULL,
+      *      DEC_TIME_AUTHOR                CHAR(6) NOT NULL,
+      *      FLG_STATUS_REFUSAL             CHAR(1) NOT NULL,
+      *      FLG_STATUS_REFUND              CHAR(1) NOT NULL,
+      *      FLG_STATUS_AUTHOR              CHAR(1) NOT NULL,
+      *      CHR_VALID                      CHAR(1) NOT NULL,
+      *      DEC_NUM_REFUSAL                DECIMAL(2, 0) NOT NULL,
+      *      CHR_OK_REFUSAL                 CHAR(1) NOT NULL,
+      *      CHR_OK_AUTHOR                  CHAR(1) NOT NULL
+      *    ) END-EXEC.
+      ******************************************************************
+      * COBOL DECLARATION FOR TABLE DCBOGDB2.CTDDMD10                  *
+      ******************************************************************
+      *01  CTDDMD10.
+      *    10 DEC-FILL             PIC S9(3)V USAGE COMP-3.
+      *    10 CHR-SEND-INST        PIC X(11).
+      *    10 CHR-RECV-INST        PIC X(11).
+      *    10 CHR-SERV-ID          PIC X(4).
+      *    10 CHR-TEST-CODE        PIC X(1).
+      *    10 CHR-FILE-TYPE        PIC X(3).
+      *    10 CHR-FILE-ID          PIC X(8).
+      *    10 DEC-GROUP-TYPE       PIC S9(3)V USAGE COMP-3.
+      *    10 DEC-CREAT-DAT-TIME   PIC X(14).
+      *    10 DEC-INTRB-SETL-DAT   PIC X(8).
+      *    10 CHR-SETTL-METHOD     PIC X(4).
+      *    10 CHR-CLEAR-SYSTEM     PIC X(35).
+      *    10 CHR-INSTRN-AG        PIC X(11).
+      *    10 CHR-INSTRT-AG        PIC X(11).
+      *    10 DEC-RECORD-TYPE      PIC S9(1)V USAGE COMP-3.
+      *    10 DEC-MSG-TYPE         PIC S9(3)V USAGE COMP-3.
+      *    10 CHR-INSTR-ID         PIC X(35).
+      *    10 CHR-TR-ID            PIC X(35).
+      *    10 CHR-SERV-LEVEL       PIC X(4).
+      *    10 CHR-LOCAL-INSTR      PIC X(35).
+      *    10 CHR-SEQ-TYPE         PIC X(4).
+      *    10 CHR-MANDAT-ID        PIC X(35).
+      *    10 DEC-DAT-OF-SIGN      PIC S9(8)V USAGE COMP-3.
+      *    10 CHR-AMEND-IND        PIC X(1).
+      *    10 CHR-O-M-I-511        PIC X(35).
+      *    10 CHR-O-C-S-I-N-512    PIC X(70).
+      *    10 CHR-O-C-S-I-I-513    PIC X(35).
+      *    10 CHR-O-C-S-I-I-514    PIC X(4).
+      *    10 CHR-O-D-A-IBAN-515   PIC X(34).
+      *    10 CHR-O-D-A-PROP-516   PIC X(5).
+      *    10 CHR-C-S-I-I-517      PIC X(35).
+      *    10 CHR-C-S-I-I-T-518    PIC X(4).
+      *    10 CHR-CR-NAME          PIC X(70).
+      *    10 CHR-CR-ADDR-LINE1    PIC X(70).
+      *    10 CHR-CR-ADDR-LINE2    PIC X(70).
+      *    10 CHR-CR-ADDR-CNTRY    PIC X(2).
+      *    10 CHR-ULT-CR-NAME      PIC X(70).
+      *    10 CHR-ULT-CR-ID        PIC X(37).
+      *    10 CHR-DB-NAME          PIC X(70).
+      *    10 CHR-DB-ADDR-LINE1    PIC X(70).
+      *    10 CHR-DB-ADDR-LINE2    PIC X(70).
+      *    10 CHR-DB-ADDR-CNTRY    PIC X(2).
+      *    10 CHR-DB-ID            PIC X(37).
+      *    10 CHR-DB-ACC-IBAN      PIC X(34).
+      *    10 CHR-DB-AG            PIC X(11).
+      *    10 CHR-DB-AG-BR-ID      PIC X(35).
+      *    10 CHR-ULT-DB-NAME      PIC X(70).
+      *    10 CHR-ULT-DB-ID        PIC X(37).
+      *    10 DEC-CIDB-CUST        PIC S9(9)V USAGE COMP-3.
+      *    10 CHR-USER             PIC X(8).
+      *    10 FLG-DIRECTION        PIC X(1).
+      *    10 FLG-STATUS-PROCESS   PIC X(1).
+      *    10 FLG-CANCEL           PIC X(1).
+      *    10 CHR-ERROR-DIAS       PIC X(4).
+      *    10 CHR-ERROR-CBOG       PIC X(4).
+      *    10 CHR-FILE-ID-TODIAS   PIC X(8).
+      *    10 DAT-DATETIME-INIT    PIC X(26).
+      *    10 DAT-DATETIME-PROC    PIC X(26).
+      *    10 DEC-AA               PIC S9(17)V USAGE COMP-3.
+      *    10 DEC-AA-RM20          PIC S9(17)V USAGE COMP-3.
+      *    10 AMT-LIMIT            PIC S9(17)V USAGE COMP-3.
+      *    10 CHR-TERMID-REFUSAL   PIC X(7).
+      *    10 CHR-TERMID-REFUND    PIC X(7).
+      *    10 CHR-TERMID-AUTHOR    PIC X(7).
+      *    10 CHR-INFORM           PIC X(50).
+      *    10 DEC-DAT-REFUSAL      PIC X(8).
+      *    10 DEC-DAT-REFUND       PIC X(8).
+      *    10 DEC-DAT-AUTHOR       PIC X(8).
+      *    10 DEC-TIME-REFUSAL     PIC X(6).
+      *    10 DEC-TIME-REFUND      PIC X(6).
+      *    10 DEC-TIME-AUTHOR      PIC X(6).
+      *    10 FLG-STATUS-REFUSAL   PIC X(1).
+      *    10 FLG-STATUS-REFUND    PIC X(1).
+      *    10 FLG-STATUS-AUTHOR    PIC X(1).
+      *    10 CHR-VALID            PIC X(1).
+      *    10 DEC-NUM-REFUSAL      PIC S9(2)V USAGE COMP-3.
+      *    10 CHR-OK-REFUSAL       PIC X(1).
+      *    10 CHR-OK-AUTHOR        PIC X(1).
+      ******************************************************************
+      * THE NUMBER OF COLUMNS DESCRIBED BY THIS DECLARATION IS 78      *
+      ******************************************************************
+

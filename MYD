@@ -1,0 +1,25 @@
+HELO MVSHOST
+MAIL FROM:<KONSTAN@SYP2.EMPORIKI.GR>
+RCPT TO:<KONSTANTOPOULOS.N@EMPORIKI.GR>
+DATA
+FROM:     KONSTAN@SYP2.EMPORIKI.GR
+TO:       KONSTANTOPOULOS.N@EMPORIKI.GR
+TO:       konstanponstan@yahoo.gr
+TO:       konstanponstanb@gmail.gr
+SUBJECT:  Αρχείο Sepa TEST απο DDREP04
+MIME-Version: 1.0
+Content-type: multipart/mixed; boundary="NPK boundary"
+
+PROLOGUE - IGNORED
+
+--NPK boundary
+Content-Type: text/html; charset="iso-8859-7"
+Content-Transfer-Encoding: quoted-printable
+
+Ακολουθεί αρχείο Sepa Direct Debit SEPA.HTML
+
+--NPK boundary
+Content-disposition: attachment; filename="SEPA.HTML"
+
+
+

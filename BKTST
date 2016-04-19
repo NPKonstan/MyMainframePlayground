@@ -1,0 +1,33 @@
+*PROCESS GOSTMT GONUMBER  ;
+ DKBTEST: PROCEDURE OPTIONS(MAIN);
+  /***********************************************************/
+  /*          MEMBER = DKBTEST                               */
+  /***********************************************************/
+ /*
+ DCL DKRGETB EXTERNAL ENTRY(PIC'(6)9', PIC'(7)9', FIXED(15,2),
+                                                  FIXED(15,2))
+ RETURNS( FIXED (5,2));
+ */
+ DCL DKRGETB EXTERNAL ENTRY(POINTER)
+ RETURNS( FIXED (1));
+ FETCH  DKRGETB ;
+ DCL MYPTR POINTER;
+ DCL RC    FIXED(1) INIT(9);
+ MYPTR = ADDR(P_INDATE);
+ DCL P_INDATE (07)  PIC '(7)9' INIT(
+            1021221,
+            1021205,1030617,1030621,1021222,1030312,1031010);
+
+       PUT SKIP LIST   ('BEFOR P_INDATE (1)    = ',P_INDATE (1)  );
+       RC = DKRGETB(MYPTR);
+       IF RC = 0 THEN DO;
+          PUT SKIP LIST('AFTER P_INDATE (1)    = ',P_INDATE (1)  );
+       END;
+       ELSE DO;
+
+          PUT SKIP LIST('ERROR RC = ',RC );
+
+
+       END;
+ END DKBTEST;
+

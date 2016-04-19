@@ -1,0 +1,2393 @@
+*PROCESS XOPTS(CICS,DLI),LIMITS (FIXEDDEC(15,31));
+ XAPOG:  PROC OPTIONS(MAIN,REENTRANT);
+ DCL PLIXOPT CHAR(39) VAR EXT  INIT ('ERRCOUNT(0)');
+ /*-----------------------------------------------------------------*/
+ /*         PROGRAM NAME: APPTAPOG    PHASE NAME: APPTAPOG          */
+ /*     EIrpPAnH dOrHr uOPOr EIdOdHMATOr KAI YpOYPcEIO OIKONOMIKxN  */
+ /*     AN EINIA AITIOkOcIA1 = 100           YpOYPcEIO OIKONOMIKxN  */
+ /*     AN EINIA AITIOkOcIA1 <>100           uOPOr EIrOdHMATOr      */
+ /*                   TRANSACTION CODE: APOG                        */
+ /*              c  TRANSLATE  GREEK CHARACTERS                     */
+ /*                                                                 */
+ /* UPDATES                                                         */
+ /*-----------------------------------------------------------------*/
+ /* NPK   ¡ÎÎ·„ﬁ ·Ô ÁÏÂÒÔÏÁÌﬂ· ·ÂÌÂÒ„ÔÔÈﬁÛÁÛÁÚ 15/10/2010  ÛÂ    */
+ /*                                               15/11/2010        */
+ /*                                                                 */
+ /* Lotus notes Christos Tsilonis/IT Applications/CBOG              */
+ /* ¡ÒÈËÏ¸Ú ≈„„Ò‹ˆÔı : 675207D625D26845C22577C8003235B1             */
+ /* ¡Ô ƒ…¡”                                                        */
+ /* ¡Ò. –Ò˘Ù.: 9264   Ã·ÒÔ˝ÛÈ, 26/10/2010                           */
+ /* »≈Ã¡:   DIASPAY - –·Ò‹Ù·ÛÁ ¡Ô„Ò·ˆﬁÚ ”ıÌÙ·ÓÈÔ˝˜˘Ì œ.¡.≈.≈.      */
+ /*                                                                 */
+ /*-----------------------------------------------------------------*/
+ /*           NA MHN pEIPAXhOYN OI pAPAKATx cPAMMEr                 */
+ %SKIP(2);
+ % INCLUDE  EFHCWADS ;
+ DCL 1   TWA_AREA       BASED(TWAPTR),
+ % INCLUDE  EFHDLIDS ;
+ % INCLUDE  EFHTFDS ;
+ % INCLUDE  EFHCUADS ;
+ % INCLUDE  EFHKWADS ;
+ /*-----------------------------------------------------------------*/
+
+    /*   DUMMY SECTION EISPRAJH FOROY EISODHMATOS */
+ % INCLUDE  EFHEFWDS ;
+    /*   VSAM EFORIA1                             */
+ % INCLUDE  EFFILDS ;
+ % INCLUDE  KSDBMAP ;
+ % INCLUDE  TSDBMAP ;
+
+ % INCLUDE  EFINDX1 ;
+
+ DCL     CWAPTR              PTR;
+ DCL     CUADSPTR            PTR;
+ DCL     KWADSPTR            PTR;
+ DCL     CUAPTR              PTR;
+ DCL     TWAPTR              PTR;
+ DCL     EDPTR               PTR;
+ DCL     EFWPTR              PTR;
+ DCL     KFIOROOT            PTR;
+ DCL     KFIOSADD            PTR;
+ %SKIP(2);
+ %PAGE;
+ /*----------------------------------------------------------------*/
+ /*
+ DCL CIDBADDO EXTERNAL ENTRY(CHAR(350)) RETURNS(CHAR(350));
+ FETCH CIDBADDO TITLE('CIDBADDO');
+ */
+ DCL CIDBINFO EXTERNAL ENTRY(CHAR(350)) RETURNS(CHAR(350));
+ FETCH CIDBINFO TITLE('CIDBINFO');
+ /*----------------------------------------------------------------*/
+
+ /***             Ã≈‘¡¬À«‘≈” √…¡ ‘«Õ CIDBADDO                    ***/
+ /* % INCLUDE CADSTREC; */
+ /***             Ã≈‘¡¬À«‘≈” √…¡ ‘«Õ CIDBINFO                    ***/
+ % INCLUDE CADSIREC;
+
+ /*----------------------------------------------------------------*/
+ DCL  WS_ARLOG          CHAR(16)    INIT(' ');
+ DCL  1 WS_ARLOGK       BASED(ADDR(WS_ARLOG)),
+        2 WS_ARLOGK1    PIC '(08)9',
+        2 WS_ARLOGK2    CHAR(08);
+ DCL  1 WS_ARLOGT       BASED(ADDR(WS_ARLOG)),
+        2 WS_ARLOGT1    PIC '(09)9',
+        2 WS_ARLOGT2    CHAR(07);
+ /*----------------------------------------------------------------*/
+ DCL 1 ERMSG01 ,
+       2 ERHEAD1  CHAR(13) ,
+       2 ERGSM1   CHAR(3)  INIT('010150'X) ,
+       2 ERMSG1   CHAR(80) INIT(' ') ,
+       2 ERGSM2   CHAR(3)  INIT('020150'X) ,
+       2 ERMSG2   CHAR(80) INIT(' ') ,
+       2 EREND2   CHAR(2)  INIT('FFFF'X) ;
+ DCL   KWACOPBIT  BIT(8) BASED(ADDR(KWACOP));
+ /*----------------------------------------------------------------*/
+ DCL 1   LINE1               BASED(CUAFW),
+      2  CICSDS              CHAR(8),
+      2  EDIDS               CHAR(5),
+      2  GR2                 BIT(8),
+      2  STH2                BIT(8),
+      2  MHK2                BIT(8),
+      2  PKEY1               CHAR(35),
+
+      2  GR3                 BIT(8),
+      2  STH3                BIT(8),
+      2  MHK3                BIT(8),
+      2  LDATE1              CHAR(8),
+      2  LDATE2              PIC '99.99.99',
+      2  LTAYTOT             CHAR(12),
+      2  LKATX               CHAR(7),
+      2  LKENO               CHAR(8),
+      2  LSEIRA              PIC'99999',
+
+      2  GR4                 BIT(8),
+      2  STH4                BIT(8),
+      2  MHK4                BIT(8),
+      2  LFIL1               CHAR(9),
+      2  LAFM1               CHAR(10),
+      2  LFIL2               CHAR(10),
+      2  LNOTE1              PIC '(8)9',
+      2  LFIL3               CHAR(9),
+      2  LAMOU1              PIC 'ZZZZZZZZZ9',
+
+      2  ENDSTR11            BIT(16);
+
+ DCL 1   LINE2               BASED(CUAFW),
+      2  CICSDS              CHAR(8),
+      2  EDIDS               CHAR(5),
+
+      2  GR5                 BIT(8),
+      2  STH5                BIT(8),
+      2  MHK5                BIT(8),
+      2  LFIL4               CHAR(9),
+      2  LAMERG              CHAR(10),
+      2  LFIL5               CHAR(12),
+      2  LYYYY               CHAR(4),
+      2  LFIL6               CHAR(1),
+      2  LMM                 CHAR(2),
+
+      2  GR6                 BIT(8),
+      2  STH6                BIT(8),
+      2  MHK6                BIT(8),
+      2  LFILL1              CHAR(30),
+      2  LAMOUNT             CHAR(6),
+      2  LAMOUNT2            PIC 'ZZZZZ999999999',
+  /*  2  LAMOUNT2            PIC 'ZZZ.ZZZ.ZZZV,ZZ'*/
+      2  ENDSTR22            BIT(16);
+
+ DCL 1   LINE2B              BASED(CUAFW),
+      2  CICSDS              CHAR(8),
+      2  EDIDS               CHAR(5),
+      2  GR6B                BIT(8),
+      2  STH6B               BIT(8),
+      2  MHK6B               BIT(8),
+      2  LAITIOL             CHAR(11),
+      2  LREF2               CHAR(45),
+      2  ENDSTR2B            BIT(16);
+
+ DCL 1   LINE2C              BASED(CUAFW),
+      2  CICSDS              CHAR(8),
+      2  EDIDS               CHAR(5),
+      2  GR6C                BIT(8),
+      2  STH6C               BIT(8),
+      2  MHK6C               BIT(8),
+      2  LMHNYMA1            CHAR(35),
+
+      2  GR6C1               BIT(8),
+      2  STH6C1              BIT(8),
+      2  MHK6C1              BIT(8),
+      2  LMHNYMA2            CHAR(35),
+
+      2  ENDSTR2C            BIT(16);
+
+ DCL 1   LINE3               BASED(CUAFW),
+      2  CICSDS              CHAR(8),
+      2  EDIDS               CHAR(5),
+      2  GR7                 BIT(8),
+      2  STH7                BIT(8),
+      2  MHK7                BIT(8),
+      2  LEKTIKOFPA1         CHAR(50),
+
+      2  GR8                 BIT(8),
+      2  STH8                BIT(8),
+      2  MHK8                BIT(8),
+      2  LEKTIKOFPA2         CHAR(50),
+
+      2  GR9                 BIT(8),
+      2  STH9                BIT(8),
+      2  MHK9                BIT(8),
+      2  LEKTIKOFPA3         CHAR(50),
+
+      2  ENDSTR33            BIT(16);
+
+ DCL 1   LINE4               BASED(CUAFW),
+      2  CICSDS              CHAR(8),
+      2  EDIDS               CHAR(5),
+      2  GR10                BIT(8),
+      2  STH10               BIT(8),
+      2  MHK10               BIT(8),
+      2  LEKTIKOENS1         CHAR(50),
+
+      2  GR11                BIT(8),
+      2  STH11               BIT(8),
+      2  MHK11               BIT(8),
+      2  LEKTIKOENS2         CHAR(50),
+
+      2  GR12                BIT(8),
+      2  STH12               BIT(8),
+      2  MHK12               BIT(8),
+      2  LEKTIKOENS3         CHAR(50),
+
+      2  ENDSTR44            BIT(16);
+
+ %PAGE;
+    /*--------------------------------*/
+    /*  WORK AREA FOR EKT   MESSAGES  */
+    /*--------------------------------*/
+
+    DCL 1   MSG,             /*    RECSIZE = 75 */
+         2  FLR1             CHAR(4) INIT ('TRK='),
+         2  EKT_CUATRKWD     CHAR(4),
+         2  FLR11            CHAR(7) INIT (' TRNID='),
+         2  EKT_TRNID        CHAR(4),
+         2  FLR1A            CHAR(4),
+         2  FLR2             CHAR(6)  INIT ('KEY = '),
+         2  EKT_KEYF         CHAR(6),
+         2  FLR2A            CHAR(6)  INIT ('EIB = '),
+         2  EKT_EIBTRMID     CHAR(4),
+         2  FLR3             CHAR(13) INIT ('    CUAARTRS='),
+         2  EKT_CUAARTRT     CHAR(3),
+         2  FLR31            CHAR(6) INIT (' CODE='),
+         2  EKT_PRGM         CHAR(8);
+
+ DCL     MSG_ERR             CHAR(75)      INIT(' ');
+ DCL     SAVEACCN            PIC '(8)9'    INIT(0);
+ DCL     CUASKATX            CHAR(07)      BASED(ADDR(CUASKAT));
+ DCL     TRAPKATMA           PIC '(4)9'    BASED(ADDR(CUAKTRAP));
+ DCL     CUAHMTSX            PIC '(6)9'    BASED(ADDR(CUAHMTS));
+ DCL     CHBRANCX            BIT(24)       BASED(ADDR(CUASKAT));
+
+ DCL     EFWEFID             CHAR(28)      INIT(' ');
+ DCL     WS_HMGEN1           PIC '(8)9'    INIT(0);
+ DCL     WS_HMGEN            CHAR(8)       BASED(ADDR(WS_HMGEN1));
+ DCL     PPEFWAFM1           PIC '(10)9'   INIT(0);
+ DCL     PPEFWNOTE1          PIC '(8)9'    INIT(0);
+ DCL     PPEFWAMOU1          PIC '(10)9'   INIT(0);
+ DCL     CCEFWAFM1           CHAR(10) BASED(ADDR(PPEFWAFM1));
+ DCL     CCEFWNOTE1          CHAR(8)  BASED(ADDR(PPEFWNOTE1));
+ DCL     CCEFWAMOU1          CHAR(10) BASED(ADDR(PPEFWAMOU1));
+
+ DCL     SOFIWAMOU1          PIC '(10)9'   INIT(0);
+
+ DCL 1 XKATMA BASED(ADDR(EFKATMA1)),
+       2 XKATMA1 BIT(20),
+       2 FILKAT  BIT(4);
+ DCL 1 XAFM   BASED(ADDR(EFAFM1)),
+       2 XAFM1 BIT(44),
+       2 FILAFM  BIT(4);
+ DCL 1 XNOTE  BASED(ADDR(EFNOTE1)),
+       2 XNOTE1 BIT(36),
+       2 FILNOT  BIT(4);
+ DCL 1 XAMOU  BASED(ADDR(EFAMOUN1)),
+       2 XAMOU1 BIT(44),
+       2 FILAMO  BIT(4);
+ DCL 1 XREF   BASED(ADDR(EFREF)),
+       2 XREF1  BIT(36),
+       2 FILREF  BIT(4);
+
+ DCL 1 ZKATMA BASED(ADDR(EFKATMA2)),
+       2 ZKATMA1 BIT(20),
+       2 ZILKAT  BIT(4);
+ DCL 1 ZAFM   BASED(ADDR(EFAFM2)),
+       2 ZAFM1 BIT(44),
+       2 ZILAFM  BIT(4);
+ DCL 1 ZNOTE  BASED(ADDR(EFNOTE2)),
+       2 ZNOTE1 BIT(36),
+       2 ZILNOT  BIT(4);
+ DCL 1 ZAMOU  BASED(ADDR(EFAMOU2)),
+       2 ZAMOU1 BIT(44),
+       2 ZILAMO  BIT(4);
+
+ DCL  ARLOG_K           FIXED(9)     INIT(0);
+ DCL  1 ARLOG1_K  BASED(ADDR(ARLOG_K)),
+        2 LOGAR1_K        BIT(36),
+        2 FILBIT_K        BIT(4);
+ DCL  IOAREAXX                CHAR(450) INIT (' ');
+ DCL  WWONOMA             CHAR(31)      INIT(' ');
+ DCL  WWAFM               PIC '(9)9'    INIT(0);
+ DCL  WWKATMA             PIC '(4)9'    INIT(0);
+
+ DCL   REF1B          BIT(40) BASED(ADDR(EFWREF1));
+ DCL   REF2B          BIT(40) BASED(ADDR(EFWREF2));
+
+ /*---------------------------------------------------------------*/
+ /*          pEdIA cIA YpOkOcIrMO CONTROL DIGIT EhNIKHr           */
+ /*---------------------------------------------------------------*/
+ DCL     FLG1                PIC '9' INIT(0);
+ DCL     WDIGIT              PIC '99';
+ DCL     WEFWREF1            PIC '9999';
+ DCL     D(2)                PIC '9'       BASED(ADDR(WDIGIT));
+ /*---------------------------------------------------------------*/
+ DCL     WAMOUNT             FIXED(13,2)   INIT(0);
+ DCL     IAMOUNT             FIXED(11)     INIT(0);
+ /*---------- AFM ------------------------------------------------*/
+ DCL     WAFM10              PIC '(10)9' INIT(0);
+ DCL 1   WAFM                BASED(ADDR(WAFM10)),
+      2  WAFMNO              PIC '(9)9',
+      2  WAFMCD              PIC '(1)9';
+ DCL     XX(10)              PIC '9'       BASED(ADDR(WAFM10));
+ DCL     FAFM9               PIC '(9)9' INIT(0);
+ DCL 1   FAFM                BASED(ADDR(FAFM9)),
+      2  FAFMNO              PIC '(8)9',
+      2  FAFMCD              PIC '(1)9';
+ DCL     FF(9)               PIC '9'       BASED(ADDR(FAFM9));
+
+ DCL     SP1                 PIC '(9)9'INIT(0);
+ DCL     SPSYNT              PIC '(12)9'INIT(0);
+ DCL     YY                  PIC '99' INIT (0);
+ DCL     WCD                 PIC '9' INIT (0);
+ DCL 1   CYY                 CHAR(2) BASED(ADDR(YY));
+
+ /*---------- AFM ME 8 -------------------------------------------*/
+ DCL     WAFM8               PIC '(8)9' INIT(0);
+ DCL     WW(8)               PIC '9'       BASED(ADDR(WAFM8));
+ /*---------- AFM ME 9 -------------------------------------------*/
+ DCL     WAFM9               PIC '(9)9' INIT(0);
+ DCL     GH(9)               PIC '9'       BASED(ADDR(WAFM9));
+ /*---------- ARIUMOS MHTRVOY ERGODOTH 10 CHFIA-------------------*/
+ DCL     WAMERG              PIC '(10)9' INIT(0);
+ DCL     ER(10)              PIC '9'       BASED(ADDR(WAMERG));
+ /*---------- AP EIdOpOIHrHr EGINE APO 7 SE 8, KAI MPHKE TO ETOS  */
+ /*                          MPROSTA 1 UESH                       */
+ DCL     WEID8               PIC '(8)9' INIT(0);
+ DCL 1   WEID                BASED(ADDR(WEID8)),
+      2  WEIDNO              PIC '(7)9',
+      2  WEIDCD              PIC '(1)9';
+ DCL     EE(8)               PIC '9'       BASED(ADDR(WEID8));
+
+ /*---------- pOrO  uOPOY EIrOdHMATOr ----------------------------*/
+ DCL     JJ                  FIXED DEC(2,0) INIT(0);
+ DCL     II                  FIXED DEC(2,0) INIT(0);
+ DCL     CPOS10              CHAR(10)    INIT(' ');
+ DCL     PP(10)              PIC '9'  INIT ( (10) 0 );
+ DCL     WPOS10              PIC '(10)9' BASED(ADDR(CPOS10));
+
+ DCL     MPOS9               CHAR(9)    INIT(' ');
+ DCL     NPOS9               PIC '(9)9' BASED(ADDR(MPOS9));
+ /*---------- LOG ------------------------------------------------*/
+ DCL     WLOG8               PIC '(8)9' INIT(0);
+ DCL 1   WLOG                BASED(ADDR(WLOG8)),
+      2  WLOGNO              PIC '(7)9',
+      2  WLOGCD              PIC '(1)9';
+ DCL     LL(8)               PIC '9'       BASED(ADDR(WLOG8));
+ /*---------- AMM ------------------------------------------------*/
+ DCL     WAMM7               PIC '(7)9' INIT(0);
+ DCL 1   WAMM                BASED(ADDR(WAMM7)),
+      2  WAMMNO              PIC '(6)9',
+      2  WAMMCD              PIC '(1)9';
+ DCL     MM(7)               PIC '9'       BASED(ADDR(WAMM7));
+ DCL WSUM                    PIC '99' INIT(0);
+ DCL 1   WSUM1               BASED(ADDR(WSUM)),
+      2  WSUM11              PIC '9',
+      2  WSUM12              PIC '9';
+ /*----------0400 0401 0402 0403----------------------------------*/
+ DCL     WOIK15              PIC '(15)9' INIT(0);
+ DCL 1   WOIK                BASED(ADDR(WOIK15)),
+      2  WOIKNO              PIC '(14)9',
+      2  WOIKCD              PIC '(1)9';
+ DCL     OO(15)              PIC '9'   BASED(ADDR(WOIK15));
+ /*----------0403 ------------------------------------------------*/
+ DCL     WAMKA               PIC '(11)9' INIT(0);
+ DCL     WKOI11              PIC '(11)9' INIT(0);
+ DCL 1   WKOI                BASED(ADDR(WKOI11)),
+      2  WKOINO              PIC '(10)9',
+      2  WKOICD              PIC '(1)9';
+ DCL     OG(11)              PIC '9'   BASED(ADDR(WKOI11));
+ DCL     GP2                 PIC '(2)9'INIT(0);
+ DCL     WGP2(2)             PIC '9'   BASED(ADDR(GP2));
+ DCL     WKKI09              PIC '(09)9' INIT(0);
+ DCL 1   WKKI                BASED(ADDR(WKKI09)),
+      2  WKKINO              PIC '(08)9',
+      2  WKKICD              PIC '(1)9';
+
+ DCL     WOIK22              PIC '(2)9' INIT(0);
+ DCL 1   WOIKB               BASED(ADDR(WOIK22)),
+      2  WOIKNO              PIC '(1)9',
+      2  WOIKCD              PIC '(1)9';
+ DCL     BB(2)               PIC '9'   BASED(ADDR(WOIK22));
+ DCL     WAFM10A             PIC '(10)9' INIT(0);
+ /*---------- TEB ------------------------------------------------*/
+ DCL     WTEB20              PIC '(20)9' INIT(0);
+ DCL 1   WTEB                BASED(ADDR(WTEB20)),
+      2  WTEBNO              PIC '(16)9',
+      2  WTEBCD              PIC '(1)9';
+ DCL     TE(20)              PIC '9'   BASED(ADDR(WTEB20));
+ DCL     WTEB22              PIC '(2)9' INIT(0);
+ DCL 1   WTEBB               BASED(ADDR(WTEB22)),
+      2  WTEBNO              PIC '(1)9',
+      2  WTEBCD              PIC '(1)9';
+ DCL     TB(2)               PIC '9'   BASED(ADDR(WTEB22));
+ /*---------- SYNTAXIOYXOI DHMOSIOY ------------------------------*/
+ DCL     WAMS10              PIC '(10)9' INIT(0);
+ DCL     WAMS4               PIC '(4)9' INIT(0);
+ DCL 1   WAMS                BASED(ADDR(WAMS4)),
+      2  WAMSNO              PIC '(3)9',
+      2  WAMSCD              PIC '(1)9';
+ DCL     DD(4)               PIC '9'       BASED(ADDR(WAMS4));
+
+ DCL     WSYN14              PIC '(14)9' INIT(0);
+ DCL 1   WSYN                BASED(ADDR(WSYN14)),
+      2  WSYNNO              PIC '(14)9';
+ DCL     SS(14)              PIC '9'   BASED(ADDR(WSYN14));
+
+ DCL     SHMAIA              PIC '9'    INIT(0);
+ DCL     SHMAIA5             PIC '9'    INIT(0);
+
+ DCL     CHACCN1A            PIC '(10)9'   INIT(0);
+ DCL 1   CHACCN1B            BASED(ADDR(CHACCN1A)),
+      2  CHACCN1C            PIC '99',
+      2  CHACCN1D            PIC '(6)9',
+      2  CHACCN1E            PIC '(2)9';
+
+ DCL WFRTERM                 CHAR(7) INIT (' ');
+ DCL KEEPEFSEQ2              PIC'99' INIT (0);
+ DCL KEEPEFREF2              CHAR(45) INIT (' ');
+
+ DCL     I                   PIC '9';
+ DCL     Y2                  PIC '99';
+ DCL     PX1                 PIC '(5)9';
+ DCL     P(5)                PIC '9'       BASED(ADDR(PX1));
+ DCL     ZX1                 PIC '(6)9';
+ DCL     Z(6)                PIC '9'       BASED(ADDR(ZX1));
+ DCL     SP2                 PIC '(8)9';
+ DCL     SP12                PIC '(12)9';
+ DCL     SP13                PIC '(13)9';
+ DCL     SP14                PIC '(14)9';
+ DCL     SP15                PIC '(15)9';
+ DCL     SPX1(3)             PIC '9'       BASED(ADDR(SP1));
+ DCL     CD(2)               PIC '(2)9';
+ DCL     CDXX                PIC '(2)9';
+ DCL     CDXXX               PIC '(2)9';
+
+ /*---------------------------------------------------------------*/
+ /*               pEdIA cIA ANTIrTPOuH HMEPOMHNIxN                */
+ /*---------------------------------------------------------------*/
+
+ DCL     ADDR                BUILTIN;
+ DCL     SUBSTR              BUILTIN;
+ DCL     VERIFY              BUILTIN;
+ DCL     CSTG                BUILTIN;
+ DCL     STG                 BUILTIN;
+ DCL     MOD                 BUILTIN;
+ DCL     DATE                BUILTIN;
+ DCL     TRIM                BUILTIN;
+ DCL     YEAR                PIC '(2)9'    INIT(0);
+ DCL     YEAR1               PIC '(2)9'    INIT(0);
+ DCL     DATESYS             PIC '(6)9'    INIT(0);
+ DCL     DATESYS1            PIC '(6)9'    INIT(0);
+ DCL     DATEX               PIC '(6)9'    INIT(0);
+ DCL 1   DATEX1              BASED(ADDR(DATEX)),
+      2  DD1                 PIC '99',
+      2  MM1                 PIC '99',
+      2  YY1                 PIC '99';
+ DCL 1   DATEX3              PIC '(6)9'    BASED(ADDR(DATEX1));
+ DCL 1   DATEX2,
+      2  YY2                 PIC '99',
+      2  MM2                 PIC '99',
+      2  DD2                 PIC '99';
+
+ DCL 1   DATEAPO1,
+      2  YYAPO1              PIC '99',
+      2  MMAPO1              PIC '99',
+      2  DDAPO1              PIC '99';
+ DCL 1   DATEAPO2,
+      2  YYAPO2              PIC '99',
+      2  MMAPO2              PIC '99',
+      2  DDAPO2              PIC '99';
+
+ DCL 1   DATEEVS1,
+      2  YYEVS1              PIC '99',
+      2  MMEVS1              PIC '99',
+      2  DDEVS1              PIC '99';
+ DCL 1   DATEEVS2,
+      2  YYEVS2              PIC '99',
+      2  MMEVS2              PIC '99',
+      2  DDEVS2              PIC '99';
+
+ DCL     DATEAPO1S           PIC '(6)9'    BASED(ADDR(DATEAPO1));
+ DCL     DATEEVS1S           PIC '(6)9'    BASED(ADDR(DATEEVS1));
+ DCL     DATEAPO2S           PIC '(6)9'    BASED(ADDR(DATEAPO2));
+ DCL     DATEEVS2S           PIC '(6)9'    BASED(ADDR(DATEEVS2));
+
+ DCL     DATE4               PIC '(8)9'    INIT(0);
+ DCL 1   DATEX4              BASED(ADDR(DATE4)),
+      2  YY41                PIC '99',
+      2  YY42                PIC '99',
+      2  MM4                 PIC '99',
+      2  DD4                 PIC '99';
+ DCL 1   DATEV4              BASED(ADDR(DATESYS1)),
+      2  VV42A               PIC '9',
+      2  VV42B               PIC '9',
+      2  VVMM4               PIC '99',
+      2  VVDD4               PIC '99';
+ DCL     WKWATRML            BIT(8)        BASED(ADDR(KWATRML));
+ %PAGE;
+         /*---------------------------------------------------------*/
+         /*                  MAIN  PROCESS                          */
+         /*---------------------------------------------------------*/
+ %SKIP(2);
+         /* ADDRESSING FOR  CUA-KWA-TWA */
+         EXEC CICS ADDRESS TWA (TWAPTR);
+         CUADSPTR = ADDR(TFDSEND) ;
+         EFWPTR=ADDR(CUAATWAA); /* ADDRESABILITY OF DUMMY SECTION  */
+         KWADSPTR=ADDR(CUAATWAA);
+         DATEX=CUAHMTS;          /* CUAHMTS HHMMEE                  */
+         DATESYS=DATE;           /* DATESYS YYMMDD                  */
+         DATESYS1=DATE;           /* DATESYS YYMMDD                  */
+ %SKIP(2);
+ /*
+         EXEC CICS IGNORE CONDITION QIDERR;
+         EXEC CICS DELETEQ TS QUEUE('FF00');
+
+        EXEC CICS WRITEQ TS QUEUE('FF00') FROM (EFWAFM1)  LENGTH(11);
+        EXEC CICS WRITEQ TS QUEUE('FF00') FROM (EFWNOTE1) LENGTH(11);
+        EXEC CICS WRITEQ TS QUEUE('FF00') FROM (EFWAMOU1) LENGTH(11);
+        EXEC CICS WRITEQ TS QUEUE('FF00') FROM (EFWREF1 ) LENGTH(11);
+        EXEC CICS WRITEQ TS QUEUE('FF00') FROM (EFWREF2 ) LENGTH(11);
+  */
+         /*---------------------------------------------------------*/
+         /*         pPOKATAPTIKOI  EkEcXOI  INPUT  MHNYMATOr        */
+         /*---------------------------------------------------------*/
+         IF  ( CUASKAT>800 & CUASKAT<932 ) !
+               CUASKAT>932                 !
+               CUASKAT=125 ! CUASKAT=555   !
+             ( CUASKAT>452 & CUASKAT<460)
+             THEN DO;
+                     CUAERCOD='0000000000011111'B;    /* X'1F' */
+                     GOTO  XERROR;
+                  END;
+
+         /*---------------------------------------------------------*/
+         /*-EpEIdH AkkAnE TO DUMMY SECTION -------------------------*/
+         /*-KAI KATAPcHhHKE TO pEdIO EFWEFID dHMIOYPcHrA AkkO ------*/
+         /*-cIA NA MHN AkkAnEI O KxdIKAr pOY EINAI TErTAPIrMENOr ---*/
+         /*---------------------------------------------------------*/
+
+     /* EXEC CICS ENTER TRACEID (001)  FROM(EFWAFM1) ;   */
+         /*---14 04 97 ---------------------------------------------*/
+     PPEFWAFM1  = EFWAFM1;
+     PPEFWNOTE1 = EFWNOTE1;
+     PPEFWAMOU1 = EFWAMOU1;
+   /**********/   SOFIWAMOU1 = EFWAMOU1;
+  /* EXEC CICS ENTER TRACEID (001)  FROM(EFWAFM1) ;  */
+  /* EXEC CICS ENTER TRACEID (002)  FROM(EFWNOTE1) ; */
+  /* EXEC CICS ENTER TRACEID (003)  FROM(EFWAMOU1) ; */
+
+     SUBSTR(EFWEFID,1,10) = CCEFWAFM1;
+     SUBSTR(EFWEFID,11,8) = CCEFWNOTE1;
+     SUBSTR(EFWEFID,19,10) = CCEFWAMOU1;
+  /* EXEC CICS ENTER TRACEID (004)  FROM(CCEFWAFM1) ;  */
+  /* EXEC CICS ENTER TRACEID (005)  FROM(CCEFWNOTE1) ; */
+  /* EXEC CICS ENTER TRACEID (006)  FROM(CCEFWAMOU1) ; */
+
+         /*---------------------------------------------------------*/
+ FOROS :
+     /*
+     IF REF1B ^= '0'B THEN DO;
+        IF EFWREF1 > 9     THEN DO;
+           CUAERCOD='0000000000010011'B;
+           GOTO  XERROR;
+        END;
+     END;
+     */
+     IF REF1B = '0'B THEN DO;
+               CUAERCOD='0000000000011111'B;    /* X'1F' */
+               GOTO  XERROR;
+          /*    EpIBOkH ApO TO KEpYO 0101XX Exr 3103XX
+                DEN PERNAEI FOROS EISODHMATOS rE AYTEr TI pEPIOdOYr */
+
+         /*  EpIrTOkH 104/4 THr 08.01.2003   */
+         /* 2003
+         CUAERCOD='0000000010001110'B;
+         GOTO  XERROR;
+         */
+        YYAPO1 = YY1;
+        MMAPO1 = 01; /*02*/
+        DDAPO1 = 01; /*01*/
+        YYEVS1 = YY1; /* YY1;*/
+        MMEVS1 = 03;/*03*/   /* 20.3.2003 */
+        DDEVS1 = 31;/*31*/   /* 20.3.2003 */
+
+
+        IF  SUBSTR(EFWEFID,12,1) = 1 THEN DO;
+         IF (DATESYS >= DATEAPO1S & DATESYS <= DATEEVS1S ) THEN DO;
+               CUAERCOD='0000000010001110'B;    /* X'E8' */
+               GOTO  XERROR;
+            END;
+        END;
+                    /* uOPOr EIrOdHMATOr OIK. ETOYr 2001 */
+        /*
+        IF  SUBSTR(EFWEFID,12,1) = 1 THEN DO;
+               CUAERCOD='0000000010001110'B;
+               GOTO  XERROR;
+        END;
+        */
+
+        SHMAIA = 1;
+        IF  VERIFY(SUBSTR(EFWEFID,1,18),'0123456789') ^= 0 THEN DO;
+            CUAERCOD='0000000000010011'B;    /* X'13' */
+            GOTO  XERROR;
+        END;
+        IF  SUBSTR(EFWEFID,1,9)='000000000' THEN DO;
+            CUAERCOD='0000000000010011'B;    /* X'13' */
+            GOTO  XERROR;
+        END;
+        IF  SUBSTR(EFWEFID,10,7)='0000000' THEN DO;
+            CUAERCOD='0000000000010011'B;    /* X'13' */
+            GOTO  XERROR;
+        END;
+
+                  /*----------------------------*/
+
+        WAFM10 = SUBSTR(EFWEFID,1,10);        /* EkEcXOr AuM 10 wHuIA */
+        IF EFWAFM1 > 9999999999 THEN DO;
+            CUAERCOD='0000000010101000'B;
+            GOTO  XERROR;
+        END;
+
+            /* CHECKDIGIT 8 */
+        SP1 = 0;
+        SP1=XX(1)*256+XX(2)*128+XX(3)*64+XX(4)*32+XX(5)*16+XX(6)*8+
+            XX(7)*4+XX(8)*2;
+        YY = MOD(SP1,11);
+        IF  SUBSTR(CYY,2,1) ^= XX(9) THEN DO;
+            CUAERCOD='0000000010101000'B;
+            GOTO  XERROR;
+        END;
+        /*   EXEI KAI ALLO CD GIA OLO TO AFM */
+        SP1 = 0;
+        SP1=XX(1)*4+XX(2)*3+XX(3)*2+XX(4)*7+XX(5)*6+XX(6)*5+
+            XX(7)*4+XX(8)*3+XX(9)*2;
+        YY = MOD(SP1,11);
+        YY = 11 - YY;
+        IF  SUBSTR(CYY,2,1) ^= XX(10) THEN DO;
+            CUAERCOD='0000000010101000'B;
+            GOTO  XERROR;
+        END;
+
+
+
+        WEID8 = SUBSTR(EFWEFID,11,8); /* EkEcXOr APIhMOY EIdOpOIHrHr */
+
+    /*  IF EFWNOTE1 > 2999999 THEN DO;
+            CUAERCOD='0000000010101010'B;
+            GOTO  XERROR;
+        END;
+        IF EFWNOTE1 < 1000000 THEN DO;
+            CUAERCOD='0000000010101010'B;
+            GOTO  XERROR;
+        END;
+     */
+        SP1 = 0;
+        SP1=EE(1)*2+EE(2)*7+EE(3)*6+EE(4)*5+EE(5)*4+EE(6)*3+
+            EE(7)*2;
+        YY = MOD(SP1,11);
+        YY = 11 - YY;
+        IF  SUBSTR(CYY,2,1) ^= EE(8) THEN DO;
+            CUAERCOD='0000000010101010'B;
+            GOTO  XERROR;
+        END;
+        /* TO 1O CHFIO EINAI TO TELEYTAIO CHFIO TOY ETOYS */
+        /* AN O MHNAS EINAI 1OS H O 2OS TOTE EINAI TO PROHG.ETOS */
+
+        IF VVMM4 = 01 ! VVMM4 = 02 THEN DO;
+           IF VV42B = 0 THEN VV42B = 9;
+           ELSE VV42B = VV42B - 1;
+           IF EE(1) ^= VV42B THEN DO;
+              CUAERCOD='0000000010101010'B;
+              GOTO  XERROR;
+           END;
+        END;
+        IF ^( VVMM4 = 01 ! VVMM4 = 02) THEN DO;
+           IF EE(1) ^= VV42B THEN DO;
+              CUAERCOD='0000000010101010'B;
+              GOTO  XERROR;
+           END;
+        END;
+        /* ----------------------------------------------- */
+        /* TO 2 CHFIO PREPEI NA PAIRNEI TIMES 1,2,3,4 MONO */
+        /* 1=F.E. 2=TELH 3=SHMA 4=TROXOSPITO               */
+        /* ----------------------------------------------- */
+        /* ----------------------------------------------- */
+        /*  1/3/2002 NA MHN PERNANE TA TELH KYKLOFORIAS    */
+        /*  ABPAMOpOYkOr THL.4802824-25 FAX:4802829        */
+        /* ----------------------------------------------- */
+   /*   IF EE(2) > 2 ! EE(2) = 0 THEN DO;*/
+
+        IF EE(2) > 1 ! EE(2) = 0 THEN DO;
+           CUAERCOD='0000000010101010'B;
+           GOTO  XERROR;
+        END;
+
+        CPOS10 = SUBSTR(EFWEFID,19,10);  /* EkEcXOr pOrOY */
+        JJ = 11;
+        DO II = 10 TO 1 BY -1;
+           IF VERIFY(SUBSTR(CPOS10,II,1),'0123456789')= 0 THEN DO;
+              JJ = JJ-1;
+              PP(JJ) = SUBSTR(CPOS10,II,1);
+           END;
+        END;
+        SP1 = 0;
+        SP1=PP(1)*4+PP(2)*3+PP(3)*2+PP(4)*7+PP(5)*6+
+            PP(6)*5+PP(7)*4+PP(8)*3+PP(9)*2;
+        YY = MOD(SP1,11);
+        YY = 11 - YY;
+        IF  SUBSTR(CYY,2,1) ^= PP(10) THEN DO;
+            CUAERCOD='0000000010101100'B;    /* X'13' */
+            GOTO  XERROR;
+        END;
+        DO II = 1 TO 10 BY 1;
+           SUBSTR(CPOS10,II,1) = PP(II);
+        END;
+
+        /* CPOS10 EXEI TO POSO KAI ME CHECK DIGIT */
+
+        MPOS9 = SUBSTR(CPOS10,1,9);
+
+        IF NPOS9 = 0 THEN DO;
+           CUAERCOD='0000000010101100'B;
+           GOTO  XERROR;
+         END;
+         IF NPOS9 > 900000000 THEN DO;
+           CUAERCOD='0000000010101100'B;
+            GOTO  XERROR;
+         END;
+         IAMOUNT=NPOS9;
+         WAMOUNT=NPOS9-IAMOUNT;
+                           /* WAMOUNT^=0 => pOrO ME dEKAdIKA wHuIA */
+         IF WAMOUNT^=0 THEN DO;
+           CUAERCOD='0000000010101100'B;
+            GOTO  XERROR;
+         END;
+
+          /*    EpIBOkH ApO TO KEpYO 0103XX Exr 1504XX KAI
+                                     0109XX Exr 1510XX
+                pEPNANE MONO TEkH KYKkOuOPIAr rE AYTEr TI pEPIOdOYr */
+
+        YYAPO1 = YY1;
+        MMAPO1 = 03;
+        DDAPO1 = 01;
+        YYEVS1 = YY1;
+        MMEVS1 = 04;
+        DDEVS1 = 30; /* 15    17/04/01 */
+
+        YYAPO2 = YY1;
+        MMAPO2 = 09;
+        DDAPO2 = 01;
+        YYEVS2 = YY1;
+       /*MMEVS2 = 10; npk changes from 10 to 11 26-10-2010  */
+        MMEVS2 = 11;
+        DDEVS2 = 15;
+
+        IF  SUBSTR(EFWEFID,12,1) = 2 THEN DO;
+         IF ^( (DATESYS >= DATEAPO1S & DATESYS <= DATEEVS1S ) !
+               ( DATESYS >= DATEAPO2S & DATESYS <= DATEEVS2S) )THEN DO;
+               CUAERCOD='0000000010001110'B;    /* X'E8' */
+               GOTO  XERROR;
+            END;
+        END;
+
+        GOTO  OKFOROS;
+
+     END;   /* END BINIARY FOROS EISODHMATOS           */
+
+     IF REF1B ^= '0'B THEN DO; /* 010101010101 */
+        /* DIARKHS APOGRAFH
+        IF EFWREF1 = 0403 & DATESYS > 110311 THEN DO;
+           ERMSG1 =
+           ' *** ≈À«Œ≈ « ¡–œ√—¡÷« ‘œ’ œ—√¡Õ…”Ãœ’ œ√¡     '!!EFWREF1;
+           GOTO ERMSG;
+        END;
+        */
+     END;
+     IF REF1B ^= '0'B THEN DO;
+        IF EFWREF1 = 0418 & DATESYS > 121031 THEN DO; /*31.10.2012  */
+           ERMSG1 =
+           ' *** ≈À«Œ≈ « ¡–œ√—¡÷« ‘œ’ œ—√¡Õ…”Ãœ’ NAT/KEAN '!!EFWREF1;
+           GOTO ERMSG;
+        END;
+     END;
+     IF REF1B ^= '0'B THEN DO;
+        IF EFWREF1 = 0418 & DATESYS < 120803 THEN DO; /*31.10.2012  */
+           ERMSG1 =
+           ' *** ƒ≈Õ Œ≈ …Õ«”≈ « ¡–œ√—¡÷« ‘œ’ NAT/KEAN '!!EFWREF1;
+           GOTO ERMSG;
+        END;
+     END;
+
+     IF REF1B ^= '0'B THEN DO; /* 010101010101 */
+      /*IF EFWREF1 = 0405 & DATESYS > 110331 THEN DO;*/
+      /*IF EFWREF1 = 0405 & DATESYS > 110513 THEN DO;   30.3.11 1159*/
+      /*IF EFWREF1 = 0405 & DATESYS > 110531 THEN DO;*/ /*16.5.11 1694*/
+        IF EFWREF1 = 0405 & DATESYS > 111015 THEN DO; /*29.8.11-    */
+           ERMSG1 =
+           ' *** ≈À«Œ≈ « ¡–œ√—¡÷« ‘œ’ œ—√¡Õ…”Ãœ’ ‘≈¡–¡”¡ '!!EFWREF1;
+           GOTO ERMSG;
+        END;
+     END;
+     IF REF1B ^= '0'B THEN DO; /* 010101010101 */
+        IF EFWREF1 = 0025 & DATESYS > 110131 THEN DO;
+           ERMSG1 =
+           ' *** ≈À«Œ≈ « ¡–œ√—¡÷« ‘œ’ œ—√¡Õ…”Ãœ’ ‘≈¡–≈–  '!!EFWREF1;
+           GOTO ERMSG;
+        END;
+     END;
+  /* IF REF1B ^= '0'B THEN DO;
+        IF EFWREF1 = 0005 & DATESYS > 120326 THEN DO;
+           ERMSG1 =
+           ' *** ≈À«Œ≈ « ¡–œ√—¡÷« ‘œ’ œ—√¡Õ…”Ãœ’ ”’Õ‘.ƒ«Ã'!!EFWREF1;
+           GOTO ERMSG;
+        END;
+     END;*/
+     IF REF1B ^= '0'B THEN DO; /* 010101010101 */
+        IF EFWREF1 = 0028 & DATESYS > 110131 THEN DO;
+           ERMSG1 =
+           ' *** ≈À«Œ≈ « ¡–œ√—¡÷« ‘œ’ œ—√¡Õ…”Ãœ’ ‘≈¡’÷≈  '!!EFWREF1;
+           GOTO ERMSG;
+        END;
+     END;
+     IF REF1B ^= '0'B THEN DO; /* 010101010101 */
+     /* IF EFWREF1 = 0406 & DATESYS > 110429 THEN DO; 21.4.2011*/
+     /* IF EFWREF1 = 0406 & DATESYS > 110527 THEN DO;*//*1427*/
+        IF EFWREF1 = 0406 & DATESYS > 110720 THEN DO;/*1427*/
+           ERMSG1 =
+          ' *** ≈À«Œ≈ « ¡–œ√—¡÷« ‘œ’ œ—√¡Õ…”Ãœ’ ETAA T”Ã≈ƒ≈  '!!EFWREF1;
+           GOTO ERMSG;
+        END;
+     END;
+     IF REF1B ^= '0'B THEN DO; /* 010101010101 */
+     /* IF EFWREF1 = 0404 & DATESYS > 110429 THEN DO;  1483*/
+     /* 1671 ”’Õ≈◊«” ¡–œ√—¡÷«
+        IF EFWREF1 = 0404 & DATESYS > 110513 THEN DO;
+           ERMSG1 =
+           ' *** ≈À«Œ≈ « ¡–œ√—¡÷« ‘œ’ œ—√¡Õ. ≈–…ƒœÃ. œ√¡ '!!EFWREF1;
+           GOTO ERMSG;
+        END;
+     */
+     END;
+     IF REF1B ^= '0'B THEN DO; /* 010101010101 */
+        IF EFWREF1 = 400 ! EFWREF1 = 401 ! EFWREF1 = 402  !
+           EFWREF1 = 403 ! EFWREF1 = 025 ! EFWREF1 = 028  !
+           EFWREF1 = 405 ! EFWREF1 = 404 ! EFWREF1 = 406  !
+           EFWREF1 = 150 ! EFWREF1 = 151 ! EFWREF1 = 2008 !
+           EFWREF1 = 418
+
+
+                                                            THEN DO;
+                /*   CUAERCOD='0000000000011111'B;
+                     GOTO  XERROR; */
+           SHMAIA5 = 5;
+           IF VERIFY(SUBSTR(EFWEFID,1,26),'0123456789') ^= 0 THEN DO;
+              CUAERCOD='0000000000010011'B;
+              GOTO  XERROR;
+           END;
+           IF SUBSTR(EFWEFID,2,8)='00000000' !
+              SUBSTR(EFWEFID,12,8)='00000000' !
+              SUBSTR(EFWEFID,19,9)='000000000' THEN DO;
+             CUAERCOD='0000000000010011'B;
+             GOTO  XERROR;
+           END;
+
+           WLOG8 = SUBSTR(EFWEFID,3,8); /* EXEI TON LOGARIASMO */
+           IF WLOG8 > 89999999 !
+              WLOG8 < 10000000 THEN DO;
+              CUAERCOD='0000000010101011'B;
+              GOTO  XERROR;
+           END;
+
+           SP1 = 0;
+           SP1=LL(1)*2+LL(2)*7+LL(3)*6+LL(4)*5+
+               LL(5)*4+LL(6)*3+LL(7)*2;
+           YY = MOD(SP1,11);
+           YY = 11 - YY;
+           IF  SUBSTR(CYY,2,1) ^= LL(8) THEN DO;
+               CUAERCOD='0000000010101011'B;
+               GOTO  XERROR;
+           END;
+
+        WAMM7 = SUBSTR(EFWEFID,12,7); /* =1 ,2    ARIUMO MHTRVOY */
+        IF ^(WAMM7 = 1 ! WAMM7 = 2 ) THEN DO;
+             CUAERCOD='0000000000010011'B;
+             GOTO  XERROR;
+        END;
+        FAFM9 = SUBSTR(EFWEFID,20,9);
+        SP1 = 0;
+        SP1=FF(1)*256+FF(2)*128+FF(3)*64+FF(4)*32+FF(5)*16+
+            FF(6)*8+FF(7)*4+FF(8)*2;
+        YY = MOD(SP1,11);
+        IF  SUBSTR(CYY,2,1) ^= FF(9) THEN DO;
+            CUAERCOD='0000000010101000'B;
+            GOTO  XERROR;
+        END;
+
+        IF VERIFY(SUBSTR(EFWREF2,1,15),'0123456789') ^= 0 THEN DO;
+              ERMSG1 =
+              ' *** œ ¡—…»Ãœ” Ã«‘—Ÿœ’ –—≈–≈… Õ¡ ≈…Õ¡… ***';
+     ERMSG2 = ' *** 15 ¡—…»Ã«‘… ¡ ÿ«÷…¡               ***';
+              GOTO ERMSG;
+            CUAERCOD='0000000010101001'B;
+            GOTO  XERROR;
+        END;
+        IF SUBSTR(EFWREF2,1,4) ^= EFWREF1 THEN DO;
+           WEFWREF1 = EFWREF1;
+              ERMSG1 =
+              ' *** ƒ≈Õ ”’Ã÷ŸÕ≈… œ ¡—…»Ãœ” '!!WEFWREF1!!'  ***';
+              ERMSG2 = 'Ã≈ ‘¡ 4 –—Ÿ‘¡ ÿ«÷…¡ ‘œ’ ¡—…»Ãœ’ Ã«‘—Ÿœ’ ';
+              GOTO ERMSG;
+        /*  CUAERCOD='0000000010101001'B;
+            GOTO  XERROR;*/
+        END;
+        WOIK15 = SUBSTR(EFWREF2,1,15);
+        SP1 = 0;
+        SP1=OO(1)*8192+OO(2)*4096+OO(3)*2048+OO(4)*1024+OO(5)*512+
+            OO(6)*256+OO(7)*128+OO(8)*64+OO(9)*32+OO(10)*16+
+            OO(11)*8+OO(12)*4+OO(13)*2+OO(14)*1;
+        YY = MOD(SP1,11);
+        YY = 11 - YY;
+        IF YY > 9 THEN WCD = 0;
+        IF YY <= 9 THEN WCD = YY;
+        IF WCD ^= OO(15) THEN DO;
+              ERMSG1 =
+              ' *** À¡»œ” ¡—…»Ãœ” Ã«‘—Ÿœ’ ¡–œ√—¡÷œÃ≈Õœ’ ***';
+              ERMSG2 =
+              ' *** ƒ…œ—»Ÿ”‘≈ ‘¡ ÿ«÷…¡ ‘œ’ ¡—…»Ãœ’ Ã«‘—Ÿœ’ ***';
+              GOTO ERMSG;
+         /* CUAERCOD='0000000010101001'B;
+            GOTO  XERROR; */
+        END;
+
+        IF EFWREF1 = 400 ! EFWREF1 = 401 ! EFWREF1 = 402 !
+           EFWREF1 = 403 ! EFWREF1 = 025 ! EFWREF1 = 028 !
+           EFWREF1 = 404 ! EFWREF1 = 405 ! EFWREF1 = 406 !
+           EFWREF1 = 150 ! EFWREF1 = 151 ! EFWREF1 = 2008
+
+                                                           THEN DO;
+           WKOI11 = SUBSTR(EFWREF2,17,11);
+           WKKI09 = SUBSTR(EFWREF2,19,09);
+           IF VERIFY(SUBSTR(EFWREF2,17,11),'0123456789') ^= 0 THEN DO;
+              ERMSG1 =
+              ' *** Ã« ¡—…»Ã«‘… ¡ ÿ«÷…¡ ”‘œÕ ¡Ã ¡ ***';
+              GOTO ERMSG;
+           END;
+            /*CUAERCOD='0000000001001011'B;*/  /* 75    */
+           /* CUAERCOD='0000001101000100'B;*/  /* 836   */
+           /* GOTO  XERROR;*/
+           END;
+           YY = WKOI11/1000000000;
+           IF YY = 00 ! YY > 31 THEN DO;
+              CUAERCOD='0000000101010011'B;
+           /* GOTO  XERROR;*/
+           END;
+           YY = WKKI09/10000000;
+           IF YY < 01 ! YY > 12 THEN DO;
+              CUAERCOD='0000000101010010'B;
+           /* GOTO  XERROR; */
+           END;
+
+           SP1 = 0;
+           DO II= 10 TO 1 BY -1;
+              GP2 = 0;
+              IF II = 10 ! II = 8 ! II = 6 ! II = 4 ! II = 2 THEN DO;
+                 GP2 = OG(II)*2;
+                 SP1 = SP1 + WGP2(1) + WGP2(2);
+              END;
+              IF II = 9 ! II = 7 ! II = 5 ! II = 3 ! II = 1 THEN DO;
+                 GP2 = OG(II)*1;
+                 SP1 = SP1 + WGP2(1) + WGP2(2);
+              END;
+           END;
+
+           YY = MOD(SP1,10);
+           YY = 10 - YY;
+           IF YY = 10 THEN WCD = 0;
+           IF YY < 10 THEN WCD = YY;
+           IF WCD ^= OG(11) THEN DO;
+              ERMSG1 =
+              ' *** À¡»œ” ¡—…»Ãœ” AMKA    ¡–œ√—¡÷œÃ≈Õœ’ ***';
+              ERMSG2 =
+              ' *** ƒ…œ—»Ÿ”‘≈ ‘¡ ÿ«÷…¡ ‘œ’ ¡—…»Ãœ’ AMKA    ***';
+              GOTO ERMSG;
+           END;
+
+
+
+
+         /*---------------------------------------------------------*/
+         /*         READ D/B KATAhErExN - EkEcXOr YpAPnHr           */
+         /*---------------------------------------------------------*/
+         WWONOMA = ' ';
+         WWAFM   = 0;
+         IF WLOG8 > 80000000 THEN DO;
+            EXEC DLI SCHD PSB('PSBKAT');
+            ARLOG_K  = WLOG8;
+            FILBIT_K = '1111'B;
+            EXEC DLI GU USING PCB(1)
+                 SEGMENT(KROOTSEG) INTO(IOAREAXX)
+                 WHERE(KSRARLOG = ARLOG_K);
+
+            KFIOROOT = ADDR(IOAREAXX);
+            TFIOROOT = KFIOROOT;
+         /*---------------------------------------------------------*/
+         /*                 ANYpAPKTOr AP.kOcAPIArMOY               */
+         /*---------------------------------------------------------*/
+            IF DIBSTAT = 'GE' THEN DO;
+               CUAERCOD='0000000000000001'B;
+               GOTO  XERROR;
+            END;
+            IF KSRKATMA > 1000 THEN DO;
+               CUAERCOD='0000000010101011'B;
+               GOTO  XERROR;
+            END;
+            IF ( KSRAKYR ^= '0' ) THEN DO;
+               CUAERCOD='0000000000000100'B;
+               GOTO  XERROR;
+            END;
+            IF ( KSRFN    = 'N' ) THEN DO;
+               CUAERCOD='0000000001000001'B; /* 65 */
+               GOTO  XERROR;
+            END;
+         /*-----------AFM FROM CIDB---------------------------------*/
+            CADSIREC    = '';
+            WS_ARLOG    = '';
+            CAD_EFARM   = '70';
+            WS_ARLOGK1  = KSRARLOG;
+            WS_ARLOGK2  = '';
+            CAD_ARLOG   = WS_ARLOG;
+            CAD_AA_SYND = 1;
+
+        /*  CADSTREC  = CIDBADDO(CADSTREC); */
+            CADSIREC  = CIDBINFO(CADSIREC);
+            IF CAD_ERROR = 0 THEN DO;
+               WAMKA    = CAD_AMKA;
+               KSRAFM   = CAD_AFM;
+               WS_HMGEN1= CAD_HMGEN;
+            END;
+         /*---------------------------------------------------------*/
+            WWONOMA = KSRONOMA;
+            WWAFM   = KSRAFM;
+            WWKATMA = KSRKATMA;
+
+         END;  /* EXEC READ KATAQESEIS */
+         IF WLOG8 < 80000000 THEN DO;
+            EXEC DLI SCHD PSB('PSBTAM');
+            ARLOG_K  = WLOG8;
+            FILBIT_K = '1111'B;
+            EXEC DLI GU USING PCB(1)
+                 SEGMENT(TROOTSEG) INTO(IOAREAXX)
+                 WHERE(TSRARLOG = ARLOG_K);
+
+            KFIOROOT = ADDR(IOAREAXX);
+            TFIOROOT = KFIOROOT;
+         /*---------------------------------------------------------*/
+         /*                 ANYpAPKTOr AP.kOcAPIArMOY               */
+         /*---------------------------------------------------------*/
+            IF DIBSTAT = 'GE' THEN DO;
+               CUAERCOD='0000000000000001'B;
+               GOTO  XERROR;
+            END;
+            IF TSRKATMA > 1000 THEN DO;
+               CUAERCOD='0000000010101011'B;
+               GOTO  XERROR;
+            END;
+            IF TSRKLEIS ^= '0' THEN DO;
+               CUAERCOD='0000000000000100'B;
+               GOTO  XERROR;
+            END;
+         /*-----------AFM FROM CIDB-------------------- 3/2007 -----*/
+            CADSIREC    = '';
+            WS_ARLOG    = '';
+            CAD_EFARM   = '90';
+            WS_ARLOGT1  = TSRARLOG;
+            WS_ARLOGT2  = '';
+            CAD_ARLOG   = WS_ARLOG;
+            CAD_AA_SYND = 1;
+
+         /* CADSTREC  = CIDBADDO(CADSTREC); */
+            CADSIREC  = CIDBINFO(CADSIREC);
+            IF CAD_ERROR = 0 THEN DO;
+               TSRAFM   = CAD_AFM;
+               WAMKA    = CAD_AMKA;
+               WS_HMGEN1= CAD_HMGEN;
+            END;
+         /*---------------------------------------------------------*/
+            WWONOMA = TSRONOMA;
+            WWAFM   = TSRAFM;
+            WWKATMA = TSRKATMA;
+        END;  /* EXEC READ TAMIEYTHRIO */
+
+
+        /*
+        IF EFWREF1 = 403 THEN DO;
+           IF CAD_ERROR = 0 THEN DO;
+              IF SUBSTR(WS_HMGEN,7,2) ^= SUBSTR(EFWREF2,17,2) THEN DO;
+                 CUAERCOD='0000000101010011'B;
+                 GOTO  XERROR;
+              END;
+              IF SUBSTR(WS_HMGEN,5,2) ^= SUBSTR(EFWREF2,19,2) THEN DO;
+                 CUAERCOD='0000000101010010'B;
+                 GOTO  XERROR;
+              END;
+              IF SUBSTR(WS_HMGEN,3,2) ^= SUBSTR(EFWREF2,21,2) THEN DO;
+                 CUAERCOD='0000000101010001'B;
+                 GOTO  XERROR;
+              END;
+           END;
+           IF CAD_ERROR ^= 0 THEN DO;
+              CUAERCOD='0000000001001011'B;
+              GOTO  XERROR;
+           END;
+        END; */
+         /*   CUAERCOD='0000000001001011'B; */ /* 75    */
+         /*PUT SKIP LIST('403,025,028,405,404 WAMKA=',WAMKA);*/
+           IF WKOI11 ^= WAMKA THEN DO;
+              ERMSG1 =
+              ' œ ¡Ã ¡ '!!WKOI11!!' ƒ≈Õ ”’Ã÷ŸÕ≈… Ã≈ ‘œÕ ¡Ã ¡ ‘œ’ CIDB';
+              ERMSG2 = 'AMKA TOY CIDB = '!!WAMKA;
+              GOTO ERMSG;
+
+        END;
+
+        GOTO  OKFOROS;
+
+        END;   /* END 101010101010101010101                   */
+
+     IF REF1B ^= '0'B THEN DO;
+        IF EFWREF1 = 100 THEN  DO;
+           SHMAIA = 2;
+           IF VERIFY(SUBSTR(EFWEFID,1,26),'0123456789') ^= 0 THEN DO;
+              CUAERCOD='0000000000010011'B;
+              GOTO  XERROR;
+           END;
+           IF SUBSTR(EFWEFID,2,8)='00000000' THEN DO;
+             CUAERCOD='0000000000010011'B;
+             GOTO  XERROR;
+           END;
+           IF SUBSTR(EFWEFID,12,8)='00000000' THEN DO;
+              CUAERCOD='0000000000010011'B;
+              GOTO  XERROR;
+           END;
+           IF  SUBSTR(EFWEFID,19,9)='000000000' THEN DO;
+              CUAERCOD='0000000000010011'B;
+              GOTO  XERROR;
+           END;
+
+           WLOG8 = SUBSTR(EFWEFID,3,8); /* EXEI TON LOGARIASMO */
+
+           IF EFWAFM1 > 89999999 THEN DO;
+              CUAERCOD='0000000010101011'B;
+              GOTO  XERROR;
+           END;
+           IF ( EFWAFM1 > 69999999 & EFWAFM1 < 80000000 ) THEN DO;
+              CUAERCOD='0000000010101011'B;
+              GOTO  XERROR;
+           END;
+           IF EFWAFM1 < 10000000 THEN DO;
+              CUAERCOD='0000000010101011'B;
+              GOTO  XERROR;
+           END;
+
+           SP1 = 0;
+           SP1=LL(1)*2+LL(2)*7+LL(3)*6+LL(4)*5+
+               LL(5)*4+LL(6)*3+LL(7)*2;
+           YY = MOD(SP1,11);
+           YY = 11 - YY;
+           IF  SUBSTR(CYY,2,1) ^= LL(8) THEN DO;
+               CUAERCOD='0000000010101011'B;
+               GOTO  XERROR;
+           END;
+
+           WAMM7 = SUBSTR(EFWEFID,12,7); /* EXEI TON ARIUMO MHTRVOY */
+           SP1 = 0;
+           WSUM = MM(6) * 2;
+           SP1 = SP1 + WSUM11 + WSUM12;
+           SP1 = SP1 + MM(5);
+           WSUM = MM(4) * 2;
+           SP1 = SP1 + WSUM11 + WSUM12;
+           SP1 = SP1 + MM(3);
+           WSUM = MM(2) * 2;
+           SP1 = SP1 + WSUM11 + WSUM12;
+           SP1 = SP1 + MM(1);
+
+           YY = MOD(SP1,10);
+           YY = 10 - YY;
+           IF SUBSTR(CYY,2,1) ^= MM(7) THEN DO;
+              CUAERCOD='0000000010101001'B;
+              GOTO  XERROR;
+           END;
+
+         FAFM9 = SUBSTR(EFWEFID,19,9); /* EkEcXOr AuM 8 wHuIA ME 0 MPR*/
+         WAFM10A = SUBSTR(EFWEFID,19,10); /* EXEI TON AFM & CD OLOY */
+                                        /* KLHROY TOY PEDIOY      */
+
+        SP1 = 0;
+        SP1=FF(1)*256+FF(2)*128+FF(3)*64+FF(4)*32+FF(5)*16+
+            FF(6)*8+FF(7)*4+FF(8)*2;
+        YY = MOD(SP1,11);
+        IF  SUBSTR(CYY,2,1) ^= FF(9) THEN DO;
+            CUAERCOD='0000000010101000'B;
+            GOTO  XERROR;
+        END;
+
+
+        WOIK15 = SUBSTR(EFWEFID,10,15);
+        WOIK22 = SUBSTR(EFWEFID,25,2);
+        SP1 = 0;
+        SP1=OO(1)*5+OO(2)*4+OO(3)*3+OO(4)*2+OO(5)*7+
+            OO(6)*6+OO(7)*5+OO(8)*4+OO(9)*3+OO(10)*2+
+            OO(11)*7+OO(12)*6+OO(13)*5+OO(14)*4+OO(15)*3+BB(1)*2;
+        YY = MOD(SP1,11);
+        IF YY = 0 THEN WCD = 1;
+        IF YY = 1 THEN WCD = 0;
+        IF ^(YY = 0 ! YY = 1) THEN DO;
+           WCD = 11 - YY;
+        END;
+        IF  WCD ^= BB(2) THEN DO;
+            CUAERCOD='0000000000010011'B;
+            GOTO  XERROR;
+        END;
+
+        GOTO  OKFOROS;
+
+        END;   /* END = 100 YP. OIKONOMIKON                   */
+     END;   /* END AITOLOGIA1  = 100 YPOYRGEIO OIKONOMIKVN */
+     IF REF1B ^= '0'B THEN DO; /*llllllllllllllll*/
+        IF EFWREF1 = 301 THEN  DO;
+           SHMAIA = 2;
+           IF VERIFY(SUBSTR(EFWEFID,1,26),'0123456789') ^= 0 THEN DO;
+              CUAERCOD='0000000000010011'B;
+              GOTO  XERROR;
+           END;
+
+           WLOG8 = SUBSTR(EFWEFID,3,8); /* EXEI TON LOGARIASMO */
+           IF EFWAFM1 > 89999999 THEN DO;
+              CUAERCOD='0000000010101011'B;
+              GOTO  XERROR;
+           END;
+           SP1 = 0;
+           SP1=LL(1)*2+LL(2)*7+LL(3)*6+LL(4)*5+
+               LL(5)*4+LL(6)*3+LL(7)*2;
+           YY = MOD(SP1,11);
+           YY = 11 - YY;
+           IF  SUBSTR(CYY,2,1) ^= LL(8) THEN DO;
+               CUAERCOD='0000000010101011'B;
+               GOTO  XERROR;
+           END;
+
+           WAMM7 = SUBSTR(EFWEFID,12,7); /* EXEI TON ARIUMO MHTRVOY */
+           SP1 = 0;
+           WSUM = MM(6) * 2;
+           SP1 = SP1 + WSUM11 + WSUM12;
+           SP1 = SP1 + MM(5);
+           WSUM = MM(4) * 2;
+           SP1 = SP1 + WSUM11 + WSUM12;
+           SP1 = SP1 + MM(3);
+           WSUM = MM(2) * 2;
+           SP1 = SP1 + WSUM11 + WSUM12;
+           SP1 = SP1 + MM(1);
+
+           YY = MOD(SP1,10);
+           YY = 10 - YY;
+           IF SUBSTR(CYY,2,1) ^= MM(7) THEN DO;
+              CUAERCOD='0000000010101001'B;
+              GOTO  XERROR;
+           END;
+
+         FAFM9 = SUBSTR(EFWEFID,19,9); /* EkEcXOr AuM 9 wHuIA         */
+
+        SP1 = 0;
+        SP1=FF(1)*256+FF(2)*128+FF(3)*64+FF(4)*32+FF(5)*16+
+            FF(6)*8+FF(7)*4+FF(8)*2;
+        YY = MOD(SP1,11);
+        IF  SUBSTR(CYY,2,1) ^= FF(9) THEN DO;
+            CUAERCOD='0000000010101000'B;
+            GOTO  XERROR;
+        END;
+
+        /* EFWEFID = 28*/
+        WTEB20 = SUBSTR(EFWEFID,10,18);
+        WTEB22 = SUBSTR(EFWEFID,25,2);
+        CUAERCOD='0000000000011111'B;
+            GOTO  XERROR;
+
+        GOTO  OKFOROS;
+
+        END;   /* END = TEB                                   */
+     END;   /* END AITOLOGIA1  = 301                       */
+     IF REF1B ^= '0'B THEN DO;
+        IF EFWREF1 = 777 ! EFWREF1 = 778           /*NAT KEAN*/
+           ! EFWREF1 = 779 THEN  DO; /*ETEX    */
+           SHMAIA = 2;
+           IF VERIFY(SUBSTR(EFWEFID,1,26),'0123456789') ^= 0 THEN DO;
+              CUAERCOD='0000000000010011'B;
+              GOTO  XERROR;
+           END;
+           IF SUBSTR(EFWEFID,2,8)='00000000' THEN DO;
+             CUAERCOD='0000000000010011'B;
+             GOTO  XERROR;
+           END;
+           IF SUBSTR(EFWEFID,12,8)='00000000' THEN DO;
+              CUAERCOD='0000000000010011'B;
+              GOTO  XERROR;
+           END;
+           IF  SUBSTR(EFWEFID,19,9)='000000000' THEN DO;
+              CUAERCOD='0000000000010011'B;
+              GOTO  XERROR;
+           END;
+
+           WLOG8 = SUBSTR(EFWEFID,3,8); /* EXEI TON LOGARIASMO */
+
+           IF EFWAFM1 > 89999999 THEN DO;
+              CUAERCOD='0000000010101011'B;
+              GOTO  XERROR;
+           END;
+           IF ( EFWAFM1 > 69999999 & EFWAFM1 < 80000000 ) THEN DO;
+              CUAERCOD='0000000010101011'B;
+              GOTO  XERROR;
+           END;
+           IF EFWAFM1 < 10000000 THEN DO;
+              CUAERCOD='0000000010101011'B;
+              GOTO  XERROR;
+           END;
+
+           SP1 = 0;
+           SP1=LL(1)*2+LL(2)*7+LL(3)*6+LL(4)*5+
+               LL(5)*4+LL(6)*3+LL(7)*2;
+           YY = MOD(SP1,11);
+           YY = 11 - YY;
+           IF  SUBSTR(CYY,2,1) ^= LL(8) THEN DO;
+               CUAERCOD='0000000010101011'B;
+               GOTO  XERROR;
+           END;
+
+                                           /* EXEI TON ARIUMO MHTRVOY */
+         IF EFWNOTE1 > 9999999 THEN DO;
+            CUAERCOD='0000000010101001'B;
+            GOTO  XERROR;
+         END;
+         WAMM7 = EFWNOTE1;  /* SUBSTR(EFWEFID,12,7); */
+         FAFM9 = EFWAMOU1;  /* SUBSTR(EFWEFID,19,9); */
+         /*---------------------------------------------------------*/
+         /*         READ D/B KATAhErExN - EkEcXOr YpAPnHr           */
+         /*---------------------------------------------------------*/
+         WWONOMA = ' ';
+         WWAFM   = 0;
+         IF WLOG8 > 80000000 THEN DO;
+            EXEC DLI SCHD PSB('PSBKAT');
+            ARLOG_K  = WLOG8;
+            FILBIT_K = '1111'B;
+            EXEC DLI GU USING PCB(1)
+                 SEGMENT(KROOTSEG) INTO(IOAREAXX)
+                 WHERE(KSRARLOG = ARLOG_K);
+
+            KFIOROOT = ADDR(IOAREAXX);
+            TFIOROOT = KFIOROOT;
+         /*---------------------------------------------------------*/
+         /*                 ANYpAPKTOr AP.kOcAPIArMOY               */
+         /*---------------------------------------------------------*/
+            IF DIBSTAT = 'GE' THEN DO;
+               CUAERCOD='0000000000000001'B;
+               GOTO  XERROR;
+            END;
+            IF KSRKATMA > 1000 THEN DO;
+               CUAERCOD='0000000010101011'B;
+               GOTO  XERROR;
+            END;
+            /* AFM EMPORIKHS PERNA ME KLEISTO LOGARIASMO */
+            /* LOGARIASMOS ENOIKIASTVN PERNA ME KLEISTO LOGARIASMO */
+            IF (( KSRAKYR ^= '0' ) & ( FAFM9 ^= 094014237 )) !
+               (( KSRAKYR ^= '0' ) & ( WLOG8 ^= 84558044  )) THEN DO;
+               CUAERCOD='0000000000000100'B;
+               GOTO  XERROR;
+            END;
+         /*-----------AFM FROM CIDB-------------------- 3/2007 -----*/
+            CADSIREC    = '';
+            WS_ARLOG    = '';
+            CAD_EFARM   = '70';
+            WS_ARLOGK1  = KSRARLOG;
+            WS_ARLOGK2  = '';
+            CAD_ARLOG   = WS_ARLOG;
+            CAD_AA_SYND = 1;
+
+         /* CADSTREC  = CIDBADDO(CADSTREC); */
+            CADSIREC  = CIDBINFO(CADSIREC);
+            IF CAD_ERROR = 0 THEN DO;
+               WAMKA    = CAD_AMKA;
+               KSRAFM   = CAD_AFM;
+            END;
+         /*---------------------------------------------------------*/
+            WWONOMA = KSRONOMA;
+            WWAFM   = KSRAFM;
+            WWKATMA = KSRKATMA;
+
+         END;  /* EXEC READ KATAQESEIS */
+         IF WLOG8 < 80000000 THEN DO;
+            EXEC DLI SCHD PSB('PSBTAM');
+            ARLOG_K  = WLOG8;
+            FILBIT_K = '1111'B;
+            EXEC DLI GU USING PCB(1)
+                 SEGMENT(TROOTSEG) INTO(IOAREAXX)
+                 WHERE(TSRARLOG = ARLOG_K);
+
+            KFIOROOT = ADDR(IOAREAXX);
+            TFIOROOT = KFIOROOT;
+         /*---------------------------------------------------------*/
+         /*                 ANYpAPKTOr AP.kOcAPIArMOY               */
+         /*---------------------------------------------------------*/
+            IF DIBSTAT = 'GE' THEN DO;
+               CUAERCOD='0000000000000001'B;
+               GOTO  XERROR;
+            END;
+            IF TSRKATMA > 1000 THEN DO;
+               CUAERCOD='0000000010101011'B;
+               GOTO  XERROR;
+            END;
+            /* AFM EMPORIKHS PERNA ME KLEISTO LOGARIASMO */
+            IF ( TSRKLEIS ^= '0' ) & ( FAFM9 ^= 094014237 ) THEN DO;
+               CUAERCOD='0000000000000100'B;
+               GOTO  XERROR;
+            END;
+         /*-----------AFM FROM CIDB-------------------- 3/2007 -----*/
+            CADSIREC    = '';
+            WS_ARLOG    = '';
+            CAD_EFARM   = '90';
+            WS_ARLOGT1  = TSRARLOG;
+            WS_ARLOGT2  = '';
+            CAD_ARLOG   = WS_ARLOG;
+            CAD_AA_SYND = 1;
+
+         /* CADSTREC  = CIDBADDO(CADSTREC);*/
+            CADSIREC  = CIDBINFO(CADSIREC);
+            IF CAD_ERROR = 0 THEN DO;
+               WAMKA    = CAD_AMKA;
+               TSRAFM   = CAD_AFM;
+            END;
+         /*---------------------------------------------------------*/
+            WWONOMA = TSRONOMA;
+            WWAFM   = TSRAFM;
+            WWKATMA = TSRKATMA;
+        END;  /* EXEC READ TAMIEYTHRIO */
+
+         /* dEN EXEI EkEcXO ApkOS EINAI 7 wHuIA */
+
+    /* WAMS10 = SUBSTR(EFWEFID,19,10);*/ /* EXEI TON AMS & CD TOY  */
+
+    /*   WAFM10A = SUBSTR(EFWEFID,19,10);*/
+
+        /* rTO 3 pEdIO MpAINEI TO AuM */
+        SP1 = 0;
+        SP1=FF(1)*256+FF(2)*128+FF(3)*64+FF(4)*32+FF(5)*16+
+            FF(6)*8+FF(7)*4+FF(8)*2;
+        YY = MOD(SP1,11);
+        IF  SUBSTR(CYY,2,1) ^= FF(9) THEN DO;
+            CUAERCOD='0000000010101000'B;
+            GOTO  XERROR;
+        END;
+
+        GOTO  OKFOROS;
+
+        END;   /* END = 777 NAT                            */
+     END;   /* END AITOLOGIA1  = 777 NAT                   */
+
+     IF REF1B ^= '0'B THEN DO;
+        IF EFWREF1 < 10 THEN  DO;
+
+        SHMAIA = 2;
+        IF  SUBSTR(EFWREF2,26,3) = 'USD' THEN DO;
+            WLOG8 = SUBSTR(EFWEFID,3,8); /* EXEI TON LOGARIASMO */
+            WAMM7 = SUBSTR(EFWEFID,12,7); /* EXEI KxdIKO OPcANIrMOY  */
+            WAMS4 = SUBSTR(EFWEFID,15,4); /* EXEI KxdIKO OPcANIrMOY  */
+            WAMS10 = SUBSTR(EFWEFID,19,10); /* EXEI TON AMS & CD TOY  */
+                                            /* AMS POY DEN ELEGXETAI  */
+            WSYN14 = SUBSTR(EFWEFID,15,14);
+            GOTO  OKFOROS;
+        END;
+        IF  VERIFY(SUBSTR(EFWEFID,1,26),'0123456789') ^= 0 THEN DO;
+            CUAERCOD='0000000000010011'B;
+            GOTO  XERROR;
+        END;
+        IF  SUBSTR(EFWEFID,2,8)='00000000' THEN DO;
+            CUAERCOD='0000000000010011'B;
+            GOTO  XERROR;
+        END;
+  /*    IF  SUBSTR(EFWEFID,11,8)='0000000' THEN DO;
+            CUAERCOD='0000000000010011'B;
+            GOTO  XERROR;
+        END;
+        IF  SUBSTR(EFWEFID,19,10)='0000000000' THEN DO;
+            CUAERCOD='0000000000010011'B;
+            GOTO  XERROR;
+        END; */
+
+        WLOG8 = SUBSTR(EFWEFID,3,8); /* EXEI TON LOGARIASMO */
+
+        IF EFWAFM1 > 89999999 THEN DO;
+           CUAERCOD='0000000010101011'B;
+           GOTO  XERROR;
+        END;
+        IF ( EFWAFM1 > 69999999 & EFWAFM1 < 80000000 ) THEN DO;
+           CUAERCOD='0000000010101011'B;
+           GOTO  XERROR;
+        END;
+        IF EFWAFM1 < 10000000 THEN DO;
+           CUAERCOD='0000000010101011'B;
+           GOTO  XERROR;
+        END;
+
+        SP1 = 0;
+        SP1=LL(1)*2+LL(2)*7+LL(3)*6+LL(4)*5+
+            LL(5)*4+LL(6)*3+LL(7)*2;
+        YY = MOD(SP1,11);
+        YY = 11 - YY;
+        IF  SUBSTR(CYY,2,1) ^= LL(8) THEN DO;
+            CUAERCOD='0000000010101011'B;
+            GOTO  XERROR;
+        END;
+
+
+        WAMM7 = SUBSTR(EFWEFID,12,7); /* EXEI KxdIKO OPcANIrMOY  */
+        WAMS4 = SUBSTR(EFWEFID,15,4); /* EXEI KxdIKO OPcANIrMOY  */
+
+        /*       kOcx kAhOYr TOY dIA dEN pEPNOYN TA CD cIA 101-106 */
+        IF WAMS4 = 101 ! WAMS4 = 102 ! WAMS4 = 103 ! WAMS4 = 104 !
+           WAMS4 = 105 ! WAMS4 = 106 THEN DO;
+           SUBSTR(EFWEFID,13,4) = '0100';
+        END;
+
+        WAMS10 = SUBSTR(EFWEFID,19,10); /* EXEI TON AMS & CD TOY  */
+                                        /* AMS POY DEN ELEGXETAI  */
+
+        WSYN14 = SUBSTR(EFWEFID,15,14);
+        SPSYNT = 0;
+        SPSYNT=SS(1)*8192+SS(2)*4096+SS(3)*2048+SS(4)*1024+
+            SS(5)*512+SS(6)*256+SS(7)*128+SS(8)*64+
+            SS(9)*32+SS(10)*16+SS(11)*8+SS(12)*4+SS(13)*2+SS(14)*1;
+        YY = MOD(SPSYNT,11);
+        YY = 11 - YY;
+        IF YY > 9 THEN WCD = 0;
+        IF YY <= 9 THEN WCD = YY;
+        IF  WCD ^= EFWREF1 THEN DO;
+            CUAERCOD='0000000000010011'B;
+            GOTO  XERROR;
+        END;
+                     /* AFM STH AITIOLOGIA */
+        IF  VERIFY(SUBSTR(EFWREF2,1,9),'0123456789') = 0 THEN DO;
+            WAFM9 = SUBSTR(EFWREF2,1,9);
+            SP1 = 0;
+            SP1=GH(1)*256+GH(2)*128+GH(3)*64+GH(4)*32+GH(5)*16+
+                GH(6)*8+GH(7)*4+GH(8)*2;
+            YY = MOD(SP1,11);
+            IF  SUBSTR(CYY,2,1) ^= GH(9) THEN DO;
+                CUAERCOD='0000000010101000'B;
+                GOTO  XERROR;
+            END;
+        END;
+
+        GOTO  OKFOROS;
+
+        END;   /* END   ME AITIOLOGIA < 10                    */
+     END;   /* END AITOLOGIA1  = 0 EVS 9 SYNTAJIOYXOI DHMO */
+
+                                     /*-----------------*/
+                                     /*  FPA  50001     */
+                                     /*-----------------*/
+     IF REF1B ^= '0'B THEN DO;
+        IF EFWREF1 = 50001 THEN  DO;
+        /*   NA PERNAEI APO THN AFPA */
+        CUAERCOD='0000000000011111'B;
+        GOTO  XERROR;
+
+        SHMAIA = 3;
+        IF  VERIFY(SUBSTR(EFWEFID,1,18),'0123456789') ^= 0 THEN DO;
+            CUAERCOD='0000000000010011'B;    /* X'13' */
+            GOTO  XERROR;
+        END;
+        IF  SUBSTR(EFWEFID,1,9)='000000000' THEN DO;
+            CUAERCOD='0000000000010011'B;    /* X'13' */
+            GOTO  XERROR;
+        END;
+        IF  SUBSTR(EFWEFID,10,8)='00000000' THEN DO;
+            CUAERCOD='0000000000010011'B;    /* X'13' */
+            GOTO  XERROR;
+        END;
+
+        FAFM9 = SUBSTR(EFWEFID,2,9);   /* EkEcXOr AuM 8 wHuIA ME 0 MPR*/
+        SP1 = 0;
+        SP1=FF(1)*256+FF(2)*128+FF(3)*64+FF(4)*32+FF(5)*16+
+            FF(6)*8+FF(7)*4+FF(8)*2;
+        YY = MOD(SP1,11);
+        IF  SUBSTR(CYY,2,1) ^= FF(9) THEN DO;
+            CUAERCOD='0000000010101000'B;
+            GOTO  XERROR;
+        END;
+
+        WLOG8 = SUBSTR(EFWEFID,11,8); /* EXEI TON LOGARIASMO */
+        SP1 = 0;
+        SP1=LL(1)*2+LL(2)*7+LL(3)*6+LL(4)*5+
+            LL(5)*4+LL(6)*3+LL(7)*2;
+        YY = MOD(SP1,11);
+        YY = 11 - YY;
+        IF  SUBSTR(CYY,2,1) ^= LL(8) THEN DO;
+            CUAERCOD='0000000010101011'B;
+            GOTO  XERROR;
+        END;
+        IF WLOG8 < 10000000 ! WLOG8 > 89999999 THEN DO;
+           CUAERCOD='0000000010101011'B;
+           GOTO  XERROR;
+        END;
+
+
+        CPOS10 = SUBSTR(EFWEFID,19,10);  /* EkEcXOr pOrOY */
+     /* MPOS9 = SUBSTR(CPOS10,2,9); */
+
+        IF WPOS10 = 0 THEN DO;
+           CUAERCOD='0000000010101100'B;
+           GOTO  XERROR;
+         END;
+         IF WPOS10 > 9000000000 THEN DO;
+           CUAERCOD='0000000010101100'B;
+            GOTO  XERROR;
+         END;
+         IAMOUNT=WPOS10;
+         WAMOUNT=WPOS10 - IAMOUNT;
+                           /* WAMOUNT^=0 => pOrO ME dEKAdIKA wHuIA */
+         IF WAMOUNT^=0 THEN DO;
+           CUAERCOD='0000000010101100'B;
+            GOTO  XERROR;
+         END;
+
+        GOTO  OKFOROS;
+        END;               /* AITIOLOGIA = 50001 */
+     END;                 /*    TELOS 50001 FPA   */
+
+                                     /*-------------------*/
+                                     /*  ENSHMA IKA 20101 */
+                                     /*-------------------*/
+     IF REF1B ^= '0'B THEN DO;
+        IF EFWREF1 = 20101 THEN  DO;
+        /*   NA PERNAEI APO THN AENS */
+        CUAERCOD='0000000000011111'B;
+        GOTO  XERROR;
+
+        SHMAIA = 4;
+        IF  VERIFY(SUBSTR(EFWEFID,1,18),'0123456789') ^= 0 THEN DO;
+            CUAERCOD='0000000000010011'B;    /* X'13' */
+            GOTO  XERROR;
+        END;
+        IF  SUBSTR(EFWEFID,1,9)='000000000' THEN DO;
+            CUAERCOD='0000000000010011'B;    /* X'13' */
+            GOTO  XERROR;
+        END;
+        IF  SUBSTR(EFWEFID,10,8)='0000000' THEN DO;
+            CUAERCOD='0000000000010011'B;    /* X'13' */
+            GOTO  XERROR;
+        END;
+
+        FAFM9 = SUBSTR(EFWEFID,2,9);   /* EkEcXOr AuM 8 wHuIA ME 0 MPR*/
+        SP1 = 0;
+        SP1=FF(1)*256+FF(2)*128+FF(3)*64+FF(4)*32+FF(5)*16+
+            FF(6)*8+FF(7)*4+FF(8)*2;
+        YY = MOD(SP1,11);
+        IF  SUBSTR(CYY,2,1) ^= FF(9) THEN DO;
+            CUAERCOD='0000000010101000'B;
+            GOTO  XERROR;
+        END;
+
+        WLOG8 = SUBSTR(EFWEFID,11,8); /* EXEI TON LOGARIASMO */
+        SP1 = 0;
+        SP1=LL(1)*2+LL(2)*7+LL(3)*6+LL(4)*5+
+            LL(5)*4+LL(6)*3+LL(7)*2;
+        YY = MOD(SP1,11);
+        YY = 11 - YY;
+        IF  SUBSTR(CYY,2,1) ^= LL(8) THEN DO;
+            CUAERCOD='0000000010101011'B;
+            GOTO  XERROR;
+        END;
+        IF WLOG8 < 10000000 ! WLOG8 > 89999999 THEN DO;
+           CUAERCOD='0000000010101011'B;
+           GOTO  XERROR;
+        END;
+
+
+        CPOS10 = SUBSTR(EFWEFID,19,10);  /* EkEcXOr pOrOY */
+     /* MPOS9 = SUBSTR(CPOS10,2,9); */
+
+        IF WPOS10 = 0 THEN DO;
+           CUAERCOD='0000000010101100'B;
+           GOTO  XERROR;
+         END;
+         IF WPOS10 > 9000000000 THEN DO;
+           CUAERCOD='0000000010101100'B;
+            GOTO  XERROR;
+         END;
+         IAMOUNT=WPOS10;
+         WAMOUNT=WPOS10 - IAMOUNT;
+                           /* WAMOUNT^=0 => pOrO ME dEKAdIKA wHuIA */
+         IF WAMOUNT^=0 THEN DO;
+           CUAERCOD='0000000010101100'B;
+            GOTO  XERROR;
+         END;
+
+        IF  VERIFY(SUBSTR(EFWREF2,1,10),'0123456789') ^= 0 THEN DO;
+            CUAERCOD='0000000100111011'B;
+            GOTO  XERROR;
+        END;
+        IF  VERIFY(SUBSTR(EFWREF2,12,6),'0123456789') ^= 0 THEN DO;
+            CUAERCOD='0000000100111100'B;
+            GOTO  XERROR;
+        END;
+                         /* APIhMOr MHTPxOY EPcOdOTH 10 wHuIA */
+                         /* MHKOS AM = 10                     */
+        IF  VERIFY(SUBSTR(EFWREF2,1,10),'0123456789') = 0 THEN DO;
+            WAMERG = SUBSTR(EFWREF2,1,10);
+            SP1 = 0;
+            SP1=ER(1)*512+ER(2)*256+ER(3)*128+
+                ER(4)*64+ER(5)*32+ER(6)*16+
+                ER(7)*8+ER(8)*4+ER(9)*2;
+            YY = MOD(SP1,11);
+            IF  SUBSTR(CYY,2,1) ^= ER(10) THEN DO;
+                CUAERCOD='0000000010101001'B; /* 169 */
+                GOTO  XERROR;
+            END;
+        END;
+
+                         /* MIrhOkOcIKH pEPIOdOr YYYYMM       */
+        IF  VERIFY(SUBSTR(EFWREF2,12,6),'0123456789') = 0 THEN DO;
+          IF (SUBSTR(EFWREF2,12,2)) ^= '20' THEN DO;
+             CUAERCOD='0000000100111100'B;
+             GOTO  XERROR;
+          END;
+          IF (SUBSTR(EFWREF2,12,4)) < '2002' THEN DO;
+             CUAERCOD='0000000100111100'B;
+             GOTO  XERROR;
+          END;
+          YEAR = SUBSTR(EFWREF2,14,2);
+          YEAR1 = SUBSTR(DATESYS,1,2);
+          IF ^( YEAR = YEAR1 ! YEAR = YEAR1 - 1 ! YEAR = YEAR1 + 1 )
+              THEN DO;
+             CUAERCOD='0000000100111100'B;
+             GOTO  XERROR;
+          END;
+          IF (SUBSTR(EFWREF2,16,2)) < '01'  !
+             (SUBSTR(EFWREF2,16,2)) > '15'  THEN DO;
+             CUAERCOD='0000000100111100'B;
+             GOTO  XERROR;
+          END;
+        END;
+
+        GOTO  OKFOROS;
+        END;               /* AITIOLOGIA = 20101 */
+     END;                 /*    TELOS 20101 ENSHMA*/
+
+
+     CUAERCOD='0000000000010011'B;
+     GOTO  XERROR;
+
+ OKFOROS: ;
+             EXEC CICS HANDLE CONDITION
+                              NOTFND  (NFND1)
+                              DUPREC  (NXTINS1)
+                              NOTOPEN (NOPE1)
+                              LENGERR (ERR)
+                              NOSTG   (ERR)
+                              INVREQ  (ERR);
+
+         EFKATMA1=CUASKAT;     /* AP. KkEIdIOY CONTROL RECORD */
+         FILKAT  ='1111'B;
+         EFAFM1=0;
+         FILAFM  ='1111'B;
+         EFNOTE1=0;
+         FILNOT  ='1111'B;
+         EFAMOUN1=0;
+         FILAMO  ='1111'B;
+         EFREF   =0;
+         FILREF  ='1111'B;
+         EFSEQ1  =0;
+         EXEC CICS READ   DATASET ('EFORIA1')
+                          INTO    (IOAREA)
+                          LENGTH  (RLENGTH)
+                          RIDFLD  (EFKEY1);
+         IF SUBSTR(EFRDATE1,3,6) ^= DATESYS THEN DO;
+            CUAERCOD='0000000011111101'B; /* 253 LAQOS HMER.SYNAL*/
+            GOTO  XERROR;
+         END;
+         /*--------------------------------------------------------*/
+         /* META TOYr APXIKOYr EkEcXOYr Eu OrON EINAI OkA ENTAnEI  */
+         /* cINETAI  INSERT STO TRAILER RECORD   FILE EFORIA1      */
+         /*--------------------------------------------------------*/
+         /*--------------------------------------------------------*/
+         /*           Eu OrON EINAI OkA ENTAnEI                    */
+         /* cINETAI  GET  rTO CONTROL RECORD TOY FILE EFORIA1 cIA  */
+         /* NA pAPOME APIhMO EccPAuHr KAI NA dHMIOYPcHrOYME TON NEO*/
+         /* pPxTO dIAhErIMO                                        */
+         /*--------------------------------------------------------*/
+
+ %SKIP(2);
+         /*----------------------------------------------------*/
+         /*      ENHMEPxrH pEdIxN TOY RECORD THr EuOPIAr1      */
+         /*----------------------------------------------------*/
+         IF SHMAIA = 1 THEN DO;
+            EFKATMA2 = CUASKAT;
+            EFAFM2   = WAFM10;
+            EFNOTE2  = WEID8;
+            EFAMOU2  = WPOS10;
+         END;
+         IF SHMAIA = 2 THEN DO;
+            EFKATMA2 = CUASKAT;
+            EFAFM2   = WLOG8;
+            EFNOTE2  = WAMM7;  /* WAMS4 */
+            EFAMOU2  = FAFM9 ;/* WAMS10, H GIA YPOIK WAFM10 */
+         END;
+         IF SHMAIA = 2 & EFWREF1 < 10 THEN DO;
+            EFKATMA2 = CUASKAT;
+            EFAFM2   = WLOG8;
+            EFNOTE2  = WAMM7;  /* WAMS4 */
+            EFAMOU2  = WAMS10;/* WAMS10, H GIA YPOIK WAFM10 */
+         END;
+         IF SHMAIA = 3 THEN DO;
+            EFKATMA2 = CUASKAT;
+            EFAFM2   = FAFM9;    /* AFM GIA FPA 9 CHFIA */
+            EFNOTE2  = WLOG8;    /* ARLOG GIA FPA       */
+            EFAMOU2  = WPOS10;    /* POSO XORIS ELEGXO   */
+         END;
+         IF SHMAIA = 4 THEN DO;
+            EFKATMA2 = CUASKAT;
+            EFAFM2   = FAFM9;    /* AFM GIA ENSHMA 9 CHFIA */
+            EFNOTE2  = WLOG8;    /* ARLOG GIA ENSHMA    */
+            EFAMOU2  = WPOS10;    /* POSO XORIS ELEGXO   */
+         END;
+                                 /* REF1 = 20101        */
+                                 /* REF2 = AM YYYYMM    */
+         IF SHMAIA5 = 5 THEN DO;
+            EFKATMA2 = CUASKAT;
+            EFAFM2   = FAFM9;    /* AFM GIA ENSHMA 9 CHFIA */
+            EFNOTE2  = WLOG8;    /* ARLOG               */
+            EFAMOU2  = WWAFM;   /* AFM EMPORIKHS       */
+         END;
+
+         ZILKAT  ='1111'B;
+         ZILAFM  ='1111'B;
+         ZILNOT  ='1111'B;
+         ZILAMO  ='1111'B;
+         YY2      = YY1;
+         DD2      = DD1;
+         MM2      = MM1;
+
+         YY42     = YY1;
+         DD4      = DD1;
+         MM4      = MM1;
+         IF YY1 > 80 THEN DO;
+            YY41 = 19;
+            YY42 = YY1;
+         END;
+         IF YY1 < 80 THEN DO;
+            YY41 = 20;
+            YY42 = YY1;
+         END;
+         YY42    = YY1;
+         EFRDATE2 = DATE4;     /* YYYYMMDD               */
+         EFRTIME  = EIBTIME/100;
+         IF SHMAIA = 1 THEN DO;
+            EFDATID  = 01;        /* uOPOI KEpYO            */
+         END;
+         IF SHMAIA = 2 THEN DO;
+            EFDATID  = 02;        /* KATAGRAFH LOGARIASMON  */
+         END;
+         IF SHMAIA = 3 THEN DO;
+            EFDATID  = 03;        /* FPA                    */
+         END;
+         IF SHMAIA = 4 THEN DO;
+            EFDATID  = 04;        /* ENSHMA                 */
+         END;
+         IF SHMAIA5 = 5 THEN DO;
+            EFDATID  = 02;        /* APOGRAFH  DPS          */
+            EFCLAMOU = 0;              /* DEN YPARXEI POSO       */
+            EFBRANCH = WWKATMA;
+            EFIDIOS  = WAMM7;
+         END;
+         EFTYPE2  = 2;         /* RECORD PLHRVMHS        */
+         EFSTATUS = 0;         /* SE ISXY                */
+         EFBRANC2 = CUASKAT;   /* TRAPEZA KATMA PLHRVMHS */
+         IF SHMAIA = 1 THEN DO;
+            EFCLAMOU = NPOS9 / 100 ;   /* POSO PLHRVMHS SE EURO  */
+         END;
+         IF SHMAIA = 2 THEN DO;
+            EFCLAMOU = 0;
+         END;
+         IF SHMAIA = 3 THEN DO;
+            EFCLAMOU = WPOS10 / 100 ;     /* POSO PLHRVMHS SE EURO  */
+         END;
+         IF SHMAIA = 4 THEN DO;
+            EFCLAMOU = WPOS10 / 100 ;     /* POSO PLHRVMHS SE EURO  */
+         END;
+         EFRTERM  = CUASKATX;              /* TERMINAL               */
+         WFRTERM  = CUASKATX;              /* TERMINAL               */
+         EFCDATE  = 0;                     /* DATE AKYRVSHS YYYYMMDDL*/
+         EFCTERM  = '';                    /* TERMINAL AKYRVSHS      */
+         EFCTIME  = 0;
+         EFREF    = EFWREF1;               /* KLEIDI                 */
+         EFREF1   = EFWREF1;               /* REFERENCE1             */
+         EFSEQ2   = 0;                     /* SEQUENCE               */
+         EFREF2   = SUBSTR(EFWREF2,1,45);  /* REFERENCE2             */
+         IF SHMAIA = 2 THEN DO;
+            FLG1 = 0; /* FLAG GIA THN EKTYPOSH */
+            IF REF2B = '0'B ! EFREF2 = ' ' THEN DO;
+               EFREF2 = WWONOMA;
+               FLG1   = 1;
+            END;
+         END;
+         EFDIAS   = ' ';
+         IF SHMAIA5 = 5 THEN DO;
+            EFDIAS   = WOIK15!!' '!!WKOI11;
+         END;
+         EFARTRS  = CUAARTRS;
+         EFPROM2  = 0;
+         EFTRN    = ' ';
+         EFLDATE  = 0;
+         EFFIL2   = ' ';
+         /*---------------------------------------------------------*/
+         /*        INSERT RECORD           rTO FILE EFORIA1         */
+         /*---------------------------------------------------------*/
+         EFSEQ2=0;
+         DO  WHILE(EFSEQ2<10);
+             EXEC CICS HANDLE CONDITION
+                              NOTFND  (NFND1)
+                              DUPREC  (NXTINS1)
+                              NOTOPEN (NOPE1)
+                              LENGERR (ERR)
+                              NOSTG   (ERR)
+                              INVREQ  (ERR);
+             EXEC CICS WRITE  DATASET ('EFORIA1')
+                              FROM (IOAREA)
+                              LENGTH (RLENGTH)
+                              RIDFLD (EFKEY2);
+
+             /* INSERT NEW RECORD TO VSAM EFINDX1 */
+             CALL WRITE_EFINDX1;
+             IF EFERROR3 ^= '0' THEN DO ; /*ERROR*/
+                GO TO ERR;
+             END;
+             KEEPEFSEQ2 = EFSEQ2;
+             KEEPEFREF2 = EFREF2;
+             EFSEQ2=11;
+ NXTINS1:    EFSEQ2=EFSEQ2+1;
+             IF  EFSEQ2=10    THEN GOTO DUPR1;
+         END;
+
+         IF SHMAIA = 2 THEN DO;
+            GOTO EKTYP;
+         END;
+
+         /*---------------------------------------------------------*/
+         /*    REPLACE CONTROL RECORD EFORIA1 MONO cIA uOPO EIrOdHM */
+         /*---------------------------------------------------------*/
+         EFKATMA1=CUASKAT;     /* AP. KkEIdIOY CONTROL RECORD */
+         FILKAT  ='1111'B;
+         EFAFM1=0;
+         FILAFM  ='1111'B;
+         EFNOTE1=0;
+         FILNOT  ='1111'B;
+         EFAMOUN1=0;
+         FILAMO  ='1111'B;
+         EFREF   =0;
+         FILREF  ='1111'B;
+         EFSEQ1  =0;
+         EXEC CICS READ   DATASET ('EFORIA1')
+                          INTO    (IOAREA)
+                          LENGTH  (RLENGTH)
+                          RIDFLD  (EFKEY1)
+                          UPDATE;
+         SAVEACCN = EFNUMB1;          /* uYkAnHr APIhMOY EccPAuHr    */
+         EFRDATE1= DATE4;            /* YYYYMMDD */
+         EFDATID1= 0;                 /*                             */
+         EFTYPE1 = 1;                 /* CONTROL RECORD              */
+         EFNUMB1 = EFNUMB1+1;         /* dIAMOPuxrHr NEOY A" dIAhErIM*/
+
+         EFTOTAL1= EFTOTAL1 + NPOS9 / 100 ;
+                                       /*AhPOIrTHr pOrxN uOPOY EIrOd*/
+         EFFIL1  = '';
+         /*--------------------------------------------------------*/
+         /* PUT CONTROL RECORD ME NEO A" dIAhErIMO APIhMO EccPAuHr */
+         /*--------------------------------------------------------*/
+         EXEC CICS REWRITE DATASET ('EFORIA1')
+                   FROM(IOAREA);
+
+         /*-TELOS ENHMERVSEVN TOY ARXEIOY EFORIA1 VS PROS FORO ----*/
+
+ EKTYP:
+         /*--------------------------------------------------------*/
+         /*       GET AREA  200 BYTES LONG FOR PREDITOR PAGE       */
+         /*--------------------------------------------------------*/
+         EXEC CICS GETMAIN SET (CUAFW)
+                   INITIMG (' ')
+                   LENGTH  (200);
+         /*--------------------------------------------------------*/
+         /*       ENHMEPxrH pEdIxN THr PAGE cIA TO TEPMATIKO       */
+         /*--------------------------------------------------------*/
+         GR2='00000010'B;
+         STH2='00000010'B;
+         MHK2='00100011'B;        /*  MHKOr  X'23' 35  */
+         IF SUBSTR(EFWEFID,12,1) = 1 & SHMAIA = 1 THEN DO;
+            PKEY1 = 'cPAM. EIrpPAnHr uOPOY EIrOdHMATOr  ';
+         END;
+         IF SUBSTR(EFWEFID,12,1) = 2 & SHMAIA = 1 THEN DO;
+            PKEY1 = 'cPAM. EIrpPAnHr TEkxN KYKkOuOPIAr  ';
+         END;
+         IF SHMAIA = 2 THEN DO;
+            PKEY1 = 'KATAcPAuH APIhM.MHTPxOY MIrhOdOrIAr';
+         END;
+         IF ( SHMAIA = 2 & EFWREF1 = 777 ) THEN DO;
+            PKEY1 = 'KATAcPAuH APIhMOY MHTPxOY NAT      ';
+         END;
+         IF ( SHMAIA = 2 & EFWREF1 = 778 ) THEN DO;
+            PKEY1 = 'KATAcPAuH APIhMOY MHTPxOY KEAN     ';
+         END;
+         IF ( SHMAIA = 2 & EFWREF1 = 779 ) THEN DO;
+            PKEY1 = 'KATAcPAuH APIhMOY MHTPxOY ETEX     ';
+         END;
+         IF ( SHMAIA5 = 5 & EFWREF1 = 025 ) THEN DO;
+            PKEY1 = ' ¡‘¡√—¡÷« T.E.A.I.T. TEA–≈– (0025) ';
+         END;
+         IF ( SHMAIA5 = 5 & EFWREF1 = 028 ) THEN DO;
+            PKEY1 = ' ¡‘¡√—¡÷« T.E.A.I.T. TEA’÷≈ (0028) ';
+         END;
+         IF ( SHMAIA5 = 5 & EFWREF1 = 005 ) THEN DO;
+            PKEY1 = ' ¡‘¡√—¡÷« ”’Õ‘¡Œ…œ’◊ŸÕ ƒ«Ãœ”(0005) ';
+         END;
+         IF ( SHMAIA5 = 5 & EFWREF1 = 400 ) THEN DO;
+            PKEY1 = ' ¡‘¡√—¡÷« ”’Õ‘¡Œ…œ’◊ŸÕ ‘≈¬≈ (0400) ';
+         END;
+         IF ( SHMAIA5 = 5 & EFWREF1 = 401 ) THEN DO;
+            PKEY1 = ' ¡‘¡√—¡÷« ”’Õ‘¡Œ…œ’◊ŸÕ ‘¡≈  (0401) ';
+         END;
+         IF ( SHMAIA5 = 5 & EFWREF1 = 402 ) THEN DO;
+            PKEY1 = ' ¡‘¡√—¡÷« ”’Õ‘¡Œ…œ’◊ŸÕ ‘”¡  (0402) ';
+         END;
+         IF ( SHMAIA5 = 5 & EFWREF1 = 403 ) THEN DO;
+            PKEY1 = ' ¡‘¡√—¡÷« ”’Õ‘¡Œ…œ’◊ŸÕ œ√¡  (0403) ';
+         END;
+         IF ( SHMAIA5 = 5 & EFWREF1 = 404 ) THEN DO;
+            PKEY1 = ' ¡‘¡√—¡÷« ≈–…ƒœÃ¡‘œ’◊œ… œ.√.¡(0404)';
+         END;
+         IF ( SHMAIA5 = 5 & EFWREF1 = 405 ) THEN DO;
+            PKEY1 = ' ¡‘¡√—¡÷« ‘.≈.¡.–.¡.”.¡/‘≈¡≈◊(0405)';
+         END;
+         IF ( SHMAIA5 = 5 & EFWREF1 = 406 ) THEN DO;
+            PKEY1 = ' ¡‘¡√—¡÷« ‘.”.M.E.ƒ.≈        (0406)';
+         END;
+         IF ( SHMAIA5 = 5 & EFWREF1 = 150 ) THEN DO;
+            PKEY1 = ' ¡‘¡√—¡÷« … ¡-‘≈¡Ã           (0150)';
+         END;
+         IF ( SHMAIA5 = 5 & EFWREF1 = 151 ) THEN DO;
+            PKEY1 = ' ¡‘¡√—¡÷« … ¡-ETEAM          (0151)';
+         END;
+         IF ( SHMAIA5 = 5 & EFWREF1 = 2008) THEN DO;
+            PKEY1 = ' ¡‘¡√—¡÷« TA–…¡‘             (2008)';
+         END;
+         IF ( SHMAIA5 = 5 & EFWREF1 = 0418) THEN DO;
+            PKEY1 = ' ¡‘¡√—¡÷« Õ¡‘ /  ≈¡Õ         (0418)';
+         END;
+         IF ( SHMAIA = 2 & WAMM7 = 888 ) THEN DO;
+            PKEY1 = 'KATAcPAuH KxdIKOY pAPAcxcxN-ETErEp ';
+         END;
+         IF ( SHMAIA = 3 ) THEN DO;
+            PKEY1 = 'cPAMMATIO EIrpPAnHr u.p.A.(50001)  ';
+         END;
+         IF ( SHMAIA = 4 ) THEN DO;
+            PKEY1 = 'cPAMM. EIrpPAnHr ENrHMxN IKA(20101)';
+         END;
+
+         GR3='00000011'B;
+         STH3='00000010'B;
+         MHK3='00110000'B;        /*  MHKOr  X'26'  41-->48  */
+         LDATE1='HM/NIA :' ;
+         LDATE2 =DATEX3;
+         LTAYTOT = ' TAYT/rEIPA:' ;
+         LKATX  =WFRTERM;
+         LKENO  =' A.p.r.:';
+         LSEIRA =CUAARTRS; /* KEEPEFSEQ2;*/
+         /*---------------------------------------------------------*/
+
+         GR4='00000100'B;
+         STH4='00000010'B;
+         MHK4='00111000'B;        /*  MHKOr  X'38'  56  */
+         /*---------------------------------------------------------*/
+         IF SUBSTR(EFWEFID,12,1) = 1 & SHMAIA = 1 THEN DO;
+            LFIL1  ='A.u.M. : ' ;
+            LFIL2  =' AP.EIdOp:' ;
+            LFIL3  ='   APIhM:' ;
+            LAFM1  =  WAFM10 ;
+            LNOTE1 =  WEID8 ;
+            LAMOU1 =  WPOS10 ;
+         END;
+         IF SUBSTR(EFWEFID,12,1) = 2 & SHMAIA = 1 THEN DO;
+            LFIL1  ='A.u.M. : ' ;
+            LFIL2  =' AP.EIdOp:' ;
+            LFIL3  ='   APIhM:' ;
+            LAFM1    = WAFM10;
+            LNOTE1   = WEID8 ;
+            LAMOU1   = WPOS10 ;
+         END;
+         IF SHMAIA = 2 THEN DO;
+            LFIL1  ='kOc/rMOr:' ;
+        /*  LFIL2  =' uOPEAr  :' ;*/
+        /*  LFIL3  =' AP.MHT: ' ; */
+            LFIL2  =' AP.MHT: ' ;
+            LFIL3  =' A.u.M.: ' ;
+            LAFM1  = WLOG8 ;
+            LNOTE1 = WAMM7 ;
+            LAMOU1 = FAFM9;
+         END;
+         IF SHMAIA = 2 & EFWREF1 < 10 THEN DO;
+            LFIL1  ='kOc/rMOr:' ;
+            LFIL2  =' uOPEAr  :';
+            LFIL3  =' AP.MHT: ' ;
+            LAFM1  = WLOG8 ;
+            LNOTE1 = WAMM7 ;
+            LAMOU1 = WAMS10;
+         END;
+         IF SHMAIA = 3 THEN DO;
+            LFIL1  ='A.u.M. : ' ;
+            LFIL2  =' kOcAPIAr:' ;
+            LFIL3  ='   APIhM:' ;
+       /*   LFIL3  ='    pOrO:' */
+            LAFM1  =  FAFM9 ;
+            LNOTE1 =  WLOG8 ;
+            LAMOU1 =  WPOS10;
+         END;
+         IF SHMAIA = 4 THEN DO;
+            LFIL1  ='A.u.M. : ' ;
+            LFIL2  =' kOcAPIAr:' ;
+            LFIL3  ='   APIhM:' ;
+       /*   LFIL3  ='    pOrO:' */
+            LAFM1  =  FAFM9 ;
+            LNOTE1 =  WLOG8 ;
+            LAMOU1 =  WPOS10;
+         END;
+
+         IF SHMAIA5 = 5 THEN DO;
+            LFIL1  ='A.u.M. : ' ;
+            LFIL2  =' kOcAPIAr:' ;
+            LFIL3  ='   APIhM:' ;
+            LAFM1  =  FAFM9 ;
+            LNOTE1 =  WLOG8 ;
+            LAMOU1 =  0;
+         END;
+
+         ENDSTR11='1111111111111111'B;
+         CUAALSEL='00011000'B;
+         EXEC CICS LINK PROGRAM('PREDITOR');
+         LINE1 = '';
+         /*---------------------------------------------------------*/
+         IF SHMAIA ^= 4 THEN DO;
+            GR5='00000101'B; /* 5*/
+            STH5='00000010'B;
+            MHK5='00100110'B;        /*  MHKOr         38  */
+            LFIL4   ='         ' ;
+            LAMERG  = ' ';
+            LFIL5   = '           ';
+            LFIL6   = ' ';
+            LYYYY   = ' ';
+            LMM     = ' ';
+         END;
+
+         IF SHMAIA = 4 THEN DO;
+            GR5='00000101'B;
+            STH5='00000010'B;
+            MHK5='00100110'B;        /*  MHKOr         38  */
+            LFIL4   ='AM EPc.: ' ;
+            LAMERG  = SUBSTR(EFWREF2,1,10);
+            LFIL5   = '  MIr.pEP.:';
+            LFIL6   = ' ';
+            LYYYY   = SUBSTR(EFWREF2,12,4);
+            LMM     = SUBSTR(EFWREF2,16,2);
+         END;
+
+         IF SHMAIA = 2 THEN DO;
+            GR5='00000101'B;
+            STH5='00000010'B;
+            MHK5='00100110'B;        /*  MHKOr         38  */
+            LFIL4   = 'dIKAIOYXO';
+            LAMERG  = 'r: '!!SUBSTR(WWONOMA,1,7);
+            LFIL5   = SUBSTR(WWONOMA,8,12);
+            LYYYY   = SUBSTR(WWONOMA,20,4);
+            LFIL6   = SUBSTR(WWONOMA,24,1);
+            LMM     = SUBSTR(WWONOMA,25,2);
+         END;
+
+         GR6='00000110'B; /* 6 */
+         STH6='00000010'B;
+         MHK6='00110010'B;        /*  MHKOr  X'11'  50  */
+         LFILL1 = ' ';
+         IF  SHMAIA = 1 THEN DO;
+             LAMOUNT='EYPx:' ;
+             LAMOUNT2 = NPOS9 / 100;
+         END;
+         IF SHMAIA = 2 THEN DO;
+             LAMOUNT='     ' ;
+             LAMOUNT2 = 0;
+         END;
+         IF  SHMAIA = 3 THEN DO;
+             LAMOUNT='EYPx:' ;
+             LAMOUNT2 = WPOS10 / 100;
+         END;
+         IF  SHMAIA = 4 THEN DO;
+             LAMOUNT='EYPx:' ;
+             LAMOUNT2 = WPOS10 / 100;
+         END;
+         IF SHMAIA5 = 5 THEN DO;
+            LAMOUNT2 = WWAFM;
+            IF WAMM7 = 1 THEN DO;
+               LFILL1 = 'œ ”’Õ‘.≈…Õ¡… œ …ƒ…œ” ¡÷Ã ≈Ã–.:';
+            END;
+            IF WAMM7 = 2 THEN DO;
+               LFILL1 = 'Ã≈”Ÿ –À«—≈Œœ’”…œ’    ¡÷Ã ≈Ã–.:';
+            END;
+         END;
+
+         ENDSTR22='1111111111111111'B;
+         CUAALSEL='00011000'B;
+         EXEC CICS LINK PROGRAM('PREDITOR');
+
+         GR6B='00000111'B;      /* 7 GRAMMH */
+         STH6B='00000010'B;
+         MHK6B='00111000'B;        /*  MHKOr        56  */
+         LAITIOL  = ' ';
+         LREF2    = ' ';
+         IF SHMAIA5 = 5 THEN DO;
+            LAITIOL  = '¡—.Ã«‘—Ÿœ’:';
+            LREF2    = KEEPEFREF2;
+         END;
+         IF ( SHMAIA5 = 5 & EFWREF1 = 403 ) THEN DO;
+            LAITIOL  = '¡—.Ã. ¡Ã ¡:';
+            LREF2    = KEEPEFREF2;
+         END;
+
+         ENDSTR2B='1111111111111111'B;
+         CUAALSEL='00011000'B;
+         EXEC CICS LINK PROGRAM('PREDITOR');
+
+         GR6B='00001000'B;      /* 8 GRAMMH */
+         STH6B='00000010'B;
+         MHK6B='00111000'B;        /*  MHKOr        56  */
+         LAITIOL  = 'O YpOXPEOr:';
+         IF SHMAIA = 2 THEN DO; /*NAT,ETEX,IKA*/
+            LAITIOL  = 'dIEYhYNrH :';
+            IF FLG1 = 1 THEN LAITIOL  = 'O YpOXPEOr:';
+         END;
+         LREF2    = KEEPEFREF2;
+         IF SHMAIA5 = 5 THEN DO;
+            LAITIOL  = ' ';
+            LREF2    = ' ';
+            IF FAFM9 ^= WWAFM THEN DO;
+               LREF2    = '–—œ”œ◊«. ƒ…¡÷œ—≈‘… œ ¡÷Ã ”‘œÕ Àœ√¡—…¡”Ãœ ';
+            END;
+         END;
+
+         ENDSTR2B='1111111111111111'B;
+         CUAALSEL='00011000'B;
+         EXEC CICS LINK PROGRAM('PREDITOR');
+
+         GR6B='00001001'B;      /* 9 GRAMMH */
+         STH6B='00000010'B;
+         MHK6B='00111000'B;        /*  MHKOr        56  */
+         LAITIOL  = ' ';
+         LREF2    = ' ';
+         IF SHMAIA5 = 5 THEN DO;
+            LAITIOL  = 'APIhMOr - d';
+            LREF2    = 'IKAIOYXOr dHkxhENTOr kOcAPIArMOY';
+         END;
+
+         ENDSTR2B='1111111111111111'B;
+         CUAALSEL='00011000'B;
+         EXEC CICS LINK PROGRAM('PREDITOR');
+
+
+         GR6C='00001010'B;      /* 10 GRAMMH */
+         STH6C='00000010'B;
+         MHK6C='00100011'B;        /*  MHKOr  X'23' 35  */
+         LMHNYMA1 = ' ';
+         LMHNYMA1 = 'rYMuxNx ME TA pAPApANx rTOIXEIA';
+         IF SHMAIA5 = 5 THEN DO;
+            LMHNYMA1 = WLOG8!!'-'!!SUBSTR(WWONOMA,1,22);
+         END;
+
+         GR6C1='00001011'B;     /* 11 GRAMMH */
+         STH6C1='00000010'B;
+         MHK6C1='00100011'B;        /*  MHKOr  X'23' 35  */
+         LMHNYMA2 = ' ';
+         IF SHMAIA = 2 THEN DO;
+            LMHNYMA2 = 'O pEkATHr                      ';
+         END;
+         IF SHMAIA = 1 ! SHMAIA = 3 ! SHMAIA = 4 THEN DO;
+            LMHNYMA2 = 'O KATABAkxN                    ';
+         END;
+         IF SHMAIA5 = 5 THEN DO;
+            LMHNYMA2 = '                   O ¡–œ√—¡÷œÃ≈Õœ”';
+         END;
+
+         ENDSTR2C='1111111111111111'B;
+         CUAALSEL='00011000'B;
+         EXEC CICS LINK PROGRAM('PREDITOR');
+
+ OKYPOYR:
+         /*---------------------------------------------------------*/
+         /*              LINK rTHN POYTINA rYNOkxN                  */
+         /*---------------------------------------------------------*/
+         IF SHMAIA = 1 THEN DO;
+            CUADPOS = NPOS9 / 100 ;
+            EXEC CICS LINK PROGRAM('GENACRTN');
+         END;
+         IF SHMAIA = 3 ! SHMAIA = 4 THEN DO;
+            CUADPOS = WPOS10 / 100 ;
+            EXEC CICS LINK PROGRAM('GENACRTN');
+         END;
+
+         GOTO EXIT1;   /* TEkOr TRANSACTION META KANONIKH EpEnEPcArIA */
+
+ NFND1:  CUAERCOD='0000000000000001'B;        /* NOT FOUND            */
+         GO TO XERROR;
+ DUPR1:  CUAERCOD='0000000010100111'B;        /* DUPLICATES           */
+         GO TO XERROR;
+ NOPE1:  CUAERCOD='0000000010011010'B;        /* KLEISTO ARXEIO       */
+         GO TO XERROR;
+ XERROR: CUAITCOD='00000000'B;
+         WKWATRML = '36'BX;
+     /* EXEC CICS ENTER TRACENUM(001)  FROM(CUAERCOD) EXCEPTION;*/
+         EXEC CICS XCTL PROGRAM ('DERRORTN');
+         RETURN;
+ ERMSG:                                 /* ≈RRœR Ã’Õ«Ã¡‘¡ ”‘«Õ œ»œÕ« */
+         KWACOPBIT = KWACOPBIT ! '01'BX;
+         CUAFW = ADDR(ERMSG01);
+         CUAALSEL = '18'BX;
+         EXEC CICS LINK PROGRAM ( 'PREDITOR' );
+
+         GOTO EXIT1;
+
+ ERR:
+         EKT_CUATRKWD = CUATRKWD;
+         EKT_KEYF     = CUASKAT;
+         EKT_EIBTRMID = EIBTRMID;
+         EKT_CUAARTRT = CUAARTRT;
+         EKT_TRNID    = EIBTRNID;
+         EKT_PRGM     = EIBFN;
+         EXEC CICS WRITEQ TD QUEUE('CSMT') FROM (MSG) LENGTH(75);
+         CUAERCOD='0000000010001100'B;        /* 140                  */
+         GO TO XERROR;
+ %SKIP(2);
+ EXIT1:  CUAALSEL='00010100'B ;    /* NORMAL TRANSACTION TERMINAT= 20*/
+         EXEC CICS XCTL PROGRAM('PREDITOR');
+
+ /********************************************************************/
+ /********************************************************************/
+ WRITE_EFINDX1:PROC;
+ /********************************************************************/
+ /********************************************************************/
+
+    /*LOAD WHAT IS NEDDED FROM RECORD EFORIA1 TO VSAM EFINDX1*/
+    EFIXIO1 = '';
+
+    EFIXIO1.EFARTRS3          = IOAREA2.EFARTRS           ;
+    EFIXIO1.EFRDATE3          = IOAREA2.EFRDATE2          ;
+    EFIXIO1.EFKATMA3          = IOAREA2.EFKATMA2          ;
+    EFIXIO1.EFAFM3            = IOAREA2.EFAFM2            ;
+    EFIXIO1.EFNOTE3           = IOAREA2.EFNOTE2           ;
+    EFIXIO1.EFAMOU3           = IOAREA2.EFAMOU2           ;
+    EFIXIO1.EFREF3            = IOAREA2.EFREF1            ;
+    EFIXIO1.EFSEQ3            = IOAREA2.EFSEQ2            ;
+
+    EFIXIO1.EFERROR3 = '0';
+    /*
+    PUT SKIP LIST('APPTAPOG BEFORE CALL EFIXIO1');
+    PUT SKIP LIST('EFARTRS    = ',EFIXIO1.EFARTRS3    );
+    PUT SKIP LIST(' EFRDATE2  = ',EFIXIO1.EFRDATE3 );
+    PUT SKIP LIST(' EFKATMA2  = ',EFIXIO1.EFKATMA3 );
+    PUT SKIP LIST(' EFAFM2    = ',EFIXIO1.EFAFM3     );
+    PUT SKIP LIST(' EFNOTE2   = ',EFIXIO1.EFNOTE3    );
+    PUT SKIP LIST(' EFAMOU2   = ',EFIXIO1.EFAMOU3    );
+    */
+
+
+
+    EXEC CICS LINK                      /* ALTERNATE VSAM INSERT */
+                    PROGRAM  ('APPTIND')
+                    COMMAREA (EFIXIO1)
+                    LENGTH   (STG(EFIXIO1));
+    /*
+    PUT SKIP LIST('APPTAPOG AFTER  CALL ERROR    ');
+    PUT SKIP LIST('EFERROR = ',EFERROR3           );
+    */
+   END WRITE_EFINDX1;
+
+ END XAPOG;
+

@@ -1,0 +1,846 @@
+      ****************************************************************  00010000
+      **                                                            **  00020000
+      **           FOUNDATION FOR COOPERATIVE PROCESSING            **  00030000
+      **                                                            **  00040000
+      **                       COBOL CICS                           **  00050000
+      **                   SERVICE MODULE FILE                      **  00060000
+      **                                                            **  00070000
+      **           COPYRIGHT (C) 1996 ANDERSEN CONSULTING.          **  00080000
+      **                    ALL RIGHTS RESERVED.                    **  00090000
+      **                                                            **  00100000
+      ****************************************************************  00110000
+      **                                                            **  00120000
+      **  MODULE NAME:       BKS03001                               **  00130000
+      **                                                            **  00140000
+      **  DATE GENERATED:                                           **  00150000
+      **                                                            **  00160000
+      **  BY USER:           NPK                                    **  00170000
+      **                                                            **  00180000
+      **  DESIGNER:                                                 **  00190000
+      **                                                            **  00200000
+      **  PROGRAMMER:                                               **  00210000
+      **                                                            **  00220000
+      **  SHORT DESCRIPTION:дглиоуяциа пациас емтокгс йатахетийым коц.  00230000
+      ****************************************************************  00240000
+       IDENTIFICATION DIVISION.                                         00250000
+       PROGRAM-ID. BKS03001.                                            00260000
+       ENVIRONMENT DIVISION.                                            00270000
+                                                                        00280000
+       DATA DIVISION.                                                   00290000
+                                                                        00300000
+       WORKING-STORAGE SECTION.                                         00310000
+      ****************************************************************  00320000
+      ** REPOSITORY WORKING STORAGE                                 **  00330000
+      ****************************************************************  00340000
+                                                                        00350000
+      *--> WS - VARIABLES                                               00360000
+      *01 WS-SPIROS            PIC 9(10)              VALUE ZEROES.     00370000
+       01 WS-AR-PAGIA          PIC 9(9)               VALUE ZEROES.     00380000
+       01 WS-AR-PAGIA-R REDEFINES WS-AR-PAGIA .                         00390000
+         05 WS-AR-PAGIA-1        PIC 9(8).                              00400000
+         05 WS-AR-CD             PIC 9(1).                              00410000
+                                                                        00420000
+       01 WS-NPK-RESULT        PIC X(04)       VALUE SPACES.            00430000
+       01 WS-COUNTER           PIC 9(05)       VALUE ZEROS.             00440000
+       01 WS-COD-FLAG          PIC X(02)       VALUE SPACES.            00450000
+       01 WS-COD-BANK          PIC X(04)       VALUE SPACES.            00460000
+       01 WS-COD-BRANCH        PIC X(04)       VALUE SPACES.            00470000
+       01 WS-COD-BRANCH1       PIC X(04)       VALUE SPACES.            00480000
+       01 WS-IND-NULL-1        PIC S9(4)V COMP.                         00490000
+                                                                        00500000
+       01  WS-PICO     PIC 9(09) .                                      00510000
+       01  WS-PICI     PIC 9(08) .                                      00520000
+       01  WS-DIGI REDEFINES WS-PICI .                                  00530000
+          05 WS-DIGI1 PIC 9(1).                                         00540000
+          05 WS-DIGI2 PIC 9(1).                                         00550000
+          05 WS-DIGI3 PIC 9(1).                                         00560000
+          05 WS-DIGI4 PIC 9(1).                                         00570000
+          05 WS-DIGI5 PIC 9(1).                                         00580000
+          05 WS-DIGI6 PIC 9(1).                                         00590000
+          05 WS-DIGI7 PIC 9(1).                                         00600000
+          05 WS-DIGI8 PIC 9(1).                                         00610000
+                                                                        00620000
+       01  WS-MASK  PIC 9(08) VALUE  97531864 .                         00630000
+       01  WS-MASK-R REDEFINES WS-MASK.                                 00640000
+           05 WS-MASK1 PIC 9(1).                                        00650000
+           05 WS-MASK2 PIC 9(1).                                        00660000
+           05 WS-MASK3 PIC 9(1).                                        00670000
+           05 WS-MASK4 PIC 9(1).                                        00680000
+           05 WS-MASK5 PIC 9(1).                                        00690000
+           05 WS-MASK6 PIC 9(1).                                        00700000
+           05 WS-MASK7 PIC 9(1).                                        00710000
+           05 WS-MASK8 PIC 9(1).                                        00720000
+                                                                        00730000
+       01  WS-SUM   PIC 9(03) VALUE ZEROES.                             00740000
+      *--> LT - VARIABLES                                               00750000
+       01 LTN-MAX-ANSWERS          PIC 9(05)       VALUE 1000.          00760000
+       01 LTA-01                   PIC X(02)       VALUE '01'.          00770000
+       01 LTA-02                   PIC X(02)       VALUE '02'.          00780000
+       01 LTA-0012                 PIC X(04)       VALUE '0012'.        00790000
+                                                                        00800000
+       01 WS-VARIABLES.                                                 00810000
+           05 WS-ACCN               PIC 9(8)   VALUE ZEROS.             00820000
+           05 WS-COD-EFARM          PIC X(2)   VALUE SPACES.            00830000
+           05 WS-ERRORS             PIC 9(6)   VALUE ZEROS.             00840000
+           05 WS-COUNT              PIC S9(6)V USAGE COMP-3 VALUE ZEROS.00850000
+           05 WS-SUM-IMPFACE   PIC S9(13)V9(2) USAGE COMP-3 VALUE ZEROS.00860000
+           05 WS-IND-SUM            PIC S9(4)  COMP.                    00870000
+                                                                        00880000
+      ****************************************************************  00890000
+      *  LITERALS                                                    *  00900000
+      ****************************************************************  00910000
+                                                                        00920000
+        01 LT-NUMERICS.                                                 00930000
+           05 LT-N-ERROR               PIC S9(4) COMP-3 VALUE 8.        00940000
+                                                                        00950000
+        01 LT-ALPHANUMERICS.                                            00960000
+           05 LT-A-ACCN-NOT-FOUND      PIC X(30) VALUE                  00970000
+                'амупаяйтос коцаяиаслос '.                              00980000
+           05 LT-A-ACCN-CLOSED         PIC X(30) VALUE                  00990000
+                ' коцаяиаслос  йкеистос'.                               01000000
+           05 LT-A-ACCN-OROYS          PIC X(30) VALUE                  01010000
+                'коцаяиаслос ле еидийоус ояоус'.                        01020000
+           05 LT-A-ERR-KATHOLIKO       PIC X(30) VALUE                  01030000
+                'лг епитяепто йахокийо '.                               01040000
+           05 LT-A-ERR-KATMA           PIC X(30) VALUE                  01050000
+                'лг епитяепто йатастгла  '.                             01060000
+           05 LT-A-01                  PIC X(2)  VALUE                  01070000
+                '01'.                                                   01080000
+           05 LT-A-0                   PIC X(1)  VALUE                  01090000
+                '0'.                                                    01100000
+                                                                        01110000
+        01  BKERROR           PIC   X(50) .                             01120000
+        01  BKERROR-R   REDEFINES  BKERROR     .                        01130000
+            05  BKREASON    PIC     X(30) .                             01140000
+            05  F1          PIC     X(2)  .                             01150000
+            05  BKACCN              PIC 9(8).                           01160000
+            05  F2          PIC     X(30) .                             01170000
+                                                                        01180000
+      ** NULL INDICATORS циа том басийо пимайа ***********************  01190000
+        01    IND-DKCM01-WEEK-DAY            PIC S9(4)V COMP.           01200000
+        01    IND-DKCM01-AVAIL-DAT1          PIC S9(4)V COMP.           01210000
+        01    IND-DKCM01-AVAIL-DAT2          PIC S9(4)V COMP.           01220000
+        01    IND-DKCM01-AVAIL-DAT3          PIC S9(4)V COMP.           01230000
+        01    IND-DKCM01-DEACTIV-PAGIA       PIC S9(4)V COMP.           01240000
+      ****************************************************************  01250000
+      **  SWITCHES                                                  **  01260000
+      ****************************************************************  01270000
+                                                                        01280000
+        01 SW-SWITCH.                                                   01290000
+           05 SW-DISPLAY              PIC X.                            01300000
+              88 DISPLAY-NO                      VALUE '0'.             01310000
+              88 DISPLAY-YES                     VALUE '1'.             01320000
+                                                                        01330000
+                                                                        01340000
+      ****************************************************************  01350000
+      ** INCLUDE TABLES - CURSORS                                   **  01360000
+      ****************************************************************  01370000
+           EXEC SQL INCLUDE CTBKACCN  END-EXEC.                         01380000
+           EXEC SQL INCLUDE T04CNV97  END-EXEC.                         01390000
+           EXEC SQL INCLUDE CTDKCM01  END-EXEC.                         01400000
+      ****************************************************************  01410000
+      **     CONSTANTS OF DIASTRANSFER ERRORS                       **  01420000
+      ****************************************************************  01430000
+       COPY DTERRORS.                                                   01440000
+                                                                        01450000
+      ****************************************************************  01460000
+      **     COPY                 FOR  AQERROR.                     **  01470000
+      ****************************************************************  01480000
+       COPY BKERRORP.                                                   01490000
+      ****************************************************************  01500000
+      ** WORKING ARQUITECTURA                                       **  01510000
+      ****************************************************************  01520000
+       COPY ADSIK200.                                                   01530000
+       COPY ADSAK001.                                                   01540000
+                                                                        01550000
+       COPY AQSRV001.                                                   01560000
+           05  LT-MODULO-SERV-V2         PIC X(8) VALUE 'BKS03001'.     01570000
+                                                                        01580000
+       LINKAGE SECTION.                                                 01590000
+      ****************************************************************  01600000
+      ** FOUNDATION LINKAGE SECTION                                 **  01610000
+      ****************************************************************  01620000
+                                                                        01630000
+      ****************************************************************  01640000
+      ** BUSINESS FUNCTION CONTEXT DATA                             **  01650000
+      ****************************************************************  01660000
+       COPY AQBEBF.                                                     01670000
+                                                                        01680000
+      ****************************************************************  01690000
+      ** INPUT MESSAGE PARMBLOCK                                    **  01700000
+      ****************************************************************  01710000
+       01  SRV-TXN-PB.                                                  01720000
+           COPY WAPIMSG.                                                01730000
+                                                                        01740000
+      ****************************************************************  01750000
+      ** REPLY MESSAGE PARMBLOCK                                    **  01760000
+      ****************************************************************  01770000
+       01  RTAF-TXN-PB.                                                 01780000
+           COPY WAPIMSG.                                                01790000
+                                                                        01800000
+      ****************************************************************  01810000
+      ** INPUT MESSAGE DATA                                         **  01820000
+      ****************************************************************  01830000
+       01  INPUT-TXN.                                                   01840000
+           COPY BK03001I.                                               01850000
+                                                                        01860000
+                                                                        01870000
+      ****************************************************************  01880000
+      ** OUTPUT MESSAGE DATA                                       **   01890000
+      ****************************************************************  01900000
+       01  OUTPUT-TXN.                                                  01910000
+           COPY BK03001O.                                               01920000
+                                                                        01930000
+                                                                        01940000
+      ****************************************************************  01950000
+      ** USER LINKAGE COPYBOOKS                                     **  01960000
+      ****************************************************************  01970000
+                                                                        01980000
+                                                                        01990000
+                                                                        02000000
+      ****************************************************************  02010000
+      ** USER PROCEDURE DIVISION                                    **  02020000
+      ****************************************************************  02030000
+       PROCEDURE DIVISION USING                                         02040000
+                                 &AQPROC1(),                            02050000
+                                 &AQPROC2(),                            02060000
+                                 &AQPROC3(),                            02070000
+                                 AQBF-AQBEBF,                           02080000
+                                 &AQPROC4(),                            02090000
+                                 SRV-TXN-PB,                            02100000
+                                 INPUT-TXN,                             02110000
+                                 RTAF-TXN-PB,                           02120000
+                                 OUTPUT-TXN.                            02130000
+                                                                        02140000
+       0000-MAINLINE.                                                   02150000
+      * START CODE PROCEDURE                                            02160000
+                                                                        02170000
+           PERFORM A1000-HOUSEKEEPING.                                  02180000
+           PERFORM A2000-PROCESS.                                       02190000
+           PERFORM A8000-WRAP-UP.                                       02200000
+                                                                        02210000
+                                                                        02220000
+       A1000-HOUSEKEEPING.                                              02230000
+      ***************************************************************** 02240000
+      **  A1000-HOUSEKEEPING                                         ** 02250000
+      ***************************************************************** 02260000
+                                                                        02270000
+            &AQOPCION(NO-ERROSQL)                                       02280000
+      *     DISPLAY 'A1000 START PROGRAM BKS03001'                      02290000
+      *     DISPLAY 'BKARLOG          '  BKARLOG                        02300000
+      *     DISPLAY 'BKARLOG1         '  BKARLOG1                       02310000
+      *     DISPLAY 'BKDATE           '  BKDATE                         02320000
+      *     DISPLAY 'BKMAIL           '  BKMAIL                         02330000
+      *     DISPLAY 'BKMON            '  BKMON                          02340000
+      *     DISPLAY 'BKREASON         '  BKREASON OF INPUT-TXN          02350000
+      *     DISPLAY 'BKSMS            '  BKSMS                          02360000
+      *     DISPLAY 'CO-FLOAMOU3      '  CO-FLOAMOU3                    02370000
+      *     DISPLAY 'DAT-TRX-FROM     '  DAT-TRX-FROM                   02380000
+      *     DISPLAY 'DAT-TRX-TO       '  DAT-TRX-TO                     02390000
+      *     DISPLAY 'COD-BRANCH       '  COD-BRANCH                     02400000
+      *     DISPLAY 'COD-USERID-TRX   '  COD-USERID-TRX                 02410000
+      *     DISPLAY 'COD-TERMINAL-TRX '  COD-TERMINAL-TRX               02420000
+           INITIALIZE OUTPUT-TXN                                        02430000
+                      CTBKACCN                                          02440000
+                      T04CNV97                                          02450000
+                      CTDKCM01                                          02460000
+                      WS-VARIABLES                                      02470000
+                                                                        02480000
+      *    PERFORM A1006-CHECK-PAGIA                                    02490000
+      *                                                                 02500000
+                                                                        02510000
+           MOVE BKARLOG  OF INPUT-TXN TO WS-ACCN OF WS-VARIABLES        02520000
+      *    PERFORM AXXXX-TEST                                           02530000
+      *    PERFORM A1001-VAL-ACC-CTBKACCN                               02540000
+      *    PERFORM A1002-VAL-ACC-T04CNV97                               02550000
+                                                                        02560000
+           MOVE BKARLOG1 OF INPUT-TXN TO WS-ACCN OF WS-VARIABLES        02570000
+      *    PERFORM A1001-VAL-ACC-CTBKACCN                               02580000
+      *    PERFORM A1002-VAL-ACC-T04CNV97                               02590000
+                                                                        02600000
+           PERFORM A1003-GET-PAGIA                                      02610000
+      *    MOVE 1234567890 TO   WS-SPIROS                               02620000
+      *    DISPLAY 'BK03 START ' WS-SPIROS                              02630000
+      *    CALL 'COCDENT'  USING  WS-SPIROS WS-SPIROS                   02640000
+      *    DISPLAY 'BK03 END   ' WS-SPIROS                              02650000
+           PERFORM A1004-ADD-CD                                         02660000
+           PERFORM A1005-CREATE-CD                                      02670000
+           .                                                            02680000
+                                                                        02690000
+      ***************************************************************** 02700000
+      *  A1006-CHECK-PAGIA                                           *  02710000
+      ***************************************************************** 02720000
+      *дем еимаи думатом ма упаявеи пациа апо тоус идиоус коцаяиаслоус* 02730000
+      *ENEяGг ╧ пяосыяим╒ апемеяцопоигл╦мг                            * 02740000
+      ***************************************************************** 02750000
+       A1006-CHECK-PAGIA        .                                       02760000
+      *    DISPLAY 'A1006-CHECK-PAGIA        '                          02770000
+           MOVE BKARLOG           OF INPUT-TXN                          02780000
+           TO  KEY-D-ARLOG1       OF CTDKCM01 .                         02790000
+                                                                        02800000
+           MOVE BKARLOG1          OF INPUT-TXN                          02810000
+           TO  KEY-D-ARLOG2       OF CTDKCM01 .                         02820000
+           EXEC SQL                                                     02830000
+             SELECT KEY_AR_PAGIA                                        02840000
+             INTO   :CTDKCM01.KEY-AR-PAGIA                              02850000
+             FROM    CTDKCM01                                           02860000
+             WHERE KEY_D_ARLOG1 =:CTDKCM01.KEY-D-ARLOG1 AND             02870000
+                   KEY_D_ARLOG2 =:CTDKCM01.KEY-D-ARLOG2 AND             02880000
+                   COD_STATUS_PAGIA IN ('A','I')                        02890000
+           END-EXEC                                                     02900000
+           MOVE SQLSTATE TO SQLSTATE-SIGLO.                             02910000
+           IF   IND-SQL-CORRECTO                                        02920000
+                                                                        02930000
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP               02940000
+                MOVE 'A1006-CHECK-PAGIA' TO ERR-PARAGRAPH OF BKERRORP   02950000
+                MOVE 'упаявеи олоиа пациа емтокг '                      02960000
+                TO      ERR-COMMENTS    OF BKERRORP                     02970000
+                MOVE   'CTDKCM01'                                       02980000
+                TO     ERR-TABLE                   OF BKERRORP          02990000
+                &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)                 03000000
+           END-IF                                                       03010000
+           .                                                            03020000
+      ***************************************************************** 03030000
+      *  A1005-CREATE-CD                                             *  03040000
+      ***************************************************************** 03050000
+       A1005-CREATE-CD          .                                       03060000
+      *                                                                 03070000
+      *    DISPLAY 'A1005-CREATE-CD          '                          03080000
+           MOVE WS-AR-PAGIA-1  TO WS-PICI                               03090000
+      *    DISPLAY 'BK03  ARPAGIA 1     ' WS-PICI                       03100000
+                                                                        03110000
+           COMPUTE WS-SUM = WS-DIGI1 * WS-MASK1         +               03120000
+                            WS-DIGI2 * WS-MASK2         +               03130000
+                            WS-DIGI3 * WS-MASK3         +               03140000
+                            WS-DIGI4 * WS-MASK4         +               03150000
+                            WS-DIGI5 * WS-MASK5         +               03160000
+                            WS-DIGI6 * WS-MASK6         +               03170000
+                            WS-DIGI7 * WS-MASK7         +               03180000
+                            WS-DIGI8 * WS-MASK8                         03190000
+                                                                        03200000
+           COMPUTE WS-AR-CD = 11 - FUNCTION MOD(WS-SUM , 11)            03210000
+      *    DISPLAY 'BK03  SUM    CD     ' WS-SUM                        03220000
+      *    DISPLAY 'BK03  CREATE-CD     ' WS-AR-CD                      03230000
+           .                                                            03240000
+      ***************************************************************** 03250000
+      *  A1004-ADD-CD                                                 * 03260000
+      ***************************************************************** 03270000
+       A1004-ADD-CD          .                                          03280000
+      *    DISPLAY 'A1004-ADD-CD          '                             03290000
+           IF  KEY-AR-PAGIA OF CTDKCM01 = 1000                          03300000
+               MOVE 1000 TO  WS-AR-PAGIA-1                              03310000
+               MOVE 0    TO  WS-AR-CD                                   03320000
+           ELSE                                                         03330000
+               MOVE KEY-AR-PAGIA OF CTDKCM01                            03340000
+               TO   WS-AR-PAGIA                                         03350000
+               ADD  1    TO  WS-AR-PAGIA-1                              03360000
+           END-IF                                                       03370000
+           .                                                            03380000
+      ***************************************************************** 03390000
+      *  A1003-GET-PAGIA                                              * 03400000
+      ***************************************************************** 03410000
+       A1003-GET-PAGIA       .                                          03420000
+      *    DISPLAY 'A1003-GET-PAGIA       '                             03430000
+                                                                        03440000
+           MOVE 1                                                       03450000
+           TO  COD-TYP-PAGIA      OF CTDKCM01 .                         03460000
+                                                                        03470000
+           EXEC SQL                                                     03480000
+             SELECT MAX(KEY_AR_PAGIA)                                   03490000
+             INTO   :CTDKCM01.KEY-AR-PAGIA :WS-IND-NULL-1               03500000
+             FROM    CTDKCM01                                           03510000
+             WHERE COD_TYP_PAGIA =:COD-TYP-PAGIA                        03520000
+             FETCH   FIRST 1 ROW ONLY                                   03530000
+           END-EXEC                                                     03540000
+           MOVE SQLSTATE TO SQLSTATE-SIGLO.                             03550000
+           EVALUATE TRUE                                                03560000
+               WHEN IND-SQL-CORRECTO                                    03570000
+                  IF WS-IND-NULL-1 IS NEGATIVE                          03580000
+                     MOVE 1000                                          03590000
+                     TO KEY-AR-PAGIA OF CTDKCM01                        03600000
+                  END-IF                                                03610000
+                WHEN OTHER                                              03620000
+      *    DISPLAY 'BK03 SQLCODE =  ' SQLCODE                           03630000
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP               03640000
+                MOVE 'A1003-GET-PAGIA' TO ERR-PARAGRAPH OF BKERRORP     03650000
+                MOVE 'кахос стгм епикоцг лав емтокгс'                   03660000
+                TO      ERR-COMMENTS    OF BKERRORP                     03670000
+                MOVE   'CTDKCM01'                                       03680000
+                TO     ERR-TABLE                   OF BKERRORP          03690000
+                &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)                 03700000
+           END-EVALUATE                                                 03710000
+           .                                                            03720000
+      ***************************************************************** 03730000
+      *  AXXXX-VAL-ACC-CTBKACCN                                       * 03740000
+      ***************************************************************** 03750000
+       AXXXX-TEST            .                                          03760000
+           &AQSRVERR(APL).                                              03770000
+           DISPLAY 'AXXXX-TEST            '                             03780000
+           IF WS-ACCN OF WS-VARIABLES >= 80000000                       03790000
+              MOVE '70'                                                 03800000
+              TO  DK-COD-EFARM  OF INPUT-TXN-120101                     03810000
+           ELSE                                                         03820000
+              MOVE '90'                                                 03830000
+              TO  DK-COD-EFARM  OF INPUT-TXN-120101                     03840000
+           END-IF                                                       03850000
+           MOVE WS-ACCN  TO    DK-ARLOGAR  OF INPUT-TXN-120101          03860000
+           MOVE SPACES   TO    DK-COD-KATHOL OF INPUT-TXN-120101        03870000
+           &AQENVIAR(1201,01).                                          03880000
+           IF FNDSEVEREERRORCODE NOT = ZERO                             03890000
+                DISPLAY 'AXXXX-TEST дем петуве  '                       03900000
+                &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)                 03910000
+           END-IF.                                                      03920000
+           DISPLAY 'AXXXX-TEST PETYXE ' .                               03930000
+           DISPLAY 'ON.' DK-ONOMA  (1) .                                03940000
+                                                                        03950000
+      ***************************************************************** 03960000
+      *  A1001-VAL-ACC-CTBKACCN                                       * 03970000
+      ***************************************************************** 03980000
+       A1001-VAL-ACC-CTBKACCN.                                          03990000
+      *    DISPLAY 'A1001-VAL-ACC-CTBKACCN'                             04000000
+           INITIALIZE CTBKACCN                                          04010000
+           IF WS-ACCN OF WS-VARIABLES >= 80000000                       04020000
+              MOVE '70'  TO COD-EFARM OF CTBKACCN                       04030000
+           ELSE                                                         04040000
+              MOVE '90'  TO COD-EFARM OF CTBKACCN                       04050000
+           END-IF                                                       04060000
+           MOVE WS-ACCN   OF WS-VARIABLES                               04070000
+             TO KEY-ARLOG OF CTBKACCN                                   04080000
+                                                                        04090000
+           EXEC SQL                                                     04100000
+             SELECT KEY_ARLOG,                                          04110000
+                    COD_KATHOL,                                         04120000
+                    IND_OROI                                            04130000
+             INTO   :CTBKACCN.KEY-ARLOG,                                04140000
+                    :CTBKACCN.COD-KATHOL,                               04150000
+                    :CTBKACCN.IND-OROI                                  04160000
+             FROM    CTBKACCN                                           04170000
+             WHERE  KEY_ARLOG      = :CTBKACCN.KEY-ARLOG                04180000
+               AND  COD_EFARM      = :CTBKACCN.COD-EFARM                04190000
+           END-EXEC                                                     04200000
+                                                                        04210000
+                                                                        04220000
+           MOVE SQLSTATE TO SQLSTATE-SIGLO.                             04230000
+           IF  NOT IND-SQL-CORRECTO                                     04240000
+      *    DISPLAY 'BK03 SQLCODE =  ' SQLCODE                           04250000
+      *     DISPLAY 'LOG CTBACCN  '  WS-ACCN   OF WS-VARIABLES          04260000
+              MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP                 04270000
+              MOVE '99'                                                 04280000
+              TO BKERRORCODE   OF OUTPUT-TXN                            04290000
+              INITIALIZE BKERROR-R                                      04300000
+              MOVE  LT-A-ACCN-NOT-FOUND     TO BKREASON OF BKERROR-R    04310000
+              MOVE  WS-ACCN OF WS-VARIABLES TO BKACCN   OF BKERROR-R    04320000
+              MOVE BKERROR                                              04330000
+              TO BKERRORDESCR OF OUTPUT-TXN                             04340000
+                  &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)               04350000
+           END-IF                                                       04360000
+           IF  ( COD-KATHOL OF CTBKACCN = 5116) OR                      04370000
+               ( COD-KATHOL OF CTBKACCN = 5117) OR                      04380000
+               ( COD-KATHOL OF CTBKACCN = 5120) OR                      04390000
+               ( COD-KATHOL OF CTBKACCN = 5121)                         04400000
+              MOVE '99'                                                 04410000
+              TO BKERRORCODE   OF OUTPUT-TXN                            04420000
+              INITIALIZE BKERROR-R                                      04430000
+              MOVE  LT-A-ERR-KATHOLIKO      TO BKREASON OF BKERROR-R    04440000
+              MOVE  WS-ACCN OF WS-VARIABLES TO BKACCN   OF BKERROR-R    04450000
+              MOVE BKERROR                                              04460000
+              TO BKERRORDESCR OF OUTPUT-TXN                             04470000
+                  &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)               04480000
+           END-IF                                                       04490000
+           IF IND-OROI OF CTBKACCN        NOT = 0                       04500000
+              MOVE '99'                                                 04510000
+              TO BKERRORCODE   OF OUTPUT-TXN                            04520000
+              INITIALIZE BKERROR-R                                      04530000
+              MOVE  LT-A-ERR-KATHOLIKO      TO BKREASON OF BKERROR-R    04540000
+              MOVE  WS-ACCN OF WS-VARIABLES TO BKACCN   OF BKERROR-R    04550000
+              MOVE BKERROR                                              04560000
+              TO BKERRORDESCR OF OUTPUT-TXN                             04570000
+                  &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)               04580000
+           END-IF                                                       04590000
+                                                                        04600000
+                         .                                              04610000
+      ***************************************************************** 04620000
+      *  A1002-VAL-ACC-T04CNV97                                       * 04630000
+      ***************************************************************** 04640000
+       A1002-VAL-ACC-T04CNV97.                                          04650000
+      *    DISPLAY 'A1002-VAL-ACC-T04CNV97'                             04660000
+           INITIALIZE T04CNV97                                          04670000
+           IF WS-ACCN OF WS-VARIABLES >= 80000000                       04680000
+              MOVE '70'                                                 04690000
+              TO COD-EFARM OF T04CNV97                                  04700000
+              MOVE WS-ACCN  OF WS-VARIABLES                             04710000
+              TO NUM-AR-LOGAR  OF T04CNV97 ( 1:8 )                      04720000
+              MOVE LT-A-01                                              04730000
+              TO NUM-AR-LOGAR  OF T04CNV97 (17:2 )                      04740000
+           ELSE                                                         04750000
+              MOVE '90'                                                 04760000
+              TO COD-EFARM OF T04CNV97                                  04770000
+              MOVE LT-A-0                                               04780000
+              TO NUM-AR-LOGAR  OF T04CNV97 ( 1:1 )                      04790000
+              MOVE WS-ACCN  OF WS-VARIABLES                             04800000
+              TO NUM-AR-LOGAR  OF T04CNV97 ( 2:8 )                      04810000
+              MOVE LT-A-01                                              04820000
+              TO NUM-AR-LOGAR  OF T04CNV97 (17:2 )                      04830000
+           END-IF                                                       04840000
+                                                                        04850000
+           EXEC SQL                                                     04860000
+             SELECT IND_OPEN_CLOSE,                                     04870000
+                    COD_KATMA                                           04880000
+             INTO   :T04CNV97.IND-OPEN-CLOSE,                           04890000
+                    :T04CNV97.COD-KATMA                                 04900000
+             FROM    T04CNV97                                           04910000
+             WHERE  NUM_AR_LOGAR   = :T04CNV97.NUM-AR-LOGAR             04920000
+               AND  COD_EFARM      = :T04CNV97.COD-EFARM                04930000
+           END-EXEC                                                     04940000
+                                                                        04950000
+                                                                        04960000
+           MOVE SQLSTATE TO SQLSTATE-SIGLO.                             04970000
+           IF  NOT IND-SQL-CORRECTO                                     04980000
+      *    DISPLAY 'BK03 SQLCODE =  ' SQLCODE                           04990000
+      *     DISPLAY 'LOG T04TCN97 '  WS-ACCN   OF WS-VARIABLES          05000000
+      *      BKPAGIA                                                    05010000
+              MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP                 05020000
+              MOVE '99'                                                 05030000
+              TO BKERRORCODE   OF OUTPUT-TXN                            05040000
+              INITIALIZE BKERROR-R                                      05050000
+              MOVE  LT-A-ACCN-NOT-FOUND     TO BKREASON OF BKERROR-R    05060000
+              MOVE  WS-ACCN OF WS-VARIABLES TO BKACCN   OF BKERROR-R    05070000
+              MOVE BKERROR                                              05080000
+              TO BKERRORDESCR OF OUTPUT-TXN                             05090000
+                  &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)               05100000
+           END-IF                                                       05110000
+           IF IND-OPEN-CLOSE OF T04CNV97       NOT = 0                  05120000
+      *     DISPLAY 'OPEN CLOSE   '  IND-OPEN-CLOSE OF T04CNV97         05130000
+              MOVE '99'                                                 05140000
+              TO BKERRORCODE   OF OUTPUT-TXN                            05150000
+              INITIALIZE BKERROR-R                                      05160000
+              MOVE  LT-A-ACCN-CLOSED        TO BKREASON OF BKERROR-R    05170000
+              MOVE  WS-ACCN OF WS-VARIABLES TO BKACCN   OF BKERROR-R    05180000
+              MOVE BKERROR                                              05190000
+              TO BKERRORDESCR OF OUTPUT-TXN                             05200000
+                  &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)               05210000
+           END-IF                                                       05220000
+                         .                                              05230000
+       A2000-PROCESS.                                                   05240000
+      ***************************************************************** 05250000
+      **  A2000-PROCESS                                              ** 05260000
+      ***************************************************************** 05270000
+      *        DISPLAY 'A2000'                                          05280000
+               PERFORM  A2001-LOAD-DATA.                                05290000
+               PERFORM  IO0001-INSERT-PAGIA.                            05300000
+                                                                        05310000
+      ****************************************************************  05320000
+      ** A2001-LOAD-DATA                                             ** 05330000
+      ****************************************************************  05340000
+       A2001-LOAD-DATA.                                                 05350000
+      *    DISPLAY 'A2001-LOAD-DATA      '                              05360000
+           INITIALIZE CTDKCM01.                                         05370000
+                                                                        05380000
+           MOVE 1                                                       05390000
+           TO  COD-CHANNEL        OF CTDKCM01 .                         05400000
+                                                                        05410000
+           MOVE WS-AR-PAGIA                                             05420000
+           TO  KEY-AR-PAGIA       OF CTDKCM01 .                         05430000
+                                                                        05440000
+           MOVE 1                                                       05450000
+           TO  COD-TYP-PAGIA      OF CTDKCM01 .                         05460000
+                                                                        05470000
+           MOVE  COD-BRANCH       OF INPUT-TXN                          05480000
+           TO  COD-KATMA          OF CTDKCM01 .                         05490000
+                                                                        05500000
+           MOVE DAT-TRX-FROM      OF INPUT-TXN                          05510000
+           TO  DAT-START-PAGIA    OF CTDKCM01 .                         05520000
+                                                                        05530000
+      *    MOVE DAT-TRX-TO        OF INPUT-TXN                          05540000
+      *    TO  DAT-DEACTIV-PAGIA  OF CTDKCM01 .                         05550000
+                                                                        05560000
+           MOVE BKARLOG           OF INPUT-TXN                          05570000
+           TO  KEY-D-ARLOG1       OF CTDKCM01 .                         05580000
+                                                                        05590000
+           MOVE BKARLOG1          OF INPUT-TXN                          05600000
+           TO  KEY-D-ARLOG2       OF CTDKCM01 .                         05610000
+                                                                        05620000
+           MOVE  CO-FLOAMOU3      OF INPUT-TXN                          05630000
+           TO  AMT-D-POSO         OF CTDKCM01 .                         05640000
+                                                                        05650000
+           IF  BKWEEK                                                   05660000
+                                                                        05670000
+             MOVE  0 TO IND-DKCM01-WEEK-DAY                             05680000
+             MOVE -1 TO IND-DKCM01-AVAIL-DAT1                           05690000
+             MOVE -1 TO IND-DKCM01-AVAIL-DAT2                           05700000
+             MOVE -1 TO IND-DKCM01-AVAIL-DAT3                           05710000
+                                                                        05720000
+             MOVE BKDATE            OF INPUT-TXN                        05730000
+             TO  COD-WEEK-DAY       OF CTDKCM01                         05740000
+                                                                        05750000
+            ELSE                                                        05760000
+                                                                        05770000
+               MOVE -1 TO IND-DKCM01-WEEK-DAY                           05780000
+                                                                        05790000
+               IF BKMON  OF INPUT-TXN NOT = ZEROES                      05800000
+                   MOVE  BKMON OF INPUT-TXN                             05810000
+                   TO  COD-AVAIL-DAT1     OF CTDKCM01                   05820000
+                   MOVE  0 TO IND-DKCM01-AVAIL-DAT1                     05830000
+               ELSE                                                     05840000
+                   MOVE -1 TO IND-DKCM01-AVAIL-DAT1                     05850000
+               END-IF                                                   05860000
+                                                                        05870000
+               IF BKMON1 OF INPUT-TXN NOT = ZEROES                      05880000
+                   MOVE  BKMON1 OF INPUT-TXN                            05890000
+                   TO  COD-AVAIL-DAT2     OF CTDKCM01                   05900000
+                   MOVE  0 TO IND-DKCM01-AVAIL-DAT2                     05910000
+               ELSE                                                     05920000
+                   MOVE -1 TO IND-DKCM01-AVAIL-DAT2                     05930000
+               END-IF                                                   05940000
+                                                                        05950000
+               IF BKMON2 OF INPUT-TXN NOT = ZEROES                      05960000
+                   MOVE  BKMON2 OF INPUT-TXN                            05970000
+                   TO  COD-AVAIL-DAT3     OF CTDKCM01                   05980000
+                   MOVE  0 TO IND-DKCM01-AVAIL-DAT3                     05990000
+               ELSE                                                     06000000
+                   MOVE -1 TO IND-DKCM01-AVAIL-DAT3                     06010000
+               END-IF                                                   06020000
+                                                                        06030000
+                                                                        06040000
+            END-IF.                                                     06050000
+                                                                        06060000
+                                                                        06070000
+           MOVE  BKMAIL  OF INPUT-TXN                                   06080000
+           TO  CHR-EMAIL          OF CTDKCM01 .                         06090000
+                                                                        06100000
+           MOVE  BKREASON OF INPUT-TXN                                  06110000
+           TO  CHR-DESCR-PAGIA    OF CTDKCM01 .                         06120000
+                                                                        06130000
+           MOVE  BKSMS            OF INPUT-TXN                          06140000
+           TO  CHR-CELL-PHONE     OF CTDKCM01 .                         06150000
+                                                                        06160000
+           MOVE COD-USERID-TRX    OF INPUT-TXN                          06170000
+           TO   CHR-USER-ID       OF CTDKCM01 .                         06180000
+                                                                        06190000
+           MOVE BKPAGIASTATUS     OF INPUT-TXN                          06200000
+           TO  COD-STATUS-PAGIA   OF CTDKCM01 .                         06210000
+                                                                        06220000
+           IF KEY-D-ARLOG1 OF CTDKCM01  >= 80000000                     06230000
+              MOVE '70'                                                 06240000
+              TO  COD-D-EFARM1   OF CTDKCM01                            06250000
+           ELSE                                                         06260000
+              MOVE '90'                                                 06270000
+              TO  COD-D-EFARM1   OF CTDKCM01                            06280000
+           END-IF                                                       06290000
+                                                                        06300000
+           IF KEY-D-ARLOG2 OF CTDKCM01  >= 80000000                     06310000
+              MOVE '70'                                                 06320000
+              TO  COD-D-EFARM2   OF CTDKCM01                            06330000
+           ELSE                                                         06340000
+              MOVE '90'                                                 06350000
+              TO  COD-D-EFARM2   OF CTDKCM01                            06360000
+           END-IF                                                       06370000
+                                                                        06380000
+           IF BKMAIL  OF INPUT-TXN NOT = SPACES                         06390000
+              MOVE 2                                                    06400000
+              TO  COD-INFORM-CUST    OF CTDKCM01                        06410000
+           ELSE                                                         06420000
+             IF BKSMS   OF INPUT-TXN NOT = SPACES                       06430000
+                MOVE 1                                                  06440000
+                TO  COD-INFORM-CUST    OF CTDKCM01                      06450000
+             ELSE                                                       06460000
+                MOVE 0                                                  06470000
+                TO  COD-INFORM-CUST    OF CTDKCM01                      06480000
+             END-IF                                                     06490000
+           END-IF                                                       06500000
+                                                                        06510000
+           MOVE 0                                                       06520000
+           TO AMT-D-TD-MAX OF CTDKCM01                                  06530000
+                                                                        06540000
+                                                                        06550000
+                                                                        06560000
+      *    TO  AMT-D-LOG1-MIN     OF CTDKCM01 .                         06570000
+      *    TO  KEY-IBAN-D-ARLOG2  OF CTDKCM01 .                         06580000
+      *    TO  KEY-TD-ARLOG1      OF CTDKCM01 .                         06590000
+      *    TO  KEY-TD-ARLOG2      OF CTDKCM01 .                         06600000
+      *    TO  AMT-TD-LOG-MIN     OF CTDKCM01 .                         06610000
+      *    TO  AMT-D-DB-MIN       OF CTDKCM01 .                         06620000
+      *    TO  AMT-AVAIL1         OF CTDKCM01 .                         06630000
+      *    TO  AMT-AVAIL2         OF CTDKCM01 .                         06640000
+      *    TO  AMT-AVAIL3         OF CTDKCM01 .                         06650000
+                                                                        06660000
+      *02  BK03001I.                                                    06670000
+      *  04  COD-TERMINAL-TRX                    PIC 9(4).              06680000
+                                                                        06690000
+               .                                                        06700000
+       IO0001-INSERT-PAGIA.                                             06710000
+      ****************************************************************  06720000
+      ** IO0001-INSERT-PAGIA.                                        ** 06730000
+      ****************************************************************  06740000
+      *    DISPLAY 'IO0001-INSERT-PAGIA  '                              06750000
+           EXEC SQL INSERT INTO CTDKCM01                                06760000
+           (                                                            06770000
+               COD_CHANNEL               ,                              06780000
+               KEY_AR_PAGIA              ,                              06790000
+               COD_TYP_PAGIA             ,                              06800000
+               COD_KATMA                 ,                              06810000
+               DAT_START_PAGIA           ,                              06820000
+               KEY_D_ARLOG1              ,                              06830000
+               COD_D_EFARM1              ,                              06840000
+               AMT_D_POSO                ,                              06850000
+               AMT_D_LOG1_MIN            ,                              06860000
+               KEY_D_ARLOG2              ,                              06870000
+               COD_D_EFARM2              ,                              06880000
+               KEY_IBAN_D_ARLOG2         ,                              06890000
+               KEY_TD_ARLOG1             ,                              06900000
+               KEY_TD_ARLOG2             ,                              06910000
+               AMT_TD_LOG_MIN            ,                              06920000
+               AMT_D_DB_MIN              ,                              06930000
+               COD_WEEK_DAY   ,                                         06940000
+               COD_AVAIL_DAT1 ,                                         06950000
+               AMT_AVAIL1                ,                              06960000
+               COD_AVAIL_DAT2 ,                                         06970000
+               AMT_AVAIL2                ,                              06980000
+               COD_AVAIL_DAT3 ,                                         06990000
+               AMT_AVAIL3                ,                              07000000
+               COD_STATUS_PAGIA          ,                              07010000
+               CHR_DESCR_PAGIA           ,                              07020000
+               COD_INFORM_CUST           ,                              07030000
+               CHR_CELL_PHONE            ,                              07040000
+               CHR_EMAIL                 ,                              07050000
+               CHR_USER_ID               ,                              07060000
+               KEY_TIMESTAMP             ,                              07070000
+               AMT_D_TD_MAX                                             07080000
+             )                                                          07090000
+             VALUES                                                     07100000
+             (                                                          07110000
+              :CTDKCM01.COD-CHANNEL               ,                     07120000
+              :CTDKCM01.KEY-AR-PAGIA              ,                     07130000
+              :CTDKCM01.COD-TYP-PAGIA             ,                     07140000
+              :CTDKCM01.COD-KATMA                 ,                     07150000
+              :CTDKCM01.DAT-START-PAGIA           ,                     07160000
+              :CTDKCM01.KEY-D-ARLOG1              ,                     07170000
+              :CTDKCM01.COD-D-EFARM1              ,                     07180000
+              :CTDKCM01.AMT-D-POSO                ,                     07190000
+              :CTDKCM01.AMT-D-LOG1-MIN            ,                     07200000
+              :CTDKCM01.KEY-D-ARLOG2              ,                     07210000
+              :CTDKCM01.COD-D-EFARM2              ,                     07220000
+              :CTDKCM01.KEY-IBAN-D-ARLOG2         ,                     07230000
+              :CTDKCM01.KEY-TD-ARLOG1             ,                     07240000
+              :CTDKCM01.KEY-TD-ARLOG2             ,                     07250000
+              :CTDKCM01.AMT-TD-LOG-MIN            ,                     07260000
+              :CTDKCM01.AMT-D-DB-MIN              ,                     07270000
+              :CTDKCM01.COD-WEEK-DAY    :IND-DKCM01-WEEK-DAY,           07280000
+              :CTDKCM01.COD-AVAIL-DAT1  :IND-DKCM01-AVAIL-DAT1,         07290000
+              :CTDKCM01.AMT-AVAIL1                ,                     07300000
+              :CTDKCM01.COD-AVAIL-DAT2  :IND-DKCM01-AVAIL-DAT2 ,        07310000
+              :CTDKCM01.AMT-AVAIL2                ,                     07320000
+              :CTDKCM01.COD-AVAIL-DAT3  :IND-DKCM01-AVAIL-DAT3 ,        07330000
+              :CTDKCM01.AMT-AVAIL3                ,                     07340000
+      *       :CTDKCM01.COD-EXCEP-MONTH1          ,                     07350000
+      *       :CTDKCM01.COD-EXCEP-MONTH2          ,                     07360000
+      *       :CTDKCM01.COD-EXCEP-MONTH3          ,                     07370000
+      *       :CTDKCM01.DAT-DEACTIV-PAGIA         ,                     07380000
+              :CTDKCM01.COD-STATUS-PAGIA          ,                     07390000
+              :CTDKCM01.CHR-DESCR-PAGIA           ,                     07400000
+              :CTDKCM01.COD-INFORM-CUST           ,                     07410000
+              :CTDKCM01.CHR-CELL-PHONE            ,                     07420000
+              :CTDKCM01.CHR-EMAIL                 ,                     07430000
+              :CTDKCM01.CHR-USER-ID               ,                     07440000
+              CURRENT       TIMESTAMP             ,                     07450000
+              :CTDKCM01.AMT-D-TD-MAX                                    07460000
+               )                                                        07470000
+           END-EXEC.                                                    07480000
+                                                                        07490000
+           MOVE SQLSTATE TO SQLSTATE-SIGLO.                             07500000
+           IF NOT IND-SQL-CORRECTO                                      07510000
+      *    DISPLAY 'BK03 SQLSTATE=  ' SQLSTATE                          07520000
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP               07530000
+                MOVE 'IO1001-INSERT'   TO ERR-PARAGRAPH OF BKERRORP     07540000
+                MOVE 'кахос стгм еисацыцг пациас емтокгс'               07550000
+                TO      ERR-COMMENTS    OF BKERRORP                     07560000
+                MOVE   'CTDKCM01'                                       07570000
+                TO     ERR-TABLE                   OF BKERRORP          07580000
+                  &AQERROR(ERROR, LT-ERR-INSERT,BKERRORP)               07590000
+           END-IF.                                                      07600000
+           MOVE KEY-AR-PAGIA OF CTDKCM01                                07610000
+           TO BKPAGIA OF OUTPUT-TXN.                                    07620000
+                                                                        07630000
+       A8000-WRAP-UP.                                                   07640000
+      ***************************************************************** 07650000
+      **  A8000-WRAP-UP                                              ** 07660000
+      ***************************************************************** 07670000
+      *        DISPLAY 'A8000' .                                        07680000
+                                                                        07690000
+      *    EXEC SQL DECLARE CTDKCM01 TABLE                              07700000
+      *    ( COD_CHANNEL                    DECIMAL(2, 0) NOT NULL,     07710000
+      *      KEY_AR_PAGIA                   DECIMAL(9, 0) NOT NULL,     07720000
+      *      COD_TYP_PAGIA                  DECIMAL(2, 0) NOT NULL,     07730000
+      *      COD_KATMA                      CHAR(4) NOT NULL,           07740000
+      *      DAT_START_PAGIA                DATE NOT NULL,              07750000
+      *      KEY_D_ARLOG1                   DECIMAL(9, 0) NOT NULL,     07760000
+      *      COD_D_EFARM1                   CHAR(2) NOT NULL,           07770000
+      *      AMT_D_POSO                     DECIMAL(15, 2) NOT NULL,    07780000
+      *      AMT_D_LOG1_MIN                 DECIMAL(15, 2) NOT NULL,    07790000
+      *      KEY_D_ARLOG2                   DECIMAL(9, 0) NOT NULL,     07800000
+      *      COD_D_EFARM2                   CHAR(2) NOT NULL,           07810000
+      *      KEY_IBAN_D_ARLOG2              CHAR(28) NOT NULL,          07820000
+      *      KEY_TD_ARLOG1                  DECIMAL(9, 0) NOT NULL,     07830000
+      *      KEY_TD_ARLOG2                  DECIMAL(9, 0) NOT NULL,     07840000
+      *      AMT_TD_LOG_MIN                 DECIMAL(15, 2) NOT NULL,    07850000
+      *      AMT_D_DB_MIN                   DECIMAL(15, 2) NOT NULL,    07860000
+      *      COD_WEEK_DAY                   DECIMAL(2, 0),              07870000
+      *      COD_AVAIL_DAT1                 DECIMAL(2, 0),              07880000
+      *      AMT_AVAIL1                     DECIMAL(15, 2) NOT NULL,    07890000
+      *      COD_AVAIL_DAT2                 DECIMAL(2, 0),              07900000
+      *      AMT_AVAIL2                     DECIMAL(15, 2) NOT NULL,    07910000
+      *      COD_AVAIL_DAT3                 DECIMAL(2, 0),              07920000
+      *      AMT_AVAIL3                     DECIMAL(15, 2) NOT NULL,    07930000
+      *      COD_EXCEP_MONTH1               DECIMAL(2, 0),              07940000
+      *      COD_EXCEP_MONTH2               DECIMAL(2, 0),              07950000
+      *      COD_EXCEP_MONTH3               DECIMAL(2, 0),              07960000
+      *      DAT_DEACTIV_PAGIA              DATE,                       07970000
+      *      COD_STATUS_PAGIA               CHAR(1) NOT NULL,           07980000
+      *      CHR_DESCR_PAGIA                CHAR(50) NOT NULL,          07990000
+      *      COD_INFORM_CUST                DECIMAL(2, 0) NOT NULL,     08000000
+      *      CHR_CELL_PHONE                 CHAR(15) NOT NULL,          08010000
+      *      CHR_EMAIL                      CHAR(40) NOT NULL,          08020000
+      *      CHR_USER_ID                    CHAR(8) NOT NULL,           08030000
+      *      KEY_TIMESTAMP                  TIMESTAMP NOT NULL,         08040000
+      *      AMT_D_TD_MAX                   DECIMAL(15, 2) NOT NULL     08050000
+      *    ) END-EXEC.                                                  08060000
+      ******************************************************************08070000
+      * COBOL DECLARATION FOR TABLE DCBOGDB2.CTDKCM01                  *08080000
+      ******************************************************************08090000
+      *01  CTDKCM01.                                                    08100000
+      *    10 COD-CHANNEL          PIC S9(2)V USAGE COMP-3.             08110000
+      *    10 KEY-AR-PAGIA         PIC S9(9)V USAGE COMP-3.             08120000
+      *    10 COD-TYP-PAGIA        PIC S9(2)V USAGE COMP-3.             08130000
+      *    10 COD-KATMA            PIC X(4).                            08140000
+      *    10 DAT-START-PAGIA      PIC X(10).                           08150000
+      *    10 KEY-D-ARLOG1         PIC S9(9)V USAGE COMP-3.             08160000
+      *    10 COD-D-EFARM1         PIC X(2).                            08170000
+      *    10 AMT-D-POSO           PIC S9(13)V9(2) USAGE COMP-3.        08180000
+      *    10 AMT-D-LOG1-MIN       PIC S9(13)V9(2) USAGE COMP-3.        08190000
+      *    10 KEY-D-ARLOG2         PIC S9(9)V USAGE COMP-3.             08200000
+      *    10 COD-D-EFARM2         PIC X(2).                            08210000
+      *    10 KEY-IBAN-D-ARLOG2    PIC X(28).                           08220000
+      *    10 KEY-TD-ARLOG1        PIC S9(9)V USAGE COMP-3.             08230000
+      *    10 KEY-TD-ARLOG2        PIC S9(9)V USAGE COMP-3.             08240000
+      *    10 AMT-TD-LOG-MIN       PIC S9(13)V9(2) USAGE COMP-3.        08250000
+      *    10 AMT-D-DB-MIN         PIC S9(13)V9(2) USAGE COMP-3.        08260000
+      *    10 COD-WEEK-DAY         PIC S9(2)V USAGE COMP-3.             08270000
+      *    10 COD-AVAIL-DAT1       PIC S9(2)V USAGE COMP-3.             08280000
+      *    10 AMT-AVAIL1           PIC S9(13)V9(2) USAGE COMP-3.        08290000
+      *    10 COD-AVAIL-DAT2       PIC S9(2)V USAGE COMP-3.             08300000
+      *    10 AMT-AVAIL2           PIC S9(13)V9(2) USAGE COMP-3.        08310000
+      *    10 COD-AVAIL-DAT3       PIC S9(2)V USAGE COMP-3.             08320000
+      *    10 AMT-AVAIL3           PIC S9(13)V9(2) USAGE COMP-3.        08330000
+      *    10 COD-EXCEP-MONTH1     PIC S9(2)V USAGE COMP-3.             08340000
+      *    10 COD-EXCEP-MONTH2     PIC S9(2)V USAGE COMP-3.             08350000
+      *    10 COD-EXCEP-MONTH3     PIC S9(2)V USAGE COMP-3.             08360000
+      *    10 DAT-DEACTIV-PAGIA    PIC X(10).                           08370000
+      *    10 COD-STATUS-PAGIA     PIC X(1).                            08380000
+      *    10 CHR-DESCR-PAGIA      PIC X(50).                           08390000
+      *    10 COD-INFORM-CUST      PIC S9(2)V USAGE COMP-3.             08400000
+      *    10 CHR-CELL-PHONE       PIC X(15).                           08410000
+      *    10 CHR-EMAIL            PIC X(40).                           08420000
+      *    10 CHR-USER-ID          PIC X(8).                            08430000
+      *    10 KEY-TIMESTAMP        PIC X(26).                           08440000
+      *    10 AMT-D-TD-MAX         PIC S9(13)V9(2) USAGE COMP-3.        08450000
+

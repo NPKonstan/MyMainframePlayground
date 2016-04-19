@@ -1,0 +1,61 @@
+//DK554P   JOB (ACCTNO),PROGRAMMER,NOTIFY=TSOID,USER=P,REGION=6M,
+//         TYPRUN=HOLD,
+//         CLASS=I,MSGCLASS=X,MSGLEVEL=(1,1)
+//*
+/*JOBPARM SYSAFF=SYP1
+//*
+//  JCLLIB ORDER=(CBG.PROD.PROC)
+//*
+//JOBLIB   DD  DSN=DSN710.DB2P.RUNLIB.LOAD,DISP=SHR
+//         DD  DSN=SYS1.DSN710.SDSNLOAD,DISP=SHR
+//         DD  DSN=CBG.PROD.LOAD,DISP=SHR          PROD PROGRAMS
+//         DD  DSN=MVSMS12.LINKLIB,DISP=SHR FOR    MVS-MS ROUTINES
+//*************************************************/
+//* DATE FORMAT FOR CSX3PPRO = HHMMEE             */
+//*************************************************/
+//**********************************************************************00001200
+//CZX3PPRO EXEC PGM=CZX3PPRO,PARM='DATE=,UPSI=,USER='                   00001100
+//**********************************************************************00001200
+//*****************************************************
+//* DELETE FILE DK.P.CD.DKDSKTAL
+//*****************************************************
+//DK554A1  EXEC PGM=IEFBR14
+//DD1       DD  DSN=DK.P.CD.DKDSKTAL,
+//          DISP=(MOD,DELETE,DELETE),
+//          SPACE=(13,(10,99),RLSE,,ROUND)
+//*****************************************************
+//*
+//**********************************************************************00001200
+//*
+//DK554A03 EXEC   PGM=IKJEFT01,DYNAMNBR=20
+//SYSPRINT DD  SYSOUT=*
+//SYSDBOUT DD  SYSOUT=*
+//SYSUDUMP DD  SYSOUT=*
+//SYSTSPRT DD  SYSOUT=*
+//SYSABEND DD  SYSOUT=*
+//SYSOUT   DD  SYSOUT=*
+//INFILE1  DD DSN=DK.P.XS.TAM20BIG(0),DISP=SHR
+//ETAIRIE  DD DSN=DK.P.DM.DKTRPEPX,DISP=SHR
+//MISFILE  DD UNIT=(SYSDA),SPACE=(900,(90,9),RLSE),AVGREC=K,
+//            DCB=(SYS2.DSCB,RECFM=FB,LRECL=500),
+//            DSN=DK.P.XS.MISBFILE(+1),DISP=(NEW,CATLG,DELETE)
+//PRT      DD SYSOUT=A,UCS=CBG
+//SYSTSIN DD *
+  DSN SYSTEM(DB2P) RETRY(0) TEST(0)
+  RUN PROGRAM(DK554) PLAN(CBPBATCH)
+END
+/*
+//DK554A5  EXEC PGM=SORT,COND=(0,LT)                                    00003100
+//SORTLIB  DD DSN=SYS1.SORTLIB,DISP=SHR                                 00003200
+//SYSOUT   DD SYSOUT=*                                                  00003300
+//SORTIN   DD DSN=DK.P.XS.MISBFILE(+1),DISP=SHR                         00002100
+//SORTOUT  DD DCB=(SYS2.DSCB,RECFM=FB,LRECL=500,                        00003500
+//            BLKSIZE=0),                                               00003600
+//            DSN=DK.P.CD.DKDSKTAL,
+//            DISP=(NEW,CATLG,DELETE),                                  00002600
+//            SPACE=(27945,(50000,1000),RLSE)                           00003700
+//SYSIN    DD *                                                         00003800
+ SORT FIELDS=COPY                                                       00004000
+ RECORD TYPE=F,LENGTH=500                                               00004100
+/*                                                                      00004600
+

@@ -1,0 +1,11 @@
+//DKNIK JOB (COMPLINK),KONSTAN,CLASS=T,MSGCLASS=X,                      00010001
+//          MSGLEVEL=(1,1),NOTIFY=KONSTAN                               00020001
+//*                                                                     00030000
+//PLILNKED        EXEC PROC=PCOMPLK,LIBUSER=KONSTAN                     00040000
+//*   THIS PROCEDURE IS FOR COMPILE AND LINK-EDIT A PLI PROGRAM         00050000
+//PLI.SYSIN       DD  DISP=SHR,DSN=KONSTAN.PRIVATE.SRC(NPK10)           00060002
+//PLI.SYSPRINT    DD  SYSOUT=*                                          00070000
+//LKED.SYSPRINT   DD  SYSOUT=*                                          00080000
+//LKED.SYSLMOD    DD  DISP=SHR,DSN=KONSTAN.PRIVATE.LOAD(NPK10)          00090002
+//*                                                                     00100001
+

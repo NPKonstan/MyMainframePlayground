@@ -1,0 +1,21 @@
+ #include <stdio.h>
+ int main(void)
+ {
+   FILE *fp;
+   fp     = fopen("DD:MYFILE", "r" );
+   if ( fp == NULL ) {
+     perror( "fopen" );
+   }
+   else
+  {
+     char filename [1000];
+     fldata_t fileinfo;
+     int rc = fldata(fp    , filename, &fileinfo);
+     if (rc != 0)
+        printf("fldata failed\n");
+     else
+        printf("filename is %s\n",fileinfo.__dsname) ;
+     fclose(fp);
+     }
+     }
+

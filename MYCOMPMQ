@@ -1,0 +1,7 @@
+//CICPLI          EXEC PROC=MQPLLK,LIBUSER=KONSTAN                      00003406
+//TRN.SYSIN       DD  DISP=SHR,DSN=CBG.TEST.SOURCE(DKWRTDT)             00005003
+//TRN.SYSPRINT    DD  SYSOUT=*                                          00005100
+//LKED.SYSPRINT   DD  SYSOUT=*                                          00007000
+//LKED.SYSLMOD    DD  DISP=SHR,DSN=CBG.TEST.OLOAD(DKWRTDT)              00008004
+//*                                                                     00009700
+

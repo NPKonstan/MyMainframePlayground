@@ -1,0 +1,594 @@
+/************************* REXX **************************************/
+/****                                                             ****/
+/**** Licensed Materials - Program Property of IBM.               ****/
+/**** This product contains "Restricted Materials of IBM"         ****/
+/**** 5694-A01 (C) Copyright IBM Corp. 1993, 2001.                ****/
+/**** All rights reserved.                                        ****/
+/**** See IBM Copyright Instructions                              ****/
+/*                                                                   */
+/*  TCP/IP for MVS                                                   */
+/*  SMP/E Distribution Name: EZADZ004                                */
+/****                                                             ****/
+/**** US Government Users Restricted Rights -                     ****/
+/**** Use, duplication or disclosure restricted                   ****/
+/**** by GSA ADP Schedule Contract with IBM Corp.                 ****/
+/****                                                             ****/
+/*********************************************************************/
+/****                                                             ****/
+/**** Name:  SMTPNOTE                                             ****/
+/****                                                             ****/
+/**** Function:                                                   ****/
+/****                                                             ****/
+/****   SMTPNOTE allows a user to prepare and send notes over     ****/
+/****   a TCP/IP network using SMTP. It accepts as arguments      ****/
+/****   a recipient mail box (TO), a carbon copy mail box (CC),   ****/
+/****   the subject of the note (SU), the name of a dataset to    ****/
+/****   import into the note (DA), and a keyword (REUSE) which    ****/
+/****   lets the user reuse the contents of a note which was      ****/
+/****   previously cancelled.  All the parameters are optional.   ****/
+/****                                                             ****/
+/****   If the user does not specify TO, CC, or SU in the         ****/
+/****   invocation of the CLIST, SMPTNOTE will prompt for these   ****/
+/****   parameters.  If prompted by SMTPNOTE, the user may enter  ****/
+/****   a list of recipient mail boxes and/or a list of carbon    ****/
+/****   copy mail boxes (one on each line) terminated by a blank  ****/
+/****   line. At least one recipient mail box must be specified,  ****/
+/****   either in the CLIST invocation (using the TO parameter)   ****/
+/****   or when prompted by SMTPNOTE.                             ****/
+/****                                                             ****/
+/****   SMTPNOTE uses the TSO EDIT command to allow the user      ****/
+/****   to prepare the text of his or her notes.  EDIT is a       ****/
+/****   line mode editor and all the functions it supports are    ****/
+/****   available to the user when preparing notes.               ****/
+/****                                                             ****/
+/****   The contents of the note are stored in a temporary        ****/
+/****   dataset (variable, blocked, sequential) with a block      ****/
+/****   size 3120, and a record length of 255.  This means that   ****/
+/****   lines in the note can be up to 243 characters in length.  ****/
+/****   Lines that are longer than 243 are detected as a problem @02C*/
+/****   and will terminate SMTPNOTE.                             @02C*/
+/****   Once the user has completed his note, SMTPNOTE            ****/
+/****   builds an RFC 822 header and inserts it at the top of     ****/
+/****   the note.  It then prefixes the necessary SMTP commands   ****/
+/****   and transmits the note over NJE to the SMTP address       ****/
+/****   space on the user's system, to the SMTP address space at  ****/
+/****   a TCP-NJE gateway host, or the the SMTP virtual machine   ****/
+/****   at a TCP-RSCS gateway host.                               ****/
+/****                                                             ****/
+/*********************************************************************/
+/****                                                             ****/
+/**** Customization:                                              ****/
+/****                                                             ****/
+/****   To install SMTPNOTE, copy it into a PDS where other       ****/
+/****   common EXECs are located, for example 'SYS1.EXEC'.        ****/
+/****   SMTPNOTE can reside in a PDS with either fixed or         ****/
+/****   variable length records, as long as the record length is  ****/
+/****   at least 80 characters.  Users who wish to use SMTPNOTE   ****/
+/****   must have this dataset allocated to their 'SYSPROC' or    ****/
+/****   SYSEXEC file, probably as a concatenation of several      ****/
+/****   datasets.                                                 ****/
+/****                                                             ****/
+/****   The following lines set five variables which affect the   ****/
+/****   way SMTPNOTE behaves.  The values provided are examples   ****/
+/****   only and should be changed, where appropriate, to         ****/
+/****   reflect your particular system.                           ****/
+/****                                                             ****/
+/****                                                             ****/
+/****   HOSTNAME   The name of the system on which this EXEC is   ****/
+/****              installed (typically the NJE node name of this ****/
+/****              system).                                       ****/
+/****                                                             ****/
+                   hostname =  sysvar(sysnode)
+/****                                                             ****/
+/****                                                             ****/
+/****   SMTPNODE   The NJE node on which the SMTP address space   ****/
+/****              or virtual machine runs.  Typically HOSTNAME   ****/
+/****              and SMTPNODE will have the same value.  In the ****/
+/****              case where SMTPNOTE is being used on a NJE     ****/
+/****              network in conjunction with a TCP-NJE gateway, ****/
+/****              the value of SMTPNODE will be the NJE node     ****/
+/****              name of the TCP-NJE gateway.                   ****/
+/****                                                             ****/
+                   smtpnode = sysvar(sysnode)
+/****                                                             ****/
+/****                                                             ****/
+/****   SMTPJOB    The name of the address space or virtual       ****/
+/****              machine in which SMTP runs at SMTPNODE.        ****/
+/****              Usually this is "SMTP".                        ****/
+/****                                                             ****/
+                   smtpjob = "SMTP"
+/****                                                             ****/
+/****                                                             ****/
+/****   TEMPDSN    The name of the temporary dataset used to      ****/
+/****              store the contents of notes being created.     ****/
+/****              This can be any arbitrary dataset name but it  ****/
+/****              must end with '.TEXT'.  DO NOT put single      ****/
+/****              quotes around the name, i.e. use a fully       ****/
+/****              qualified dataset name, as this will result    ****/
+/****              in multiple TSO users using the same           ****/
+/****              temporary dataset.                             ****/
+/****                                                             ****/
+                   tempdsn = "SMTPNOTE.TEXT"
+                   if sysvar('syspref') = "" then
+                      tempdsn = userid()"."tempdsn
+/****                                                             ****/
+/****                                                             ****/
+/****   TIMEZONE   The time zone which appears in the "Date:"     ****/
+/****              stamp of the RFC 822 header.                   ****/
+/****                                                             ****/
+                   timezone = "EST"
+/****                                                             ****/
+/****   ATSIGN     Some foreign language need to have a different@A2A*/
+/****              character represent the at symbol             @A2A*/
+/****                                                            @A2A*/
+                   atsign   = "@"                             /* @A2A*/
+/****                                                             ****/
+/****   DDNAME     The DDNAME that SMTPNOTE will use to allocate @N1A*/
+/****              the input data set to allow shared access to  @N1A*/
+/****              the data set.                                 @N1A*/
+/****                                                            @N1A*/
+                   ddname  = "EZBSMTPN"                       /* @N1A*/
+/****                                                             ****/
+/*********************************************************************/
+trace o
+
+parse arg parms
+parse source system .                /* find out where we are      */
+if parms = '?' then do
+   if system = 'TSO' then 'HELP SMTPNOTE'   /* get the normal help */
+                     else say "EZA5591E HELP ONLY AVAILABLE UNDER TSO"
+   exit                              /* and then exit              */
+end
+to  = ''
+cc  = ''
+nocc = ''
+su = ''
+da = ''
+reuse = ''
+debug = ''
+batch = ''
+i = 1                                 /* get number of parms.      */
+j = words(parms)                      /* get number of parms.      */
+do while i<=j                         /* Scan all parms.           */
+  parmword = word(parms,i)
+  parse var parmword parm '(' value ')' .
+  select
+    when abbrev('TO',translate(parm),1) then do
+         myindex = wordindex(parms,i)
+         tovar = substr(parms,myindex)
+         parse var tovar parm "(" to ")" parms
+         if (to = "") then do
+            errcode=0013
+            call errexit
+            exit 1
+         end
+         i = 0
+         j = words(parms)
+    end
+    when abbrev('CC',translate(parm),1) then do
+         myindex = wordindex(parms,i)
+         ccvar = substr(parms,myindex)
+         parse var ccvar parm "(" cc ")" parms
+         if (cc = "") then do
+            errcode=0014
+            call errexit
+            exit 1
+         end
+         i = 0
+         j = words(parms)
+    end
+    when abbrev('NOCC',translate(parmword),3) then nocc = 'NOCC'
+    when abbrev('SUBJECT',translate(parm),1) then do
+         myindex = wordindex(parms,i)
+         subj = substr(parms,myindex)
+         if substr(value,1,1) = "'" then do
+             parse var subj parm "'" su "'" parms
+             if substr(parms,1,1) = ')' then parms = substr(parms,2)
+         end
+         else
+            if substr(value,1,1) = '"' then do
+               parse var subj parm '"' su '"' parms
+               if substr(parms,1,1) = ')' then parms = substr(parms,2)
+            end
+            else parse var subj parm "(" su ")" parms
+         i = 0
+         j = words(parms)
+    end
+    when abbrev('DATASET',translate(parm),1) then do
+
+    /* If parenthesis is found then assume dataset is PDS and  @01A */
+    /* not sequential so append closing parenthesis            @01A */
+    if (pos('(',value) > 0) then do                          /*@01A */
+                                 value = value !! ')'        /*@01A */
+                                 end                         /*@01A */
+    if (pos('(',value) > 0 & pos("'",value) > 0) then do     /*@04A */
+                                 value = value !! "'"        /*@04A */
+                                 end                         /*@04A */
+
+    da = value
+    if (da = "") then do
+       errcode=0015
+       call errexit
+       exit 1
+    end
+    end
+    when abbrev('REUSE',translate(parmword),1) then reuse = 'REUSE'
+    when abbrev('DEBUG',translate(parmword),2) then debug = 'DEBUG'
+    when abbrev('BATCH',translate(parmword),1) then batch = 'BATCH'
+    otherwise
+      errparm=word(parms,i)
+      errcode=0010
+      call errexit
+      exit 1
+    end
+    i = i+1
+end
+
+if (batch = "BATCH") then
+   if (da = "") then do
+      errcode=0011
+      call errexit
+      exit 1
+   end
+
+if debug = "DEBUG" then do
+    trace r
+    x = msg("ON")                                             /* @A1C*/
+end
+else x = msg("OFF")                                           /* @A1C*/
+
+errcode = 0
+recovlvl = 0
+/*********************************************************************/
+/****                                                             ****/
+/**** If NOCC was specified then check for conflict with the CC   ****/
+/**** parameter.                                                  ****/
+/****                                                             ****/
+/*********************************************************************/
+if nocc = 'NOCC' then do
+    if cc ^= '' then do
+        errcode = 012
+        call ERREXIT
+    end
+end
+/*********************************************************************/
+/****                                                             ****/
+/**** If REUSE was specified then check for conflict with the DA  ****/
+/**** parameter.  If there is no temporary dataset to reuse then  ****/
+/**** ignore the REUSE parameter.                                 ****/
+/****                                                             ****/
+/*********************************************************************/
+if reuse = "REUSE" then do
+    if da ^= "" then do
+        errcode = 007
+        call ERREXIT
+    end
+    if sysdsn(tempdsn) = "DATASET NOT FOUND" then
+        reuse = ""
+end
+/*********************************************************************/
+/****                                                             ****/
+/**** If the previously cancelled note will not be used then      ****/
+/**** copy the specified dataset (DA) to the temporary dataset,   ****/
+/**** or allocate it.  Any previous data is deleted first.        ****/
+/****                                                             ****/
+/*********************************************************************/
+if reuse = "" then do
+    errcode = 0
+    if sysdsn(tempdsn) ^= "DATASET NOT FOUND" then do
+        address TSO "delete" tempdsn "purge"
+        if rc ^= 0 then do
+            errcode = 006
+            call ERREXIT
+        end
+    end
+    if da ^= "" then do
+        sub1 = sysdsn(da)
+        if sub1 ^= "OK" then do
+           errcode = 009
+           call  ERREXIT
+        end
+        address TSO "ALLOC DA("tempdsn") LIKE("da,
+         ") LRECL(255) DSORG(PS) RECFM(V B) BLKSIZE(3120) NEW CATALOG"
+        if rc ^= 0   then do                                   /*@02A*/
+        /* A return code of 12 is a general allocation failure   @02A*/
+        /* could be protected error or record length problem     @02A*/
+        /* sub1 = "PROTECTED DATASET"                            @02R*/
+           errcode = 008                                       /*@02C*/
+           call ERREXIT                                        /*@02A*/
+        end                                                    /*@02A*/
+        address TSO "ALLOC DA("da") FI("ddname") SHR"          /*@N1A*/
+        if rc ^= 0   then do                                   /*@N1A*/
+           errcode = 008                                       /*@N1A*/
+           call ERREXIT                                        /*@N1A*/
+        end                                                    /*@N1A*/
+/*      address TSO "REPRO IDS("da") ODS("tempdsn")"             @L1C*/
+        address TSO "REPRO INFILE("ddname") ODS("tempdsn")"    /*@N1C*/
+        save_rc = rc                                           /*@N1A*/
+        address TSO "FREE DA("da")"                            /*@N1A*/
+        if save_rc ^= 0 then do                                /*@N1C*/
+           sub1 = "COPYING ERRORS DETECTED"                    /*@02C*/
+           errcode = 009                                       /*@02C*/
+           call ERREXIT
+        end
+    end
+    else do
+        address TSO "alloc da("tempdsn,
+          ") new catalog dsorg(ps) recfm(v b)" ,
+          "blksize(3120) lrecl(255) tracks space(1,1)"
+        if rc ^= 0 then do
+            errcode = 002
+            call ERREXIT
+        end
+        address TSO "free da("tempdsn")"
+    end
+end
+/*********************************************************************/
+/****                                                             ****/
+/**** Build the date stamp.                                       ****/
+/****                                                             ****/
+/*********************************************************************/
+/* the first line prints the century, the second removes it */
+date = date("n")" "time()" "timezone
+date = subword(date,1,2)               !! ,   /* dd mon */
+       " "                             !! ,
+       strip(substr(word(date,3),3,4)) !! ,   /* yy */
+       " "                             !! ,
+       subword(date,4)                        /* time and zone  @03C */
+/*********************************************************************/
+/****                                                             ****/
+/**** If the TO parameter was not specified then prompt for       ****/
+/**** multiple destination mailboxes.                             ****/
+/****                                                             ****/
+/*********************************************************************/
+if to = "" then do
+    if batch = "BATCH" then do
+      errcode = 001
+      call ERREXIT
+    end
+    else do
+      say "TO:"
+      do tocnt=1 by 1 until to.tocnt = ""
+        parse pull to.tocnt
+      end
+      tocnt = tocnt - 1
+    end
+end
+else do
+  j = words(to)
+  do i=1 to j
+    to.i = word(to,i)
+  end
+  tocnt=i-1
+end
+/*********************************************************************/
+/****                                                             ****/
+/**** If less than 1 destination was specified then report the    ****/
+/**** error.                                                      ****/
+/****                                                             ****/
+/*********************************************************************/
+if tocnt < 1 then do
+    errcode = 001
+    call ERREXIT
+end
+/*********************************************************************/
+/****                                                             ****/
+/**** If the CC parameter was not specified then prompt for       ****/
+/**** multiple carbon copy mailboxes.                             ****/
+/****                                                             ****/
+/*********************************************************************/
+if cc = "" then do
+    if (batch = "BATCH") ! (nocc = "NOCC")  then cccnt = 0
+    else do
+      say "CC:"
+      do cccnt = 1 by 1 until cc.cccnt= ""
+        parse pull cc.cccnt
+      end
+      cccnt = cccnt - 1
+    end
+end
+else do
+  do i=1 to words(cc)
+    cc.i = word(cc,i)
+  end
+  cccnt = i-1
+end
+/*********************************************************************/
+/****                                                             ****/
+/**** If the SU parameter was not specified then prompt for       ****/
+/**** the subject.                                                ****/
+/****                                                             ****/
+/*********************************************************************/
+if su = "" then do
+    if batch = "BATCH" then su = ""
+    else do
+      say "SUBJECT:"
+      parse pull su
+    end
+end
+/*********************************************************************/
+/****                                                             ****/
+/**** Invoke the TSO editor for the user. If a dataset has been   ****/
+/**** imported then stay in EDIT mode.  If this                   ****/
+/**** is a new note then go into INPUT mode.  Once the user       ****/
+/**** escapes from INPUT mode, write out some help messages and   ****/
+/**** wait for the appropriate termination string.  The user can  ****/
+/**** use any of the editor's commands at this time.              ****/
+/****                                                             ****/
+/*********************************************************************/
+errcode = 0
+if batch^="BATCH" then do
+  say
+  say 'ENTER "END SAVE" TO SAVE THE NOTE.'
+  say 'FOR A COMPLETE LIST OF EDIT SUBCOMMANDS ENTER "HELP".'
+/*********************************************************************/
+/****                                                             ****/
+/**** Build the RFC 822 header by using the editor and inserting  ****/
+/**** the data line by line into the note file.  Have the editor  ****/
+/**** save the note before proceeding.                            ****/
+/****                                                             ****/
+/*********************************************************************/
+  address TSO "edit" tempdsn "text nonum imode"
+  recovlvl = 1
+  if errcode ^= 0 then do
+      errcode = 004
+      call ERREXIT
+  end
+  say 'ENTER "SEND" TO SEND THE NOTE.'
+  say 'ENTER "CANCEL" TO TERMINATE WITHOUT SENDING THE NOTE.'
+  parse upper pull resp
+  pointer = find("SEND CANCEL",resp)
+  if pointer = 0 then do
+      errcode = 004
+      call ERREXIT
+  end
+/*********************************************************************/
+/****                                                             ****/
+/**** If the user entered CANCEL then use the error exit with     ****/
+/**** the appropriate error number.                               ****/
+/****                                                             ****/
+/*********************************************************************/
+  if pointer = 2 then do
+      errcode = 003
+      call ERREXIT
+  end
+  recovlvl = 2
+  if errcode ^= 0 then do
+      errcode = 004
+      call ERREXIT
+  end
+end
+queue "top"
+queue "change * 999999 // /all"
+queue "top"
+queue "insert helo "hostname
+queue "insert mail from:<"userid()!!atsign!!hostname">"       /* @A2C*/
+do i=1 by 1 while i <= tocnt
+  queue "insert rcpt to:<"to.i">"
+end
+do i=1 by 1 while i <= cccnt
+  queue "insert rcpt to:<"cc.i">"
+end
+queue "insert data"
+queue "insert Date:     "date
+queue "insert From:     "userid()!!atsign!!hostname           /* @A2C*/
+conchr = ""
+if tocnt > 1
+  then
+    conchr = ","
+queue "insert To:       "to.1!!conchr
+i = 2
+do while i <= tocnt
+  if i = tocnt then
+      conchr = ""
+  queue "insert           "to.i!!conchr
+  i = i + 1
+  end
+if cccnt ^= 0 then do
+    conchr = ""
+    if cccnt > 1 then
+        conchr = ","
+    queue "insert Cc:       "cc.1!!conchr
+    i = 2
+    do while i <= cccnt
+      if i = cccnt then
+          conchr = ""
+      queue "insert           "cc.i!!conchr
+      i = i + 1
+      end
+    end
+if su ^= ""
+  then
+    queue "insert Subject:  "su
+queue "insert dummy"
+queue "change * /dummy//"
+errcode = 0
+queue "end save"
+address TSO "edit" tempdsn "text nonum emode"
+recovlvl = 1
+if errcode ^= 0 then do
+    errcode = 004
+    call ERREXIT
+end
+/*********************************************************************/
+/****                                                             ****/
+/**** Transmit the note to SMTP address space, which may be       ****/
+/**** on this system or some other on the NJE network.  Finally,  ****/
+/**** delete the temporary dataset.                               ****/
+/****                                                             ****/
+/*********************************************************************/
+address TSO "transmit" smtpnode"."smtpjob ,
+  "dataset("tempdsn") noepilog nolog noprolog"
+if rc ^= 0 then do
+    errcode = 005
+    call ERREXIT
+end
+recovlvl = 4
+address TSO "delete" tempdsn "purge"
+if rc ^= 0 then do
+    errcode = 006
+    call ERREXIT
+end
+exit
+
+ERREXIT:
+/*********************************************************************/
+/****                                                             ****/
+/**** Error exit:  Use the recovery level to determine what       ****/
+/**** steps to take.  These can be save the current contents of   ****/
+/**** the note, discard the current contents of the note, or      ****/
+/**** delete the existing temporary dataset.                      ****/
+/****                                                             ****/
+/*********************************************************************/
+if recovlvl = 1 then
+    address TSO "save"
+else
+    if recovlvl = 2 then
+        address TSO "nosave"
+    else
+        if recovlvl = 3 then
+            address TSO "delete" tempdsn "purge"
+/*********************************************************************/
+/****                                                             ****/
+/**** Write out the error number and message.                     ****/
+/****                                                             ****/
+/*********************************************************************/
+select
+   when errcode = 001 then
+     say "EZA5575E NO DESTINATION SPECIFIED FOR NOTE"
+   when errcode = 002 then
+     say "EZA5576E UNABLE TO ALLOCATE TEMPORARY DATASET '"tempdsn"'"
+   when errcode = 003 then
+     say "EZA5577I NOTE CANCELLED"
+   when errcode = 004 then
+     say "EZA5578I UNABLE TO EDIT TEMPORARY DATASET '"tempdsn"'"
+   when errcode = 005 then
+     say "EZA5579E UNABLE TO TRANSMIT DATA TO '"smtpjob",
+' AT '"smtpnode"'"
+   when errcode = 006 then
+     say "EZA5580E UNABLE TO DELETE TEMPORARY DATASET '"tempdsn"'"
+   when errcode = 007 then
+     say "EZA5581E CONFLICTING PARAMETERS 'DATASET' AND 'REUSE'"
+   when errcode = 008 then
+     say "EZA5582E UNABLE TO USE DATASET '"da"'"
+   when errcode = 009 then
+     say "EZA5583E UNABLE TO USE DATASET '"da"'," sub1
+   when errcode = 010 then
+     say "EZA5584E INVALID PARAMETER, "parm
+   when errcode = 011 then
+     say "EZA5585E BATCH PARAMETER REQUIRES DATASET PARAMETER"
+   when errcode = 012 then
+     say "EZA5586E CONFLICTING PARAMETERS 'CC' AND 'NOCC'"
+   when errcode = 013 then
+     say "EZA5587E NO VALUE FOR PARAMETER 'TO'"
+   when errcode = 014 then
+     say "EZA5588E NO VALUE FOR PARAMETER 'CC'"
+   when errcode = 015 then
+     say "EZA5589E NO VALUE FOR PARAMETER 'DATASET'"
+   when errcode = 999 then
+        say "EZA5590S UNRECOVERABLE ERROR"
+   otherwise
+     say "EZA5590S UNKNOWN ERROR CODE '"errcode"'"
+end /* select */
+exit 0
+

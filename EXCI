@@ -1,0 +1,696 @@
+*PROCESS XOPTS(EXCI)                                                    00010000
+  NIS MACRO FLAG(W) SOURCE MARGINS(2,72,1) XREF LIST LANGLVL(SPROG)     00020000
+  SYSTEM(MVS);                                                          00030000
+ /* @BANNER_START                                                    */ 00040000
+ /* Licensed Materials - Property of IBM                             */ 00050000
+ /*                                                                  */ 00060000
+ /* "Restricted Materials of IBM"                                    */ 00070000
+ /*                                                                  */ 00080000
+ /* 5697-E93                                                         */ 00090000
+ /*                                                                  */ 00100000
+ /* (C) Copyright IBM Corp. 1994, 1998                               */ 00110000
+ /*                                                                  */ 00120000
+ /* CICS                                                             */ 00130000
+ /* (Element of CICS Transaction Server                              */ 00140000
+ /*   for z/OS, Version 2 Release 2)                                 */ 00150000
+ /* @BANNER_END                                                      */ 00160000
+ DFHPXCC: PROC (PARAM) OPTIONS(MAIN);                                   00170000
+ /********************************************************************/ 00180000
+ /*                                                                  */ 00190000
+ /* PROGRAM_NAME : DFH$PXCC                                          */ 00200000
+ /*                                                                  */ 00210000
+ /* TITLE :  PLI Sample Batch Client Program.                        */ 00220000
+ /*                                                                  */ 00230000
+ /* PROGRAM DESCRIPTION  :  This program will show how to code a     */ 00240000
+ /*                         simple batch type application using the  */ 00250000
+ /*                         EXCI call and EXEC level APIs.           */ 00260000
+ /*                                                                  */ 00270000
+ /* SPECIAL REQUIREMENTS :  The program must be translated with the  */ 00280000
+ /*                         EXCI option, and must run AMODE 31 in    */ 00290000
+ /*                         order to use the External CICS Interface.*/ 00300000
+ /*                                                                  */ 00310000
+ /* SYSTEM LEVEL :          CICS V4R1 or higher.                     */ 00320000
+ /*                                                                  */ 00330000
+ /* INPUT :                 The target CICS system with which this   */ 00340000
+ /*                         batch client program communicates can    */ 00350000
+ /*                         be specified via the JCL PARM statement, */ 00360000
+ /*                         otherwise it defaults to applid DBDCCICS.*/ 00370000
+ /*                         The target file is hardcoded as FILEA.   */ 00380000
+ /*                         The userid for the target system can @P1A*/ 00390000
+ /*                         now be entered as a parameter.       @P1A*/ 00400000
+ /*                         The parameters are passed as         @P1A*/ 00410000
+ /*                             applid,userid                    @P1A*/ 00420000
+ /*                                                                  */ 00430000
+ /* OUTPUT :                The whole of the target file will be     */ 00440000
+ /*                         output to the SYSPRINT log.              */ 00450000
+ /*                                                                  */ 00460000
+ /*------------------------------------------------------------------*/ 00470000
+ /*                                                                  */ 00480000
+ /* Change Activity:                                                 */ 00490000
+ /* $SEG(DFH$PXCC),COMP(SAMPLES),PROD(CICS    ):                     */ 00500000
+ /*                                                                  */ 00510000
+ /*   PN= REASON REL YYMMDD HDXIII : REMARKS                         */ 00520000
+ /*  $01= A53800 410 940523 HDCWNRB : Migrate PN53800 from SPA R410  */ 00530000
+ /*  $02= A70659 410 950526 HDBGNRB : Migrate PN70659 from SPA R410  */ 00540000
+ /*  $P1= M27373 530 980815 HD2GJST:  Pass USERID as PARM            */ 00550000
+ /*  $L0= 660    410 94     HDELDFG: Created.                        */ 00560000
+ /*                                                                  */ 00570000
+ /********************************************************************/ 00580000
+                                                                        00590000
+ /*==================================================================*/ 00600000
+ /*  Include return code values                                      */ 00610000
+ /*==================================================================*/ 00620000
+ %INCLUDE DFHXCRCL;                                                     00630000
+                                                                        00640000
+ /*==================================================================*/ 00650000
+ /*  Include Parameter list structure and values                     */ 00660000
+ /*==================================================================*/ 00670000
+ %INCLUDE DFHXCPLL;                                                     00680000
+                                                                        00690000
+ DCL RETAREA CHAR(20);                                                  00700000
+                                                                        00710000
+ DCL DPL_RETAREA CHAR(12);                                              00720000
+                                                                        00730000
+ DCL LINK_RETAREA CHAR(20);                                             00740000
+                                                                        00750000
+ /*==================================================================*/ 00760000
+ /*  Initialise target information variables.                        */ 00770000
+ /*==================================================================*/ 00780000
+                                                                        00790000
+ DCL TARGET_FILE            CHAR(8)       INIT('FILEA   ');             00800000
+ DCL TARGET_TRANSID         CHAR(4)       INIT('EXCI');                 00810000
+ DCL TARGET_SYSTEM          CHAR(8)       INIT('        ');             00820000
+ DCL TARGET_PROGRAM         CHAR(8)       INIT('DFH$AXCS');             00830000
+ DCL TARGET_USERID          CHAR(8)       INIT('        ');  /* @P1A */ 00840000
+ DCL USERID_PTR             PTR  BASED(ADDR(TARGET_USERID)); /* @P1A */ 00850000
+                                                                        00860000
+ /*==================================================================*/ 00870000
+ /*  Define Call level specific variables.                           */ 00880000
+ /*==================================================================*/ 00890000
+                                                                        00900000
+ DCL APPLICATION            CHAR(8)       INIT('BATCHCLI');             00910000
+ DCL NULL_PTR               PTR;                                        00920000
+ DCL USER_TOKEN             FIXED BIN(31) INIT(0);                      00930000
+ DCL PIPE_TOKEN             FIXED BIN(31) INIT(0);                      00940000
+                                                                        00950000
+ /*==================================================================*/ 00960000
+ /*  Define Commarea struct.                                         */ 00970000
+ /*==================================================================*/ 00980000
+                                                                        00990000
+ DCL 1 COMMAREA,                                                        01000000
+      3 CALL                FIXED BIN(31) INIT(0),                      01010000
+      3 FILE                CHAR(8)       INIT('xxxxxxxx'),             01020000
+      3 RID                 CHAR(6)       INIT('000001'),               01030000
+      3 RECORD              CHAR(80)      INIT(' ');                    01040000
+                                                                        01050000
+ /*==================================================================*/ 01060000
+ /*  Initialise Commarea length and Data length(in bytes).           */ 01070000
+ /*==================================================================*/ 01080000
+                                                                        01090000
+ DCL COMM_LENGTH            FIXED BIN(31) INIT(98);                     01100000
+ DCL DATA_LENGTH            FIXED BIN(31) INIT(18);                     01110000
+ DCL EXEC_COM_LEN           FIXED BIN(15) INIT(18);                     01120000
+ DCL EXEC_DAT_LEN           FIXED BIN(15) INIT(18);                     01130000
+                                                                        01140000
+ /*==================================================================*/ 01150000
+ /*  Define Server call-type codes.                                  */ 01160000
+ /*==================================================================*/ 01170000
+                                                                        01180000
+ DCL INIT_CALL              FIXED BIN(31) STATIC INIT(1);               01190000
+ DCL READ_CALL              FIXED BIN(31) STATIC INIT(2);               01200000
+ DCL CLOSE_CALL             FIXED BIN(31) STATIC INIT(3);               01210000
+                                                                        01220000
+ /*==================================================================*/ 01230000
+ /*  Define Server Return codes.                                     */ 01240000
+ /*==================================================================*/ 01250000
+                                                                        01260000
+ DCL RET_BROWSE             FIXED BIN(31) STATIC INIT(0);               01270000
+ DCL RET_NOBRWS             FIXED BIN(31) STATIC INIT(4);               01280000
+ DCL RET_EOF                FIXED BIN(31) STATIC INIT(8);               01290000
+ DCL RET_NOFILE             FIXED BIN(31) STATIC INIT(12);              01300000
+ DCL RET_ERROR              FIXED BIN(31) STATIC INIT(16);              01310000
+                                                                        01320000
+ /*==================================================================*/ 01330000
+ /*  Declare program specific variables and flags.                   */ 01340000
+ /*==================================================================*/ 01350000
+                                                                        01360000
+ DCL ABORT                  CHAR(3)       INIT('NO ');                  01370000
+ DCL LINKMSG                CHAR(120)     INIT(' ');                    01380000
+ DCL CALLMODE               BIN(8);                                     01390000
+ DCL EXEC_API               BIN(8)        INIT(40);                     01400000
+ DCL CALL_LEVEL             BIN(8)        INIT(80);                     01410000
+ DCL TARGET_PROGRAM_RETCODE FIXED BIN(31) INIT(0);                      01420000
+ DCL 1 EXEC_MSG_AREA BASED(EXEC_MSG_PTR),                               01430000
+      3 EXEC_MSG_TEXT       CHAR(120);                                  01440000
+ DCL 1 EXCI_MSG_AREA  BASED(EXCI_MSG_PTR),                              01450000
+      3 EXCI_MSG_LEN        FIXED BIN(15),                              01460000
+      3 FILLER              FIXED BIN(15),                              01470000
+      3 EXCI_MSG_TEXT       CHAR(116);                                  01480000
+ DCL NULL_VALUE             FIXED BIN(31) BASED(NULL_PTR);              01490000
+ DCL BATCH_RETURN_CODE      FIXED BIN(31) INIT(0);                      01500000
+ DCL PARAM CHAR(17) VARYING;              /*Can be APPLID,USERID @P1C*/ 01510000
+ DCL PARAM_LENGTH FIXED BINARY(15);                                     01520000
+                                                                        01530000
+ /*==================================================================*/ 01540000
+ /*  Program messages for output.                                    */ 01550000
+ /*==================================================================*/ 01560000
+                                                                        01570000
+ DCL    MSG00    CHAR(80) INIT(' ');                                    01580000
+ DCL    MSG01    CHAR(80) INIT('*===================== EXCI Sample Batch01590000
+  Client Program =======================*');                            01600000
+ DCL    MSG02    CHAR(80) INIT('*                                       01610000
+                                        *');                            01620000
+ DCL    MSG03    CHAR(80) INIT('*  EXEC Level Processor.                01630000
+                                        *');                            01640000
+ DCL    MSG04    CHAR(80) INIT('*    Setting up the EXEC level call.    01650000
+                                        *');                            01660000
+ DCL    MSG05    CHAR(80) INIT('*    The Link Request has successfully c01670000
+ ompleted.                              *');                            01680000
+ DCL    MSG06    CHAR(80) INIT('*    Server Response:                   01690000
+                                        *');                            01700000
+ DCL    MSG07    CHAR(80) INIT('*      The file is set to a browsable st01710000
+ ate.                                   *');                            01720000
+ DCL    MSG08    CHAR(80) INIT('*      The file could not be found.     01730000
+                                        *');                            01740000
+ DCL    MSG09    CHAR(80) INIT('*      The file could not be successfull01750000
+ y initialised                          *');                            01760000
+ DCL    MSG10    CHAR(80) INIT('*      A serious error was detected.    01770000
+                                        *');                            01780000
+ DCL    MSG11    CHAR(80) INIT('*    The Link Request has failed.  Retur01790000
+ n codes are:                           *');                            01800000
+ DCL    MSG13    CHAR(80) INIT('*    A message was received from the tar01810000
+ get CICS system:                       *');                            01820000
+ DCL    MSG14    CHAR(80) INIT('*    >>>> Aborting further processing <<01830000
+ <<                                     *');                            01840000
+ DCL    MSG15    CHAR(80) INIT('*  CALL Level Processor.                01850000
+                                        *');                            01860000
+ DCL    MSG16    CHAR(80) INIT('*    Initialise_User call complete.     01870000
+                                        *');                            01880000
+ DCL    MSG17    CHAR(80) INIT('*    Allocate_Pipe call complete.       01890000
+                                        *');                            01900000
+ DCL    MSG18    CHAR(80) INIT('*    Open_Pipe call complete.           01910000
+                                        *');                            01920000
+ DCL    MSG19    CHAR(80) INIT('*    The connection has been successful.01930000
+                                        *');                            01940000
+ DCL    MSG20    CHAR(80) INIT('*      The target file follows:         01950000
+                                        *');                            01960000
+ DCL    MSG21    CHAR(80) INIT('*=========================== Top of File01970000
+ =======================================*');                            01980000
+ DCL    MSG22    CHAR(80) INIT('*=========================== End of File01990000
+ =======================================*');                            02000000
+ DCL    MSG23    CHAR(80) INIT('*    The connection has been unsuccessfu02010000
+ l.  Return codes are:                  *');                            02020000
+ DCL    MSG25    CHAR(80) INIT('*      The Dpl request has failed.      02030000
+                                        *');                            02040000
+ DCL    MSG26    CHAR(80) INIT('*      Link return codes are:           02050000
+                                        *');                            02060000
+ DCL    MSG27    CHAR(80) INIT('*      Dpl return codes are:            02070000
+                                        *');                            02080000
+ DCL    MSG28    CHAR(80) INIT('*    Closing Dpl Request has been attemp02090000
+ ted.                                   *');                            02100000
+ DCL    MSG29    CHAR(80) INIT('*    Close_Pipe call complete.          02110000
+                                        *');                            02120000
+ DCL    MSG30    CHAR(80) INIT('*    Deallocate_Pipe call complete.     02130000
+                                        *');                            02140000
+ DCL    MSG31    CHAR(80) INIT('*=================== End of EXCI Sample 02150000
+ Batch Client Program ==================*');                            02160000
+ DCL    MSG32    CHAR(80) BASED(MSG_PTR);    /* Parameter message@P1A*/ 02170000
+ DCL    1 MSG_AREA,                                                     02180000
+          2 MSG_FILL1    CHAR(25) INIT('*    Parameters:  APPLID='),    02190000
+          2 MSG_APPLID   CHAR(8),                                       02200000
+          2 MSG_FILL2    CHAR(11) INIT(' '),                            02210000
+          2 MSG_USERID   CHAR(8),                                       02220000
+          2 MSG_FILL3    CHAR(28) INIT('                           *'); 02230000
+ DCL MSG_PTR  POINTER;                                                  02240000
+                                                                        02250000
+ DCL    SPACES   CHAR(6)  INIT('      ');                               02260000
+                                                                        02270000
+                                                                        02280000
+ /*==================================================================*/ 02290000
+ /*                                                                  */ 02300000
+ /*          >>>>>>>>>>> MAINLINE CODE <<<<<<<<<<<<<<<               */ 02310000
+ /*                                                                  */ 02320000
+ /*==================================================================*/ 02330000
+                                 /*==================================*/ 02340000
+ Put Edit(MSG00)(SKIP,A);        /*  Msg= blank                      */ 02350000
+ Put Edit(MSG01)(SKIP,A);        /*  Msg="*===EXCI Sample ===*"      */ 02360000
+ Put Edit(MSG02)(SKIP,A);        /*  Msg="*                  *"      */ 02370000
+                                                                        02380000
+ /*==================================================================*/ 02390000
+ /* Get applid of CICS system from PARM statement if specified.      */ 02400000
+ /* Also get USERID if supplied as a parameter                  @P1A */ 02410000
+ /*==================================================================*/ 02420000
+                                                                        02430000
+ TARGET_SYSTEM = 'DBDCCICS';     /* Set up default SYSTEM        @P1A*/ 02440000
+ USERID_PTR = PTRVALUE(0);       /* Initialise null pointer value@P1A*/ 02450000
+                                                                        02460000
+ IF LENGTH(PARAM) > 0 THEN       /* Parameter provided           @P1C*/ 02470000
+ DO;                                                         /*  @P1A*/ 02480000
+   PARAM_LENGTH = MIN(17,LENGTH(PARAM));                     /*  @P1A*/ 02490000
+   j = Index(PARAM,',');         /* Is there a ','? j=position   @P1A*/ 02500000
+   Select(j);                                                /*  @P1A*/ 02510000
+     When(0)                       /* Only Applid supplied       @P1A*/ 02520000
+     Do;                                                     /*  @P1A*/ 02530000
+       TARGET_SYSTEM = SUBSTR(PARAM,1,PARAM_LENGTH);         /*  @P1A*/ 02540000
+       MSG_APPLID = TARGET_SYSTEM;                           /*  @P1A*/ 02550000
+     End;                                                    /*  @P1A*/ 02560000
+     When(1)                       /* Only Userid supplied       @P1A*/ 02570000
+     Do;                                                     /*  @P1A*/ 02580000
+       TARGET_USERID = SUBSTR(PARAM,2,PARAM_LENGTH - 1);     /*  @P1A*/ 02590000
+       MSG_USERID = TARGET_USERID;                           /*  @P1A*/ 02600000
+       MSG_FILL2 = '    USERID=';                           /*  @P1A*/  02610000
+       MSG_APPLID = ' ';                                     /*  @P1A*/ 02620000
+       MSG_FILL1 = '*    Parameters:         ';              /*  @P1A*/ 02630000
+     End;                                                    /*  @P1A*/ 02640000
+     Otherwise                     /* Both parameters supplied   @P1A*/ 02650000
+     Do;                                                     /*  @P1A*/ 02660000
+       TARGET_SYSTEM = SUBSTR(PARAM,1,j - 1);                /*  @P1A*/ 02670000
+       MSG_APPLID = TARGET_SYSTEM;                           /*  @P1A*/ 02680000
+       TARGET_USERID = SUBSTR(PARAM,j+1,PARAM_LENGTH - j);   /*  @P1A*/ 02690000
+       MSG_USERID = TARGET_USERID;                           /*  @P1A*/ 02700000
+       MSG_FILL2 = '    USERID=';                            /*  @P1A*/ 02710000
+     End;                                                    /*  @P1A*/ 02720000
+   END;                                                      /*  @P1A*/ 02730000
+   MSG_PTR = ADDR(MSG_AREA);                                 /*  @P1A*/ 02740000
+   Put Edit(MSG32)(SKIP,A);                                  /*  @P1A*/ 02750000
+   Put Edit(MSG02)(SKIP,A);                                  /*  @P1A*/ 02760000
+ End;                                                        /*  @P1A*/ 02770000
+                                                                        02780000
+                                 /*==================================*/ 02790000
+ Do;                             /*                                  */ 02800000
+ Call SECTION_I;                 /* Initialise the Target file.      */ 02810000
+ If ABORT='YES' Then Leave;      /*                                  */ 02820000
+ Call SECTION_II;                /* Perform Browse of Target file.   */ 02830000
+ Call SECTION_III;               /* Perform file backout/close Link. */ 02840000
+ End;                            /*                                  */ 02850000
+                                 /*                                  */ 02860000
+ Put Edit(MSG02)(SKIP,A);        /*  Msg="*                  *"      */ 02870000
+ Put Edit(MSG31)(SKIP,A);        /*  Msg="*==End of Sample===*"      */ 02880000
+                                 /*==================================*/ 02890000
+ /*==================================================================*/ 02900000
+ /*                                                                  */ 02910000
+ /*      >>>>>>>>>>>> END OF MAINLINE CODE <<<<<<<<<<<<<             */ 02920000
+ /*                                                                  */ 02930000
+ /*==================================================================*/ 02940000
+ CALL PLIRETC(BATCH_RETURN_CODE); /* Set external return code        */ 02950000
+ RETURN;                                                                02960000
+                                                                        02970000
+ SECTION_I: PROC;                                                       02980000
+ /*==================================================================*/ 02990000
+ /*                                                                  */ 03000000
+ /*  SECTION I:   This routine will use an EXEC level EXCI call to   */ 03010000
+ /*               invoke the program BATCHSER on the target CICS     */ 03020000
+ /*               system with a call-type of INIT.  The server will  */ 03030000
+ /*               query the existence of the target file, and attempt*/ 03040000
+ /*               to initialise it to a browsable state. If the call */ 03050000
+ /*               or the server program fails in any way, all further*/ 03060000
+ /*               processing will be aborted.                        */ 03070000
+ /*                                                                  */ 03080000
+ /*==================================================================*/ 03090000
+                                /*===================================*/ 03100000
+ Put Edit(MSG03)(SKIP,A);       /* Msg="*  Exec processor *"         */ 03110000
+ Put Edit(MSG04)(SKIP,A);       /* Msg="*  Setting up call*"         */ 03120000
+                                /*                                   */ 03130000
+ CALL = INIT_CALL;              /* Put parameters in slots 1 and 2   */ 03140000
+ FILE = TARGET_FILE;            /* of the Commarea.                  */ 03150000
+                                /*                                   */ 03160000
+ EXCI_EXEC_RETURN_CODE_PTR = ADDR(LINK_RETAREA); /* Address retcodes */ 03170000
+ CALLMODE = EXEC_API;           /* Set EXEC level flag.              */ 03180000
+                                /*===================================*/ 03190000
+ /*==================================================================*/ 03200000
+ /*                                                                  */ 03210000
+ /*  Perform the EXCI Link request.                                  */ 03220000
+ /*                                                                  */ 03230000
+ /*==================================================================*/ 03240000
+ EXEC CICS LINK PROGRAM(TARGET_PROGRAM)                                 03250000
+                TRANSID(TARGET_TRANSID)                                 03260000
+                APPLID(TARGET_SYSTEM)                                   03270000
+                COMMAREA(COMMAREA)                                      03280000
+                LENGTH(EXEC_COM_LEN)                                    03290000
+                DATALENGTH(EXEC_DAT_LEN)                                03300000
+                RETCODE(LINK_RETAREA)                                   03310000
+                SYNCONRETURN;                                           03320000
+ /*==================================================================*/ 03330000
+ /*                                                                  */ 03340000
+ /*  Check on how successful the call was.                           */ 03350000
+ /*                                                                  */ 03360000
+ /*==================================================================*/ 03370000
+                                                                        03380000
+ If EXEC_RESP = 0 Then                                                  03390000
+     Do;                                   /*========================*/ 03400000
+     Put Edit(MSG05)(SKIP,A);              /* Msg="* Link Worked *"  */ 03410000
+     TARGET_PROGRAM_RETCODE = CALL;        /*                        */ 03420000
+     Put Edit(MSG06)(SKIP,A);              /* Msg="* Server resp *"  */ 03430000
+     Select(TARGET_PROGRAM_RETCODE);       /*                        */ 03440000
+     When(RET_BROWSE)                      /*                        */ 03450000
+              Do;                          /*                        */ 03460000
+              Put Edit(MSG07)(SKIP,A);     /* Msg="File browsable"   */ 03470000
+              ABORT = 'NO';                /*                        */ 03480000
+              End;                         /*                        */ 03490000
+     When(RET_NOBRWS)                      /*                        */ 03500000
+              Do;                          /*                        */ 03510000
+              Put Edit(MSG09)(SKIP,A);     /* Msg="File not brwsble" */ 03520000
+              Put Edit(MSG14)(SKIP,A);     /* Msg="Aborting..."      */ 03530000
+              ABORT = 'YES';               /*                        */ 03540000
+              BATCH_RETURN_CODE = 16;      /* Set RC=16              */ 03550000
+              End;                         /*                        */ 03560000
+     When(RET_NOFILE)                      /*                        */ 03570000
+              Do;                          /*                        */ 03580000
+              Put Edit(MSG08)(SKIP,A);     /* Msg="File not found"   */ 03590000
+              Put Edit(MSG14)(SKIP,A);     /* Msg="Aborting..."      */ 03600000
+              ABORT = 'YES';               /*                        */ 03610000
+              BATCH_RETURN_CODE = 16;      /* Set RC=16              */ 03620000
+              End;                         /*                        */ 03630000
+     When(RET_ERROR)                       /*                        */ 03640000
+              Do;                          /*                        */ 03650000
+              Put Edit(MSG10)(SKIP,A);     /* Msg="Serious error"    */ 03660000
+              Put Edit(MSG14)(SKIP,A);     /* Msg="Aborting..."      */ 03670000
+              ABORT = 'YES';               /*                        */ 03680000
+              BATCH_RETURN_CODE = 16;      /* Set RC=16              */ 03690000
+              End;                         /*                        */ 03700000
+     End;                                  /*                        */ 03710000
+     End;                                  /*                        */ 03720000
+ Else                                      /*                        */ 03730000
+     Do;                                   /*                        */ 03740000
+     Put Edit(MSG11)(SKIP,A);              /* Msg="Link failed"      */ 03750000
+     Call GET_RET;                         /* Output Return codes    */ 03760000
+     Put Edit(MSG14)(SKIP,A);              /* Msg="Aborting..."      */ 03770000
+     ABORT = 'YES';                        /*                        */ 03780000
+     End;                                  /*                        */ 03790000
+                                           /*========================*/ 03800000
+ RETURN;                                                                03810000
+ /*==================================================================*/ 03820000
+ /*                                                                  */ 03830000
+ /*        >>>>>>>>> End of SECTION_I processing. <<<<<<<<<<         */ 03840000
+ /*                                                                  */ 03850000
+ /*==================================================================*/ 03860000
+ END SECTION_I;                                                         03870000
+                                                                        03880000
+ SECTION_II: PROC;                                                      03890000
+ /*==================================================================*/ 03900000
+ /*                                                                  */ 03910000
+ /*   SECTION II:  This routine will perform a Call level EXCI       */ 03920000
+ /*                request by setting up a Pipe to the target CICS   */ 03930000
+ /*                system with Initialise User, Allocate, and Open   */ 03940000
+ /*                Pipe calls.  It will then perform a series of DPL */ 03950000
+ /*                calls in succession until the required portion of */ 03960000
+ /*                the target file has been retrieved.  Each DPL     */ 03970000
+ /*                request will call the BATCHSER server program     */ 03980000
+ /*                defined on the target CICS system with the call   */ 03990000
+ /*                type of READ.  If an 'abort required' situation   */ 04000000
+ /*                is detected or when the process is complete, then */ 04010000
+ /*                control will pass to section III.                 */ 04020000
+ /*                                                                  */ 04030000
+ /*==================================================================*/ 04040000
+                                   /*================================*/ 04050000
+ Put Edit(MSG02)(SKIP,A);          /* Msg="*                *"       */ 04060000
+ Put Edit(MSG15)(SKIP,A);          /* Msg="*  Call processor*"       */ 04070000
+ CALLMODE = CALL_LEVEL;            /* Set CALL level flag            */ 04080000
+ EXCI_RETURN_CODE_PTR = ADDR(RETAREA); /* Set retarea addressibility */ 04090000
+                                   /*================================*/ 04100000
+ /*==================================================================*/ 04110000
+ /*  Set up and perform Initialise User call.                        */ 04120000
+ /*==================================================================*/ 04130000
+                                   /*================================*/ 04140000
+ CALL DFHXCIS(VERSION_1,           /* Version no. of EXCI API        */ 04150000
+              RETAREA,             /* For Return codes.              */ 04160000
+              USER_TOKEN,          /* Use this to refer to this User */ 04170000
+              INIT_USER,           /* Call is an Init_User.          */ 04180000
+              APPLICATION);        /* Name of this User application  */ 04190000
+ Put Edit(MSG16)(SKIP,A);          /* Msg='Init_User call complete'  */ 04200000
+                                   /*================================*/ 04210000
+ /*==================================================================*/ 04220000
+ /*  Set up and perform Allocate Pipe call.                          */ 04230000
+ /*==================================================================*/ 04240000
+                                   /*================================*/ 04250000
+ CALL DFHXCIS(VERSION_1,           /* Version no. of EXCI API        */ 04260000
+              RETAREA,             /* For Return codes.              */ 04270000
+              USER_TOKEN,          /* Use this to refer to this User */ 04280000
+              ALLOCATE_PIPE,       /* Call is an Allocate_Pipe.      */ 04290000
+              PIPE_TOKEN,          /* Use this to refer to this Pipe */ 04300000
+              TARGET_SYSTEM,       /* The Target CICS to linked to.  */ 04310000
+              SPECIFIC_PIPE);      /* The Option bit for type of Pipe*/ 04320000
+ Put Edit(MSG17)(SKIP,A);          /* Msg='Allocate_Pipe complete'   */ 04330000
+                                   /*================================*/ 04340000
+ /*==================================================================*/ 04350000
+ /*  Set up and perform Open Pipe call.                              */ 04360000
+ /*==================================================================*/ 04370000
+                                   /*================================*/ 04380000
+ CALL DFHXCIS(VERSION_1,           /* Version no. of EXCI API        */ 04390000
+              RETAREA,             /* For Return codes.              */ 04400000
+              USER_TOKEN,          /* Use this to refer to this User */ 04410000
+              OPEN_PIPE,           /* Call is an Open_Pipe.          */ 04420000
+              PIPE_TOKEN);         /* Use this to refer to this Pipe */ 04430000
+ Put Edit(MSG18)(SKIP,A);          /* Msg='Open_Pipe complete'       */ 04440000
+                                   /*================================*/ 04450000
+ /*==================================================================*/ 04460000
+ /*                                                                  */ 04470000
+ /*  If the Link has been succesfully set up, continue with Dpl call.*/ 04480000
+ /*                                                                  */ 04490000
+ /*==================================================================*/ 04500000
+                                                                        04510000
+ If EXCI_RESPONSE = 0 Then              /*===========================*/ 04520000
+     Do;                                /*                           */ 04530000
+     Put Edit(MSG19)(SKIP,A);           /* Msg=" Connect was good"   */ 04540000
+     Put Edit(MSG20)(SKIP,A);           /* Msg="Target file follows" */ 04550000
+     Put Edit(MSG02)(SKIP,A);           /* Msg="*                *"  */ 04560000
+     Put Edit(MSG21)(SKIP,A);           /* Msg="*===Top of File===*" */ 04570000
+     Call DPL_SECTION;                  /*  Get the file.            */ 04580000
+     End;                               /*                           */ 04590000
+ Else Do;                               /*                           */ 04600000
+     Put Edit(MSG23)(SKIP,A);           /* Msg="Connect failed"      */ 04610000
+     Call GET_RET;                      /* Output return codes       */ 04620000
+     Put Edit(MSG14)(SKIP,A);           /* Msg="Aborting..."         */ 04630000
+     End;                               /*                           */ 04640000
+                                        /*===========================*/ 04650000
+ RETURN;                                                                04660000
+ /*==================================================================*/ 04670000
+ /*                                                                  */ 04680000
+ /*     >>>>>>>>>> End of SECTION_II processing. <<<<<<<<<<<         */ 04690000
+ /*                                                                  */ 04700000
+ /*==================================================================*/ 04710000
+ END SECTION_II;                                                        04720000
+                                                                        04730000
+                                                                        04740000
+ DPL_SECTION: PROC;                                                     04750000
+ /*==================================================================*/ 04760000
+ /*                                                                  */ 04770000
+ /*  SECTION IIb:  DPL request.  This routine is the multiple DPL    */ 04780000
+ /*                looping section which will read all records from  */ 04790000
+ /*                the target file and output them to the SYSPRINT   */ 04800000
+ /*                log.  It will also make a decision as to whether  */ 04810000
+ /*                any further calls are required/neccessary/possible*/ 04820000
+ /*                and call for an abort of processing if this is    */ 04830000
+ /*                needed.                                           */ 04840000
+ /*                                                                  */ 04850000
+ /*==================================================================*/ 04860000
+                                                                        04870000
+ Do While (ABORT ^='YES');                                              04880000
+                                                                        04890000
+ /*==================================================================*/ 04900000
+ /*                                                                  */ 04910000
+ /*  Set up and perform DPL request.                                 */ 04920000
+ /*                                                                  */ 04930000
+ /*   No Uowid is passed on the call.  This shows how to        @P1C */ 04940000
+ /*   omit optional parameters. To omit a parameter, the address of  */ 04950000
+ /*   the parameter must be zero in the parameter list. This is      */ 04960000
+ /*   achieved by referencing the null_value variable which is based */ 04970000
+ /*   on a null pointer.                                             */ 04980000
+ /*                                                                  */ 04990000
+ /*==================================================================*/ 05000000
+                                /*===================================*/ 05010000
+   NULL_PTR = PTRVALUE(0);      /* Initialise null pointer value.    */ 05020000
+   CALL = READ_CALL;            /* Set up the Server call-type.      */ 05030000
+   EXCI_DPL_RETAREA_PTR = ADDR(DPL_RETAREA); /* Set addressibility   */ 05040000
+   CALL DFHXCIS(VERSION_1,      /* Version no. of EXCI API.          */ 05050000
+                RETAREA,        /* For Return codes (High level)     */ 05060000
+                USER_TOKEN,     /* Refer to this EXCI user           */ 05070000
+                DPL_REQUEST,    /* Call is a DPL_REQUEST type        */ 05080000
+                PIPE_TOKEN,     /* Refer to the Pipe already set up. */ 05090000
+                TARGET_PROGRAM, /* The CICS-resident Server          */ 05100000
+                COMMAREA,       /* Contains Server parameters+retarea*/ 05110000
+                COMM_LENGTH,    /* Length of the whole commarea      */ 05120000
+                DATA_LENGTH,    /* No of bytes of commarea sent out  */ 05130000
+                TARGET_TRANSID, /* TransId on Target CICS ->DFHMIRS  */ 05140000
+                NULL_VALUE,     /* Unit of Work Id is ommitted       */ 05150000
+                TARGET_USERID,  /* End user's userid            @P1C */ 05160000
+                DPL_RETAREA,    /* For DPL Return codes (low level)  */ 05170000
+                SYNCONRETURN);  /* Option bit.  This is mandatory.   */ 05180000
+                                /*===================================*/ 05190000
+ /*==================================================================*/ 05200000
+ /*                                                                  */ 05210000
+ /*  Check on how successful the call was.  If it works, then we have*/ 05220000
+ /*  a record in the commarea to be output to the SYSPRINT log.      */ 05230000
+ /*                                                                  */ 05240000
+ /*==================================================================*/ 05250000
+                                                                        05260000
+     MSG='';                                                            05270000
+     If EXCI_RESPONSE = 0 Then                                          05280000
+         Do;                                /*=======================*/ 05290000
+         If EXCI_DPL_RESP ^= 0 Then         /*                       */ 05300000
+             Do;                            /*                       */ 05310000
+             Put Edit(MSG25)(SKIP,A);       /* Msg="Dpl call failed" */ 05320000
+             Put Edit(MSG27)(SKIP,A);       /* Msg="Dpl return codes */ 05330000
+             Put Edit('*     Resp, resp2, and Abend code: ',            05340000
+             EXCI_DPL_RESP,EXCI_DPL_RESP2,SPACES,EXCI_DPL_ABCODE)       05350000
+             (SKIP,A,F(8),F(8),A,A);                                    05360000
+             ABORT='YES';                                               05370000
+             Put Edit(MSG14)(SKIP,A);       /* Msg="Aborting..."     */ 05380000
+             End;                           /*                       */ 05390000
+         Else Do;                           /*                       */ 05400000
+             TARGET_PROGRAM_RETCODE = CALL; /*                       */ 05410000
+             If TARGET_PROGRAM_RETCODE = RET_ERROR Then     /*       */ 05420000
+                 Do;                        /*                       */ 05430000
+                 Put Edit(MSG06)(SKIP,A);   /* Msg="Server response" */ 05440000
+                 Put Edit(MSG10)(SKIP,A);   /* Msg="A serious error" */ 05450000
+                 ABORT='YES';               /*                       */ 05460000
+                 BATCH_RETURN_CODE = 16;    /* Set RC=16             */ 05470000
+                 End;                       /*                       */ 05480000
+             Else Do;                       /*                       */ 05490000
+                 Put Edit(RECORD)(SKIP,A);  /* Output the record     */ 05500000
+                 End;                       /*                       */ 05510000
+             End;                           /*                       */ 05520000
+         End;                               /*                       */ 05530000
+     Else Do;                               /*                       */ 05540000
+         Put Edit(MSG25)(SKIP,A);           /* Msg="Dpl call failed" */ 05550000
+         Put Edit(MSG26)(SKIP,A);           /* Msg="Link retcodes"   */ 05560000
+         Call GET_RET;                      /* Output return codes   */ 05570000
+         Put Edit(MSG27)(SKIP,A);           /* Msg="Dpl return codes */ 05580000
+         Put Edit('*      Resp, resp2, and Abend code: ',               05590000
+         EXCI_DPL_RESP,EXCI_DPL_RESP2,SPACES,EXCI_DPL_ABCODE)           05600000
+         (SKIP,A,F(8),F(8),A,A);            /* Output DPL ret. codes */ 05610000
+         ABORT='YES';                       /*                       */ 05620000
+         Put Edit(MSG14)(SKIP,A);           /* Msg="Aborting..."     */ 05630000
+         end;                               /*                       */ 05640000
+                                            /*                       */ 05650000
+     If TARGET_PROGRAM_RETCODE = RET_EOF Then /*                     */ 05660000
+         Do;                                /*                       */ 05670000
+         Put Edit(MSG22)(SKIP,A);           /* Msg="*===End File===*"*/ 05680000
+         Put Edit(MSG02)(SKIP,A);           /* Msg="*              *"*/ 05690000
+         ABORT='YES';                       /*                       */ 05700000
+         End;                               /*                       */ 05710000
+                                            /*=======================*/ 05720000
+ End;    /* While loop */                                               05730000
+                                                                        05740000
+ RETURN;                                                                05750000
+ /*==================================================================*/ 05760000
+ /*                                                                  */ 05770000
+ /*     >>>>>>>>> End of DPL_SECTION processing. <<<<<<<<<<          */ 05780000
+ /*                                                                  */ 05790000
+ /*==================================================================*/ 05800000
+ END DPL_SECTION;                                                       05810000
+                                                                        05820000
+ SECTION_III: PROC;                                                     05830000
+ /*==================================================================*/ 05840000
+ /*                                                                  */ 05850000
+ /*   SECTION_III:   Whether or not SECTION_II processing was a      */ 05860000
+ /*                  success, we assume that at least all the calls  */ 05870000
+ /*                  were completed. Hence we perform a further Dpl  */ 05880000
+ /*                  call to the server program to set the Target    */ 05890000
+ /*                  file Closed, and continue by Closing and        */ 05900000
+ /*                  Deallocating the Pipe to the Target CICS system */ 05910000
+ /*                  to shut down the Link before exiting to MVS.    */ 05920000
+ /*                                                                  */ 05930000
+ /*==================================================================*/ 05940000
+                                                                        05950000
+ /*==================================================================*/ 05960000
+ /*                                                                  */ 05970000
+ /*  Set up and perform DPL request.                                 */ 05980000
+ /*                                                                  */ 05990000
+ /*==================================================================*/ 06000000
+                                /*===================================*/ 06010000
+   CALL = CLOSE_CALL;           /* Set up the Server call-type.      */ 06020000
+   CALL DFHXCIS(VERSION_1,      /* Version no. of EXCI API.          */ 06030000
+                RETAREA,        /* For Return codes (High level)     */ 06040000
+                USER_TOKEN,     /* Refer to this EXCI user           */ 06050000
+                DPL_REQUEST,    /* Call is a DPL_REQUEST type        */ 06060000
+                PIPE_TOKEN,     /* Refer to the Pipe already set up. */ 06070000
+                TARGET_PROGRAM, /* The CICS-resident Server          */ 06080000
+                COMMAREA,       /* Contains Server parameters+retarea*/ 06090000
+                COMM_LENGTH,    /* Length of the whole commarea      */ 06100000
+                DATA_LENGTH,    /* No of bytes of commarea sent out  */ 06110000
+                TARGET_TRANSID, /* TransId on Target CICS ->DFHMIRS  */ 06120000
+                NULL_VALUE,     /* Unit of Work Id is ommitted.      */ 06130000
+                TARGET_USERID,  /* End user's userid            @P1C */ 06140000
+                DPL_RETAREA,    /* For DPL Return codes (low level)  */ 06150000
+                SYNCONRETURN);  /* Synconreturn is mandatory.        */ 06160000
+ Put Edit(MSG28)(SKIP,A);       /* Msg='Closing DPL call attempted'  */ 06170000
+                                /*===================================*/ 06180000
+ /*==================================================================*/ 06190000
+ /*  Perform Close Pipe call.                                        */ 06200000
+ /*==================================================================*/ 06210000
+                                   /*================================*/ 06220000
+   CALL DFHXCIS(VERSION_1,         /* Version no. of EXCI API        */ 06230000
+                RETAREA,           /* For Return codes.              */ 06240000
+                USER_TOKEN,        /* Refer to this EXCI User        */ 06250000
+                CLOSE_PIPE,        /* Call is a Close_Pipe type      */ 06260000
+                PIPE_TOKEN);       /* Refer to the used Pipe         */ 06270000
+ Put Edit(MSG29)(SKIP,A);          /* Msg='Close_Pipe call complete' */ 06280000
+                                   /*================================*/ 06290000
+ /*==================================================================*/ 06300000
+ /*  Perform Deallocate Pipe call.                                   */ 06310000
+ /*==================================================================*/ 06320000
+                                   /*================================*/ 06330000
+   CALL DFHXCIS(VERSION_1,         /* Version no. of EXCI API        */ 06340000
+                RETAREA,           /* For Return codes.              */ 06350000
+                USER_TOKEN,        /* Refer to this EXCI User        */ 06360000
+                DEALLOCATE_PIPE,   /* Call is a Close_Pipe type      */ 06370000
+                PIPE_TOKEN);       /* Refer to the used Pipe         */ 06380000
+ Put Edit(MSG30)(SKIP,A);          /* Msg='Deallocate_Pipe complete'.*/ 06390000
+                                   /*================================*/ 06400000
+ /*==================================================================*/ 06410000
+ /*                                                                  */ 06420000
+ /*      >>>>>>>>>> End of SECTION_III processing. <<<<<<<<<<<       */ 06430000
+ /*                                                                  */ 06440000
+ /*==================================================================*/ 06450000
+ RETURN;                                                                06460000
+ END SECTION_III;                                                       06470000
+                                                                        06480000
+ GET_RET: PROC;                                                         06490000
+ /*==================================================================*/ 06500000
+ /*                                                                  */ 06510000
+ /*  If the EXCI call fails, this section will create the printable  */ 06520000
+ /*  return codes, and messages.                                     */ 06530000
+ /*                                                                  */ 06540000
+ /*==================================================================*/ 06550000
+                                                                        06560000
+ If CALLMODE = CALL_LEVEL Then                                          06570000
+  Do;                                                                   06580000
+  Put Edit('*     Response, Reason, and Subreason Codes of:',           06590000
+  EXCI_RESPONSE,EXCI_REASON,EXCI_SUB_REASON1)(SKIP,A,F(8),F(8),F(8));   06600000
+  BATCH_RETURN_CODE = EXCI_RESPONSE;                                    06610000
+  EXCI_MSG=BINARYVALUE(EXCI_MSG_PTR);  /*============================*/ 06620000
+  If EXCI_MSG ^= 0 Then                /* Has a message come back?   */ 06630000
+     Do;                               /*                            */ 06640000
+     Put Edit(MSG13)(SKIP,A);          /* Msg="A message has been.." */ 06650000
+     Put Edit(MSG02)(SKIP,A);          /* Msg="*                  *" */ 06660000
+     LINKMSG = SUBSTR(EXCI_MSG_TEXT,1,EXCI_MSG_LEN-4); /* copy msg   */ 06670000
+     Put Edit(LINKMSG)(SKIP,A);        /* Output error message       */ 06680000
+     Put Edit(MSG02)(SKIP,A);          /* Msg="*                  *" */ 06690000
+     End;                              /*============================*/ 06700000
+  End;                                                                  06710000
+ Else                                                                   06720000
+    Do;                                                                 06730000
+    Put Edit('*     Response, Reason, and Abend codes of:',             06740000
+    EXEC_RESP,EXEC_RESP2,SPACES,EXEC_ABCODE)(SKIP,A,F(8),F(8),A,A);     06750000
+    BATCH_RETURN_CODE = EXEC_RESP;                                      06760000
+    If EXEC_MSG_LEN ^= 0      Then     /*  Has a message come back?  */ 06770000
+       Do;                             /*                            */ 06780000
+       Put Edit(MSG13)(SKIP,A);        /* Msg="A message has been.." */ 06790000
+       Put Edit(MSG02)(SKIP,A);        /* Msg="*                  *" */ 06800000
+       LINKMSG = SUBSTR(EXEC_MSG_TEXT,1,EXEC_MSG_LEN);                  06810000
+       Put Edit(LINKMSG)(SKIP,A);      /*   ...and output it.        */ 06820000
+       Put Edit(MSG02)(SKIP,A);        /* Msg="*                  *" */ 06830000
+       End;                            /*============================*/ 06840000
+    End;                                                                06850000
+                                                                        06860000
+ RETURN;                                                                06870000
+ /*==================================================================*/ 06880000
+ /*                                                                  */ 06890000
+ /*      >>>>>>>>>> End of GET_RET processing. <<<<<<<<<<<           */ 06900000
+ /*                                                                  */ 06910000
+ /*==================================================================*/ 06920000
+ END GET_RET;                                                           06930000
+                                                                        06940000
+ END DFHPXCC;                                                           06950000
+

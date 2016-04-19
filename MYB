@@ -1,0 +1,50 @@
+HELO MVSHOST
+MAIL FROM:<KONSTAN@SYP2.EMPORIKI.GR>
+RCPT TO:<KONSTANTOPOULOS.N@EMPORIKI.GR>
+DATA
+FROM:     KONSTAN@SYP2.EMPORIKI.GR
+TO:       KONSTANTOPOULOS.N@EMPORIKI.GR
+SUBJECT:  Θα βάλω και μικρά και Μεγάλα και English
+MIME-Version: 1.0
+Content-type: multipart/mixed; boundary="simple boundary"
+
+PROLOGUE - IGNORED
+
+--simple boundary
+Content-type: text/html;
+
+<html>
+<head>
+<title>document with attachment</title>
+</head>
+<body>
+This is typed HTML using
+<font color=red>red</font> &amp.
+<font color=blue>blue</font>
+colors to prove this.
+<p><i>(See the attachment ATT.TXT attached)</i></p>
+<hr><p></p>
+</body>
+<hr><p></p>
+</body>
+</html>
+
+--simple boundary
+Content-disposition: attachment; filename="ATT.TXT"
+
+"Θέλει και Ελληνικά Ο Χαρούλης        zy dog" is a pangram (a phrase
+that uses all the letters of the alphabet) that has been used to test
+typewriters and computer keyboards because it is nicely coherent and
+short. It was known in the late 19th century, and used in Baden-Powel's
+book Scouting for Boys (1908) as a practice sentence for signalling.
+In later years, the phrase was popularized by Western Union and the
+Phone Company to test Telex/TWX data communication equipment for
+accuracy and reliability. It was often used for testing the teletype
+services (a procedure known as "foxing") when these machines were still
+used.
+In the age of computers, it is often used as a sample text in font
+selection contexts.
+
+--simple boundary
+EPILOGUE - IGNORED
+

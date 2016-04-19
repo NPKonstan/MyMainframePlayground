@@ -1,0 +1,431 @@
+      ****************************************************************
+      **                                                            **
+      **           FOUNDATION FOR COOPERATIVE PROCESSING            **
+      **                                                            **
+      **                       COBOL CICS                           **
+      **                   SERVICE MODULE FILE                      **
+      **                                                            **
+      **           COPYRIGHT (C) 1996 ANDERSEN CONSULTING.          **
+      **                    ALL RIGHTS RESERVED.                    **
+      **                                                            **
+      ****************************************************************
+      **                                                            **
+      **  MODULE NAME:       BKS03021                               **
+      **                                                            **
+      **  DATE GENERATED:    Tue Jul 08 12:12:55 2008               **
+      **                                                            **
+      **  BY USER:           NPK                                    **
+      **                                                            **
+      **  DESIGNER:                                                 **
+      **                                                            **
+      **  PROGRAMMER:                                               **
+      **                                                            **
+      **  SHORT DESCRIPTION:ÃÂÙ·‚ÔÎﬁ ”ÙÔÈ˜Âﬂ˘Ì –‹„È·Ú ≈ÌÙÔÎﬁÚ  OEK  **
+      **                    œ‘¡Õ COD-TYP-PAGIA = 4                  *
+      ****************************************************************
+
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. BKS03021.
+       ENVIRONMENT DIVISION.
+
+       DATA DIVISION.
+
+       WORKING-STORAGE SECTION.
+      ****************************************************************
+      ** REPOSITORY WORKING STORAGE                                 **
+      ****************************************************************
+        01 WS-MAX-BKMON         PIC 9(2) VALUE ZEROES.
+        01  LT-CONSTANTS.
+            02    LT-X-0     PIC X   VALUE '0'.
+            02    LT-X-1     PIC X   VALUE '1'.
+
+      **KLEMENOS KODIKAS *********************************************
+        01 WS-EMP-REC.
+           05 WK-EMP-RES PIC 99.
+           05 WS-SUB1 PIC 999 VALUE 0.
+           05 WS-SUB2 PIC 999 VALUE 0.
+           05 WS-EMP-NO PIC X(10).
+           05 WS-EMP-DEP PIC X(2).
+           05 WS-EMP-RESX PIC X(200).
+           05 WS-EMP-RESR REDEFINES WS-EMP-RESX OCCURS 100.
+              10 WS-EMP-RES PIC 9(2).
+      ** NULL INDICATORS √…¡ ‘œÕ ¬¡”… œ –…Õ¡ ¡ ***********************
+        01    IND-DKCM01-WEEK-DAY            PIC S9(4)V COMP.
+        01    IND-DKCM01-AVAIL-DAT1          PIC S9(4)V COMP.
+        01    IND-DKCM01-AVAIL-DAT2          PIC S9(4)V COMP.
+        01    IND-DKCM01-AVAIL-DAT3          PIC S9(4)V COMP.
+        01    IND-DKCM01-DEACTIV-PAGIA       PIC S9(4)V COMP.
+      ** NULL INDICATORS √…¡ ‘œÕ ISTORIKO  –…Õ¡ ¡ *******************
+        01    IND-DKCMH1-WEEK-DAY            PIC S9(4)V COMP.
+        01    IND-DKCMH1-AVAIL-DAT1          PIC S9(4)V COMP.
+        01    IND-DKCMH1-AVAIL-DAT2          PIC S9(4)V COMP.
+        01    IND-DKCMH1-AVAIL-DAT3          PIC S9(4)V COMP.
+        01    IND-DKCMH1-DEACTIV-PAGIA       PIC S9(4)V COMP.
+
+      ****************************************************************
+           EXEC SQL INCLUDE CTDKMOEK END-EXEC.
+           EXEC SQL INCLUDE CTDKHOEK END-EXEC.
+
+      ****************************************************************
+      **     CONSTANTS OF DIASTRANSFER ERRORS                       **
+      ****************************************************************
+       COPY DTERRORS.
+
+      ****************************************************************
+      **     COPY OF DIASTRANSFER FOR  AQERROR.                     **
+      ****************************************************************
+       COPY BKERRORP.
+
+      ****************************************************************
+      ** WORKING ARQUITECTURA                                       **
+      ****************************************************************
+       COPY ADSIK200.
+       COPY ADSAK001.
+
+       COPY AQSRV001.
+           05  LT-MODULO-SERV-V2         PIC X(8) VALUE 'BKS03021'.
+
+       LINKAGE SECTION.
+      ****************************************************************
+      ** FOUNDATION LINKAGE SECTION                                 **
+      ****************************************************************
+
+      ****************************************************************
+      ** BUSINESS FUNCTION CONTEXT DATA                             **
+      ****************************************************************
+       COPY AQBEBF.
+
+      ****************************************************************
+      ** INPUT MESSAGE PARMBLOCK                                    **
+      ****************************************************************
+       01  SRV-TXN-PB.
+           COPY WAPIMSG.
+
+      ****************************************************************
+      ** REPLY MESSAGE PARMBLOCK                                    **
+      ****************************************************************
+       01  RTAF-TXN-PB.
+           COPY WAPIMSG.
+
+      ****************************************************************
+      ** INPUT MESSAGE DATA                                         **
+      ****************************************************************
+       01  INPUT-TXN.
+           COPY BK03021I.
+
+
+      ****************************************************************
+      ** OUTPUT MESSAGE DATA                                       **
+      ****************************************************************
+       01  OUTPUT-TXN.
+           COPY BK03021O.
+
+
+      ****************************************************************
+      ** USER LINKAGE COPYBOOKS                                     **
+      ****************************************************************
+
+
+
+      ****************************************************************
+      ** USER PROCEDURE DIVISION                                    **
+      ****************************************************************
+       PROCEDURE DIVISION USING
+                                 &AQPROC1(),
+                                 &AQPROC2(),
+                                 &AQPROC3(),
+                                 AQBF-AQBEBF,
+                                 &AQPROC4(),
+                                 SRV-TXN-PB,
+                                 INPUT-TXN,
+                                 RTAF-TXN-PB,
+                                 OUTPUT-TXN.
+
+       0000-MAINLINE.
+      * START CODE PROCEDURE
+
+           PERFORM A1000-HOUSEKEEPING.
+           PERFORM A2000-PROCESS.
+           PERFORM A8000-WRAP-UP.
+
+       A1000-HOUSEKEEPING.
+      *****************************************************************
+      **  A1000-HOUSEKEEPING                                         **
+      *****************************************************************
+
+           &AQOPCION(NO-ERROSQL)
+
+      *     DISPLAY '                     '
+      *     DISPLAY 'BKS03021 NPK         '
+      *     DISPLAY 'BKARLOG              '  BKARLOG   OF INPUT-TXN
+      *     DISPLAY 'BKARLOG1             '  BKARLOG1  OF INPUT-TXN
+      *     DISPLAY 'BKPAGIA              '  BKPAGIA   OF INPUT-TXN
+      *
+
+           INITIALIZE CTDKMOEK.
+           INITIALIZE CTDKHOEK.
+           INITIALIZE OUTPUT-TXN.
+
+
+       A2000-PROCESS.
+      *****************************************************************
+      **  A2000-PROCESS                                              **
+      *****************************************************************
+               PERFORM A2100-LOAD-ISTORIKO  .
+               PERFORM A2200-INSERT-ISTORIKO  .
+               PERFORM A2300-UPDATE-CTDKMOEK.
+
+       A8000-WRAP-UP.
+      *****************************************************************
+      **  A8000-WRAP-UP                                              **
+      *****************************************************************
+      *        DISPLAY 'A8000-WRAP-UP  '
+                            .
+       A2100-LOAD-ISTORIKO  .
+      *****************************************************************
+      **  A2100-LOAD-ISTORIKO                                        **
+      *****************************************************************
+      *     DISPLAY 'A2100-LOAD-ISTORIKO  '
+            MOVE  COD-BRANCH OF INPUT-TXN
+            TO COD-KATMA    OF CTDKMOEK
+            MOVE  BKARLOG   OF INPUT-TXN
+            TO KEY-D-ARLOG1 OF CTDKMOEK
+            MOVE  BKARLOG1  OF INPUT-TXN
+            TO KEY-D-ARLOG2 OF CTDKMOEK
+            MOVE  BKPAGIA   OF INPUT-TXN
+            TO KEY-AR-PAGIA OF CTDKMOEK
+            MOVE 4
+            TO  COD-TYP-PAGIA      OF CTDKMOEK
+
+           EXEC SQL SELECT
+               COD_CHANNEL               ,
+               KEY_AR_PAGIA              ,
+               COD_TYP_PAGIA             ,
+               COD_KATMA                 ,
+               DAT_START_PAGIA           ,
+               KEY_D_ARLOG1              ,
+               COD_D_EFARM1              ,
+               AMT_D_POSO                ,
+               AMT_D_LOG1_MIN            ,
+               KEY_D_ARLOG2              ,
+               COD_D_EFARM2              ,
+               KEY_IBAN_D_ARLOG2         ,
+               KEY_TD_ARLOG1             ,
+               KEY_TD_ARLOG2             ,
+               AMT_TD_LOG_MIN            ,
+               AMT_D_DB_MIN              ,
+               COD_WEEK_DAY              ,
+               COD_AVAIL_DAT1            ,
+               AMT_AVAIL1                ,
+               COD_AVAIL_DAT2            ,
+               AMT_AVAIL2                ,
+               COD_AVAIL_DAT3            ,
+               AMT_AVAIL3                ,
+               DAT_DEACTIV_PAGIA         ,
+               COD_STATUS_PAGIA          ,
+               CHR_DESCR_PAGIA           ,
+               COD_INFORM_CUST           ,
+               CHR_CELL_PHONE            ,
+               CHR_EMAIL                 ,
+               CHR_USER_ID               ,
+               KEY_TIMESTAMP             ,
+               AMT_D_TD_MAX
+             INTO
+              :CTDKHOEK.COD-CHANNEL               ,
+              :CTDKHOEK.KEY-AR-PAGIA              ,
+              :CTDKHOEK.COD-TYP-PAGIA             ,
+              :CTDKHOEK.COD-KATMA                 ,
+              :CTDKHOEK.DAT-START-PAGIA           ,
+              :CTDKHOEK.KEY-D-ARLOG1              ,
+              :CTDKHOEK.COD-D-EFARM1              ,
+              :CTDKHOEK.AMT-D-POSO                ,
+              :CTDKHOEK.AMT-D-LOG1-MIN            ,
+              :CTDKHOEK.KEY-D-ARLOG2              ,
+              :CTDKHOEK.COD-D-EFARM2              ,
+              :CTDKHOEK.KEY-IBAN-D-ARLOG2         ,
+              :CTDKHOEK.KEY-TD-ARLOG1             ,
+              :CTDKHOEK.KEY-TD-ARLOG2             ,
+              :CTDKHOEK.AMT-TD-LOG-MIN            ,
+              :CTDKHOEK.AMT-D-DB-MIN              ,
+              :CTDKHOEK.COD-WEEK-DAY   :IND-DKCM01-WEEK-DAY        ,
+              :CTDKHOEK.COD-AVAIL-DAT1 :IND-DKCM01-AVAIL-DAT1      ,
+              :CTDKHOEK.AMT-AVAIL1                ,
+              :CTDKHOEK.COD-AVAIL-DAT2 :IND-DKCM01-AVAIL-DAT2      ,
+              :CTDKHOEK.AMT-AVAIL2                ,
+              :CTDKHOEK.COD-AVAIL-DAT3 :IND-DKCM01-AVAIL-DAT3      ,
+              :CTDKHOEK.AMT-AVAIL3                ,
+              :CTDKHOEK.DAT-DEACTIV-PAGIA :IND-DKCM01-DEACTIV-PAGIA   ,
+              :CTDKHOEK.COD-STATUS-PAGIA          ,
+              :CTDKHOEK.CHR-DESCR-PAGIA           ,
+              :CTDKHOEK.COD-INFORM-CUST           ,
+              :CTDKHOEK.CHR-CELL-PHONE            ,
+              :CTDKHOEK.CHR-EMAIL                 ,
+              :CTDKHOEK.CHR-USER-ID               ,
+              :CTDKHOEK.KEY-TIMESTAMP ,
+              :CTDKHOEK.AMT-D-TD-MAX
+             FROM    CTDKMOEK
+             WHERE KEY_D_ARLOG1 =:CTDKMOEK.KEY-D-ARLOG1 AND
+                   KEY_D_ARLOG2 =:CTDKMOEK.KEY-D-ARLOG2 AND
+                   COD_KATMA    =:CTDKMOEK.COD-KATMA    AND
+                   COD_TYP_PAGIA =:CTDKMOEK.COD-TYP-PAGIA AND
+                   KEY_AR_PAGIA =:CTDKMOEK.KEY-AR-PAGIA
+           END-EXEC.
+
+           MOVE SQLSTATE TO SQLSTATE-SIGLO.
+           IF NOT IND-SQL-CORRECTO
+                MOVE SQLSTATE       TO ERR-SQLSTATE  OF BKERRORP
+                MOVE 'A2100-LOAD '  TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'À¡»œ” SELECT  –¡√…¡” ≈Õ‘œÀ«”'
+                TO      ERR-COMMENTS    OF BKERRORP
+                MOVE   'CTDKMOEK'
+                TO     ERR-TABLE                   OF BKERRORP
+                  &AQERROR(ERROR, LT-ERR-SELECT,BKERRORP)
+           END-IF.
+
+       A2200-INSERT-ISTORIKO  .
+      *****************************************************************
+      **  A2200-INSERT-ISTORIKO                                    **
+      *****************************************************************
+      *    DISPLAY 'A2200-INSERT-ISTORIKO  '
+           EXEC SQL INSERT INTO CTDKHOEK
+           (
+               COD_CHANNEL               ,
+               KEY_AR_PAGIA              ,
+               COD_TYP_PAGIA             ,
+               COD_KATMA                   ,
+               DAT_START_PAGIA           ,
+               KEY_D_ARLOG1              ,
+               COD_D_EFARM1              ,
+               AMT_D_POSO                ,
+               AMT_D_LOG1_MIN            ,
+               KEY_D_ARLOG2              ,
+               COD_D_EFARM2              ,
+               KEY_IBAN_D_ARLOG2         ,
+               KEY_TD_ARLOG1             ,
+               KEY_TD_ARLOG2             ,
+               AMT_TD_LOG_MIN            ,
+               AMT_D_DB_MIN              ,
+               COD_WEEK_DAY              ,
+               COD_AVAIL_DAT1            ,
+               AMT_AVAIL1                 ,
+               COD_AVAIL_DAT2            ,
+               AMT_AVAIL2                 ,
+               COD_AVAIL_DAT3            ,
+               AMT_AVAIL3                 ,
+               DAT_DEACTIV_PAGIA         ,
+               COD_STATUS_PAGIA          ,
+               CHR_DESCR_PAGIA           ,
+               COD_INFORM_CUST           ,
+               CHR_CELL_PHONE            ,
+               CHR_EMAIL                   ,
+               CHR_USER_ID               ,
+               KEY_TIMESTAMP             ,
+               AMT_D_TD_MAX
+             )
+             VALUES
+             (
+              :CTDKHOEK.COD-CHANNEL               ,
+              :CTDKHOEK.KEY-AR-PAGIA              ,
+              :CTDKHOEK.COD-TYP-PAGIA             ,
+              :CTDKHOEK.COD-KATMA                   ,
+              :CTDKHOEK.DAT-START-PAGIA           ,
+              :CTDKHOEK.KEY-D-ARLOG1              ,
+              :CTDKHOEK.COD-D-EFARM1              ,
+              :CTDKHOEK.AMT-D-POSO                ,
+              :CTDKHOEK.AMT-D-LOG1-MIN            ,
+              :CTDKHOEK.KEY-D-ARLOG2              ,
+              :CTDKHOEK.COD-D-EFARM2              ,
+              :CTDKHOEK.KEY-IBAN-D-ARLOG2         ,
+              :CTDKHOEK.KEY-TD-ARLOG1             ,
+              :CTDKHOEK.KEY-TD-ARLOG2             ,
+              :CTDKHOEK.AMT-TD-LOG-MIN            ,
+              :CTDKHOEK.AMT-D-DB-MIN              ,
+              :CTDKHOEK.COD-WEEK-DAY   :IND-DKCM01-WEEK-DAY       ,
+              :CTDKHOEK.COD-AVAIL-DAT1 :IND-DKCM01-AVAIL-DAT1     ,
+              :CTDKHOEK.AMT-AVAIL1                ,
+              :CTDKHOEK.COD-AVAIL-DAT2 :IND-DKCM01-AVAIL-DAT2     ,
+              :CTDKHOEK.AMT-AVAIL2                ,
+              :CTDKHOEK.COD-AVAIL-DAT3 :IND-DKCM01-AVAIL-DAT3     ,
+              :CTDKHOEK.AMT-AVAIL3                ,
+              :CTDKHOEK.DAT-DEACTIV-PAGIA :IND-DKCM01-DEACTIV-PAGIA  ,
+              :CTDKHOEK.COD-STATUS-PAGIA          ,
+              :CTDKHOEK.CHR-DESCR-PAGIA           ,
+              :CTDKHOEK.COD-INFORM-CUST           ,
+              :CTDKHOEK.CHR-CELL-PHONE            ,
+              :CTDKHOEK.CHR-EMAIL                 ,
+              :CTDKHOEK.CHR-USER-ID               ,
+              CURRENT       TIMESTAMP             ,
+              :CTDKHOEK.AMT-D-TD-MAX
+               )
+           END-EXEC.
+
+           MOVE SQLSTATE TO SQLSTATE-SIGLO.
+           IF NOT IND-SQL-CORRECTO
+                MOVE SQLSTATE       TO ERR-SQLSTATE  OF BKERRORP
+                MOVE 'A2200-INSERT'   TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'À¡»œ” ”‘«Õ ≈…”¡√Ÿ√« –¡√…¡” ≈Õ‘œÀ«”'
+                TO      ERR-COMMENTS    OF BKERRORP
+                MOVE   'CTDKHOEK'
+                TO     ERR-TABLE                   OF BKERRORP
+                  &AQERROR(ERROR, LT-ERR-INSERT,BKERRORP)
+           END-IF.
+
+
+       A2300-UPDATE-CTDKMOEK.
+      ****************************************************************
+      ** A2300-UPDATE-CTDKMOEK.                                      **
+      ****************************************************************
+           MOVE  COD-BRANCH OF INPUT-TXN
+           TO COD-KATMA    OF CTDKMOEK
+           MOVE  BKARLOG   OF INPUT-TXN
+           TO KEY-D-ARLOG1 OF CTDKMOEK
+           MOVE  BKARLOG1  OF INPUT-TXN
+           TO KEY-D-ARLOG2 OF CTDKMOEK
+           MOVE  BKPAGIA   OF INPUT-TXN
+           TO KEY-AR-PAGIA OF CTDKMOEK
+           MOVE 4
+           TO  COD-TYP-PAGIA      OF CTDKMOEK
+
+           MOVE  CO-FLOAMOU3      OF INPUT-TXN
+           TO  AMT-D-LOG1-MIN     OF CTDKMOEK
+
+
+           MOVE COD-USERID-TRX    OF INPUT-TXN
+           TO   CHR-USER-ID       OF CTDKMOEK
+
+              EXEC SQL UPDATE CTDKMOEK
+               SET
+                    COD_TYP_PAGIA    =
+                    :CTDKMOEK.COD-TYP-PAGIA  ,
+                    AMT_D_LOG1_MIN   =
+                    :CTDKMOEK.AMT-D-LOG1-MIN ,
+                    CHR_USER_ID      = :CTDKMOEK.CHR-USER-ID    ,
+                    KEY_TIMESTAMP = CURRENT TIMESTAMP
+             WHERE KEY_D_ARLOG1 =:CTDKMOEK.KEY-D-ARLOG1 AND
+                   KEY_D_ARLOG2 =:CTDKMOEK.KEY-D-ARLOG2 AND
+                   COD_TYP_PAGIA =:CTDKMOEK.COD-TYP-PAGIA AND
+                   COD_KATMA    =:CTDKMOEK.COD-KATMA    AND
+                   KEY_AR_PAGIA =:CTDKMOEK.KEY-AR-PAGIA
+           END-EXEC.
+
+           MOVE SQLSTATE      TO SQLSTATE-SIGLO.
+           IF NOT IND-SQL-CORRECTO
+                MOVE SQLSTATE       TO ERR-SQLSTATE  OF BKERRORP
+                MOVE 'A2300-UPDATE'   TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'A2300'
+                TO      ERR-OPER-CODE   OF BKERRORP
+                MOVE 'UPDATE ≈Õ‘œÀ«”'
+                TO      ERR-COMMENTS    OF BKERRORP
+                MOVE   'CTDKMOEK'
+                TO     ERR-TABLE                   OF BKERRORP
+              &AQERROR(ERROR, LT-ERR-UPDATE,BKERRORP)
+           END-IF.
+      *
+      *
+      *
+      *
+      *
+      *
+      *
+      *
+

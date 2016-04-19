@@ -1,0 +1,38 @@
+ DKR1 : PROC  OPTIONS(FETCHABLE)  RETURNS(CHAR(8));
+ DCL  RET  CHAR (8);
+ DCL (LENGTH,SUBSTR,ADDR,UNSPREC) BUILTIN;
+ DCL PSA_PTR POINTER;
+ DCL 1 PSA  BASED (PSA_PTR),
+          2 FILLER    CHAR (540),
+          2 TCBPTR    POINTER;
+
+ DCL 1 TCB  BASED (TCBPTR),
+          2 FILLER    CHAR (180),
+          2 JSCBPTR    POINTER;
+
+ DCL 1 JSCB  BASED (JSCBPTR),
+          2 FILLER    CHAR (260),
+          2 JCTPTR     POINTER;
+
+ DCL 1 JCT   BASED (JCTPTR),
+          2 FILLER    CHAR (56),
+          2 ACT_ADDR  CHAR(3);
+
+ DCL   MYPTR POINTER;
+          UNSPEC (MYPTR) = 0;
+          AAA = ACT_ADDR;
+
+ DCL   1 BASEDPTR BASED(MYPTR),
+          2 FILLER    CHAR (1),
+          2 AAA       CHAR(3);
+
+ DCL 1 ACT   BASED (MYPTR),
+          2 FILLER    CHAR (24),
+          2 NAME      CHAR(20);
+
+     /* INITIALISE POINTER */
+     UNSPEC (PSA_PTR) = 0;
+     RET = SUBSTR(NAME,1,8);
+     RETURN(RET);
+ END  DKR1 ;
+

@@ -1,0 +1,32 @@
+ DKR2:  PROC  OPTIONS(MAIN);
+ DCL  RET  CHAR (8);
+ DCL (LENGTH,SUBSTR,ADDR,UNSPREC) BUILTIN;
+ DCL PSA_PTR POINTER;
+ DCL 1 PSA  BASED (PSA_PTR),
+          2 FILLER    CHAR (548),
+          2 ASCBPTR    POINTER;
+
+ DCL 1 ASCB  BASED (ASCBPTR),
+          2 FILLER    CHAR (108),
+          2 ASXBPTR    POINTER;
+
+ DCL 1 ASXB  BASED (ASXBPTR),
+          2 FILLER    CHAR (200),
+          2 ACEEPTR     POINTER;
+
+ DCL 1 ACEE   BASED (ACEEPTR),
+          2 F         CHAR (21),
+          2 MYNAME    CHAR(8);
+
+ DCL 1 PIN  BASED (ADDR(MYNAME)),
+         2  PI(8) CHAR(1);
+ DCL I FIXED(3) INIT(0);
+     /* INITIALISE POINTER */
+     UNSPEC (PSA_PTR) = 0;
+     PUT SKIP LIST('F    ',F     );
+     PUT SKIP LIST('NAME ',MYNAME);
+     DO  I=1 TO 8 DO;
+     PUT SKIP LIST('PI=',I,PI(I));
+     END;
+ END  DKR2 ;
+

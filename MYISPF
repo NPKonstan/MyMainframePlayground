@@ -1,0 +1,33 @@
+)ATTR                                                                   00010000
+  _ TYPE(INPUT)  CAPS(ON)  JUST(LEFT)  COLOR(WHITE)                     00011000
+  / TYPE(TEXT)   INTENS(HIGH) SKIP(ON) COLOR(TURQUOISE)                 00012000
+  $ TYPE(TEXT)   INTENS(HIGH) SKIP(ON) COLOR(GREEN)                     00013000
+  ? TYPE(OUTPUT) INTENS(HIGH) SKIP(ON) COLOR(YELLOW)                    00014000
+  * TYPE(OUTPUT) INTENS(HIGH) SKIP(ON) COLOR(RED)                       00015000
+  % TYPE(OUTPUT) INTENS(HIGH) SKIP(ON) COLOR(WHITE)                     00016000
+)BODY WINDOW(62,20)                                                     00017000
+$                                                                       00018000
+$   Dataset..:_filename                                    $            00019000
+$   Userid...:_user    $                                                00019100
+$                                                                       00019200
+/   Put an X in front of the destination nodes                          00019300
+$                                                                       00019400
+$         *local1  ?node1    _D1+                                       00019500
+$         *local2  ?node2    _D2+                                       00019600
+$         *local3  ?node3    _D3+                                       00019700
+$         *local4  ?node4    _D4+                                       00019800
+$         *local5  ?node5    _D5+                                       00020000
+$         *local6  ?node6    _D6+                                       00020100
+$         *local7  ?node7    _D7+                                       00020200
+$         *local8  ?node8    _D8+                                       00020300
+$         *local9  ?node9    _D9+                                       00020400
+$                                                                       00020500
+$         %msg                                                          00020600
+/    PF3 - Cancel                     ENTER - Transmit                  00020700
+)INIT                                                                   00020800
+&ZWINTTL = ' Transmit a file '                                          00020900
+)PROC                                                                   00021000
+VER(&filename,NONBLANK,dsname)                                          00021100
+VER(&user,NONBLANK)                                                     00021200
+)END                                                                    00021300
+

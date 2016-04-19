@@ -1,0 +1,901 @@
+ /* PROCESS A,GOSTMT,NEST,OPT(TIME),AG,MI('+'),S,X,MAP,INCLUDE;       */
+      /*-------------PROGRAM   EF197         -----------------*/
+      /*    статистийа диахесгс сглатым циа KYKkOuOPIAr 77770 */
+      /*            KATERINA THERIAKI 03/2005                 */
+      /*                                                DUMMY */
+      /*--------------------------------------- -------------*/
+
+ EF197 : PROC OPTIONS(MAIN) ;
+ DCL PLIXOPT CHAR(39) VAR EXT  INIT ('ERRCOUNT(0)');
+ DCL CZX3VDAT CHAR(6); FETCH CZXDATEP;
+ DCL CZXDATEP ENTRY OPTIONS(INTER,ASM) ;
+ DCL PRINT FILE RECORD OUTPUT ENV(FB RECSIZE(133) CTLASA);
+ DCL EFORIA1 FILE RECORD INPUT ENV(FB RECSIZE(190) CTLASA);
+ DCL READER FILE RECORD INPUT ENV(FB RECSIZE(80));
+
+ % INCLUDE  EFFILDS ;
+ % INCLUDE  DAYRTNS ;
+
+ DCL 1   WREADER,
+      2  CKATHG              PIC '(5)9',
+      2  CFILLER1            CHAR(1) INIT(' '),
+      2  CETOS               CHAR(4) INIT(' '),
+      2  CFILLER2            CHAR(1) INIT(' '),
+      2  CMONTH              CHAR(2) INIT(' '),
+      2  CFILLER3            CHAR(1) INIT(' '),
+      2  CINDIC              CHAR(1) INIT(' '),
+      2  CFILLER4            CHAR(65);
+
+ DCL  MONTH_FROM  PIC '(2)9' INIT(0);
+ DCL  MONTH_TO    PIC '(2)9' INIT(0);
+ DCL  PREV_MONTH  PIC '(2)9' INIT(0);
+ DCL  CURR_YEAR   PIC '9999'   INIT(0);
+ DCL  PREV_YEAR   PIC '9999'   INIT(0);
+ DCL  MINIMUM_DATE       PIC '(8)9'    INIT(0);
+ DCL  MAXIMUM_DATE       PIC '(8)9'    INIT(0);
+ DCL  DSP_MIN_DATE       PIC 'ZZZZ.ZZ.Z9' INIT(0);
+ DCL  DSP_MAX_DATE       PIC 'ZZZZ.ZZ.Z9' INIT(0);
+ DCL  EFRDATE8           PIC '(8)9'    INIT(0);
+ DCL 1 EFRDT8            BASED(ADDR(EFRDATE8)),
+      2  DTYY4           PIC '9999',
+      2  DTMM2           PIC '99',
+      2  DTDD2           PIC '99';
+
+
+ DCL 1 LINE,
+     2  CC     CHAR (1)      INIT('1'),
+     2  GRAM   CHAR (132);
+
+ DCL 1 LINEOUT BASED(ADDR(GRAM)),
+     2 LCC             CHAR(1) INIT('0'),
+     2 LFIL0           CHAR(5),
+     2 LDATE           PIC '99',
+     2 LFIL1           CHAR(1),
+     2 LCURR_YEAR_NUM  PIC 'ZZ.ZZZ.ZZZ.ZZ9' INIT(0),
+     2 LFIL2           CHAR(1),
+     2 LCURR_YEAR_POSO PIC 'Z.ZZZ.ZZZ.ZZ9V,99' INIT(0),
+     2 LFIL3           CHAR(1),
+     2 LPREV_YEAR_NUM  PIC 'ZZ.ZZZ.ZZZ.ZZ9' INIT(0),
+     2 LFIL4           CHAR(1),
+     2 LPREV_YEAR_POSO PIC 'ZZ.ZZZ.ZZZ.ZZ9V,99' INIT(0),
+     2 LFIL5           CHAR(2),
+     2 LPERCENTNUM     PIC 'ZZZ.ZZZV,ZZ-' INIT(0),
+     2 LFIL6           CHAR(1),
+     2 LPERCENTPOS     PIC 'ZZZ.ZZZV,ZZ-' INIT(0),
+   /*2 LFIL7           CHAR(40); NPK 13-11-2007 ENTERPLI*/
+     2 LFIL7           CHAR(34);
+
+ DCL 1 SLINEOUT ,
+     2 SCC             CHAR(1) INIT('0'),
+     2 SFIL1           CHAR(11) INIT ('сумока'),
+     2 SCURR_YEAR_NUM  PIC 'Z.ZZZ.ZZZ.ZZ9' INIT(0),
+     2 SFIL2           CHAR(1),
+     2 SCURR_YEAR_POSO PIC 'Z.ZZZ.ZZZ.ZZ9V,99' INIT(0),
+     2 SFIL3           CHAR(1),
+     2 SPREV_YEAR_NUM  PIC 'Z.ZZZ.ZZZ.ZZ9' INIT(0),
+     2 SFIL4           CHAR(1),
+     2 SPREV_YEAR_POSO PIC 'Z.ZZZ.ZZZ.ZZ9V,99' INIT(0),
+     2 SFIL5           CHAR(3),
+     2 SPERCENTNUM     PIC 'ZZZV,ZZ-' INIT(0),
+     2 SFIL6           CHAR(3),
+     2 SPERCENTPOS     PIC 'ZZZV,ZZ-' INIT(0),
+     2 SFIL7           CHAR(40);
+
+ DCL 1 SLINEOUTK,
+     2 SCCK             CHAR(1) INIT('0'),
+     2 SFIL1K           CHAR(08) INIT ('сумока'),
+     2 SCURR_YEAR_NUMK  PIC 'ZZ.ZZZ.ZZZ.ZZ9' INIT(0),
+     2 SFIL2K           CHAR(1),
+     2 SCURR_YEAR_POSOK PIC 'ZZ.ZZZ.ZZZ.ZZ9V,99' INIT(0),
+     2 SFIL3K           CHAR(1),
+     2 SPREV_YEAR_NUMK  PIC 'ZZ.ZZZ.ZZZ.ZZ9' INIT(0),
+     2 SFIL4K           CHAR(1),
+     2 SPREV_YEAR_POSOK PIC 'ZZ.ZZZ.ZZZ.ZZ9V,99' INIT(0),
+     2 SFIL5K           CHAR(5),
+     2 SPERCENTNUMK     PIC 'ZZZZV,ZZ-' INIT(0),
+     2 SFIL6K           CHAR(4),
+     2 SPERCENTPOSK     PIC 'ZZZZV,ZZ-' INIT(0),
+     2 SFIL7K           CHAR(34); /*NPK 13-11-2007 ENTERPLI*/
+
+ DCL 1 XKATMA BASED(ADDR(EFKATMA1)),
+       2 XKATMA1 BIT(20),
+       2 FILKAT  BIT(4);
+ DCL 1 XAFM   BASED(ADDR(EFAFM1)),
+       2 XAFM1 BIT(44),
+       2 FILAFM  BIT(4);
+ DCL 1 XNOTE  BASED(ADDR(EFNOTE1)),
+       2 XNOTE1 BIT(36),
+       2 FILNOT  BIT(4);
+ DCL 1 XAMOU  BASED(ADDR(EFAMOUN1)),
+       2 XAMOU1 BIT(44),
+       2 FILAMO  BIT(4);
+
+  DCL BEFREF1  BIT(4)  BASED(ADDR(EFREF1));
+  DCL WKATMA   PIC '999'   INIT(0);
+  DCL CKATMA   CHAR(5)     INIT(' ');
+  DCL KATMA5   PIC '99999'   INIT(0);
+
+  DCL ZT1       PIC 'ZZZZZZZZZZ9'   INIT (0);
+  DCL AT1       PIC '99999999999'   INIT (0);
+  DCL AT2       PIC '99999999999'   INIT (0);
+  DCL ATAFM     PIC '99999999999'   INIT (0);
+  DCL ATYPOIK   PIC '99999999999'   INIT (0);
+  DCL ATYPOIKA  PIC '99999999999'   INIT (0);
+  DCL ATREF     PIC '99999999999'   INIT (0);
+  DCL ATDAT     PIC '99999999999'   INIT (0);
+  DCL ATSTAT    PIC '99999999999'   INIT (0);
+  DCL ATSTATPOS FIXED(15,2)        INIT (0);
+  DCL DPOSO     PIC 'ZZZZ.ZZZ.ZZ9V,99'   INIT (0);
+  DCL ATDAT4    PIC '99999999999'   INIT (0);
+  DCL ATFOROS   PIC '99999999999'   INIT (0);
+  DCL ATFORPOS  FIXED(15,2)    INIT (0);
+  DCL TEMP_VAR  FIXED(15,3)    INIT (0);
+  DCL TEMP1_VAR FIXED(15,3)    INIT (0);
+  DCL TEMP2_VAR FIXED(15,3)    INIT (0);
+  DCL POSOSTO   FIXED DECIMAL(4,2)    INIT (0);
+  DCL NUMSIMATA PIC '99999999999'   INIT (0);
+  DCL POSSIMATA FIXED(13,2)    INIT (0);
+  DCL ATKATMA   PIC '99999999999'   INIT (0);
+  DCL ATNOTE    PIC '99999999999'   INIT (0);
+  DCL MSG      CHAR (1)         INIT (' ');
+  DCL ANSWER   CHAR (3)         INIT (' ');
+  DCL WNOMISMA CHAR (6)         INIT (' ');
+  DCL ERR_REC  PIC '9999999999'   INIT (0);
+
+  DCL ( PRIORITY,ADDR,ONCODE,SUBSTR,TRANSLATE )  BUILTIN;
+  DCL ( VERIFY )  BUILTIN;
+
+  DCL  ALFA CHAR(49)
+       INIT('ABcdEZHhIKkMNnOpPrTYuXwx.ABcdEZHhIKkMNnOpPrTYuXwx');
+  DCL  BHTA CHAR(49)
+       INIT('ABCDEFGHIJKLMNOQRSUVWXYZ.ABcdEZHhIKkMNnOpPrTYuXwx');
+
+  DATE: PROC IRREDUCIBLE RETURNS(CHAR(6)) ;
+        CALL CZXDATEP ( CZX3VDAT) ;
+        RETURN (CZX3VDAT) ;
+  END DATE ;
+  DCL CURDATE  CHAR (6)            INIT (' ');
+  DCL DATEX BASED(ADDR(CURDATE))   PIC  '999999';
+
+       /*----------------------------*/
+       /* EXTERNAL PROCEDURE EKXOR   */
+       /*----------------------------*/
+
+  DCL EKXOR ENTRY(CHAR(3),CHAR(14))
+      OPTIONS(INTER,ASM);
+  FETCH EKXOR;
+  DCL KAT         CHAR (3)          INIT (' ');
+  DCL KMA         CHAR (14)         INIT (' ');
+  DCL KATPIC      PIC  '999' BASED(ADDR(KAT));
+
+ DCL  CTLFLDN  CHAR(10)  INIT('1234567890');
+
+ DCL II            FIXED(5)   INIT(0) ;
+ DCL JJ            PIC'99'    INIT(0) ;
+ DCL WRKDT         CHAR (6);
+ DCL WRKDATE       PIC '999999' BASED(ADDR(WRKDT));
+ DCL WEFNOTE2      PIC '99999999' INIT (0);
+ DCL CEFNOTE2      CHAR(8) BASED(ADDR(WEFNOTE2));
+ DCL PAGENO        FIXED(05)  INIT(0);                                  BK300800
+ DCL ZPAGENO       PIC 'Z.ZZ9';                                         BK300800
+ DCL LINENO        FIXED(05)  INIT(0);                                  BK300800
+ DCL GINP          FIXED(10)  INIT(0);                                  BK300800
+ DCL LAR           FIXED(05)  INIT(0);                                  BK300800
+ DCL LPOS          FIXED(13,2)  INIT(0);                                BK300800
+ DCL GARFOR        FIXED(05)  INIT(0);                                  BK300800
+ DCL GPOSFOR       FIXED(15,2)  INIT(0);                                BK300800
+ DCL GARTEL        FIXED(05)  INIT(0);                                  BK300800
+ DCL GPOSTEL       FIXED(15,2)  INIT(0);                                BK300800
+
+ DCL     DATE2               PIC '(6)9'    INIT(0);
+ DCL 1   DATEX2              BASED(ADDR(DATE2)),
+      2  YY2                 PIC '99',
+      2  MM2                 PIC '99',
+      2  DD2                 PIC '99';
+
+ DCL     DATE4               PIC '(8)9'    INIT(0);
+ DCL 1   DATEX4              BASED(ADDR(DATE4)),
+      2  YY4                 PIC '9999',
+      2  MM4                 PIC '99',
+      2  DD4                 PIC '99';
+
+ DCL DATE8       PIC '(8)9' INIT(0);
+ DCL SEARCHDDMM  PIC '(4)9' INIT(0);
+ DCL I           PIC '99' INIT(0);
+ DCL J           PIC '999' INIT(0);
+
+ DCL  1  TABLE_OF_SIMATA(400),
+       2  TBL_ID           PIC '999'        ,
+       2  TBL_HMERA        PIC '9999'       ,
+       2  TBL_MONTH        PIC '99'         ,
+       2  TBL_NUMBER_PY    PIC '99999999999' ,
+       2  TBL_POSO_PY      PIC 'S99999999999V99' ,
+       2  TBL_NUMBER_CY    PIC '99999999999'     ,
+       2  TBL_POSO_CY      PIC 'S99999999999V99' ;
+ TABLE_OF_SIMATA = '';/*NPK 13-11-2007 ENTERPLI*/
+ DCL  1  TABLE_OF_SUMS(12),
+       2  SUM_MONTH        PIC '99'        ,
+       2  SUM_NUMBER_PY    PIC '99999999999' ,
+       2  SUM_POSO_PY      PIC 'S99999999999V99' ,
+       2  SUM_NUMBER_CY    PIC '99999999999'     ,
+       2  SUM_POSO_CY      PIC 'S99999999999V99' ;
+ TABLE_OF_SUMS = '';/*NPK 13-11-2007 ENTERPLI*/
+ DCL  1  TABLE_OF_KLIM(999),
+       2  KLI_ID           PIC '999'       ,
+       2  KLI_CODE         PIC '99'        ,
+       2  KLI_MONTH        PIC '99'        ,
+       2  KLI_NUMBER_PY    PIC '99999999999' ,
+       2  KLI_POSO_PY      PIC 'S99999999999V99',
+       2  KLI_NUMBER_CY    PIC '99999999999'    ,
+       2  KLI_POSO_CY      PIC 'S99999999999V99' ;
+ TABLE_OF_KLIM = '';/*NPK 13-11-2007 ENTERPLI*/
+
+ DCL TBL_INDEX     PIC '999'    INIT(0);                                BK300800
+ DCL TBL_METR1     PIC '999'    INIT(0);                                BK300800
+ DCL TBL_METR2     PIC '999'    INIT(0);                                BK300800
+ DCL COUNT1        PIC '99'     INIT(0);                                BK300800
+ DCL KLIMAKIO      PIC '99'     INIT(0);                                BK300800
+ DCL MAX_ID        PIC '999'    INIT(0);                                BK300800
+ DCL MIN_ID        PIC '999'    INIT(0);                                BK300800
+ DCL MIN_ID2       PIC '99'    INIT(0);                                 BK300800
+ DCL FOUND         BIT(1)       INIT('0'B);
+
+ DCL TOT_NUMBER_PY    PIC '99999999999'     INIT(0);
+ DCL TOT_POSO_PY      PIC 'S99999999999V99' INIT(0);
+ DCL TOT_NUMBER_CY    PIC '99999999999'     INIT(0);
+ DCL TOT_POSO_CY      PIC 'S99999999999V99' INIT(0);
+
+  %PAGE;
+    OPEN FILE (PRINT);
+    OPEN FILE ( EFORIA1 );
+    OPEN FILE ( READER );
+    ON ENDFILE (EFORIA1) GO TO TELOS;
+    ON ENDFILE (READER) GO TO TELOS;
+
+    CALL READ_INCARD;
+    LINEOUT = '';
+    TBLSHM = 0;
+
+    WRKDT    = DATE;
+    DATE4 = DAYR6R8(WRKDATE);
+
+    TBL_INDEX = 1;
+    DO TBL_METR2 = MONTH_FROM TO MONTH_TO;
+       DO TBL_METR1 = 1 TO 31;
+          TBL_ID(TBL_INDEX) = 0;
+          TBL_HMERA(TBL_INDEX) = (TBL_METR1 * 100) + TBL_METR2;
+          TBL_INDEX = TBL_INDEX + 1;
+       END;
+    END;
+
+    DO TBL_METR2 = 1 TO 80;
+       KLI_ID(TBL_METR2) = TBL_METR2 ;
+       KLI_CODE(TBL_METR2) = 0;
+    END;
+
+    TBL_INDEX = 1;
+    DO TBL_INDEX = 1 TO 12;
+        SUM_MONTH(TBL_INDEX)     = TBL_INDEX;
+    END;
+
+   RD:
+    READ  FILE ( EFORIA1  ) INTO ( IOAREA   );
+
+    GINP = GINP + 1;
+
+    EFRDATE8 = EFRDATE2;
+
+    SEARCHDDMM = DTDD2 !! DTMM2 ;
+    /*
+    IF SEARCHDDMM ^= 0111 & SEARCHDDMM ^= 0211
+                          THEN GOTO RD;
+    */
+     IF EFDATID ^= 08 THEN DO;
+        ATYPOIK = ATYPOIK + 1;
+        GOTO RD;
+      END;
+
+      IF EFDATID  = 08 & EFSTATUS = 0 THEN DO;
+         ATFOROS  = ATFOROS + 1;
+         ATFORPOS = ATFORPOS + EFCLAMOU;
+      END;
+
+      IF EFDATID = 08 & EFSTATUS = 1 THEN DO;
+         ATSTAT= ATSTAT+ 1;
+         ATSTATPOS = ATSTATPOS + EFCLAMOU;
+         GOTO RD;
+      END;
+
+      IF (DTYY4 ^=  CURR_YEAR) & (DTYY4 ^=  PREV_YEAR)    THEN DO;
+         ATSTAT= ATSTAT+ 1;
+         ATSTATPOS = ATSTATPOS + EFCLAMOU;
+         GOTO RD;
+      END;
+
+      IF (DTMM2 > MONTH_TO) ! (DTMM2 < MONTH_FROM)    THEN DO;
+         ATSTAT= ATSTAT+ 1;
+         ATSTATPOS = ATSTATPOS + EFCLAMOU;
+         GOTO RD;
+      END;
+
+      KLIMAKIO  = 0;
+      KLIMAKIO  = SUBSTR(EFDIAS,8,2);
+      /*
+    GRAM = 'SEARCHDDMM:' !! SEARCHDDMM;
+    WRITE FILE(PRINT) FROM(LINE);
+      */
+     CALL UPDATE_TABLE;
+     IF MINIMUM_DATE = 0 THEN  MINIMUM_DATE = EFRDATE8;
+     IF MAXIMUM_DATE = 0 THEN  MAXIMUM_DATE = EFRDATE8;
+     IF EFRDATE8 < MINIMUM_DATE
+        THEN  MINIMUM_DATE = EFRDATE8;
+     IF EFRDATE8 > MAXIMUM_DATE
+        THEN  MAXIMUM_DATE = EFRDATE8;
+
+
+     GOTO RD;
+
+ UPDATE_TABLE: PROC;
+    TBL_INDEX = 0;
+    DO TBL_INDEX = 1 TO 400;
+       IF TBL_HMERA(TBL_INDEX) = SEARCHDDMM THEN DO;
+          TBL_ID(TBL_INDEX) = 1;
+          TBL_MONTH(TBL_INDEX) = DTMM2;
+          SELECT(DTYY4);
+          WHEN (CURR_YEAR)
+           DO;
+            TBL_NUMBER_CY(TBL_INDEX) = TBL_NUMBER_CY(TBL_INDEX) + 1;
+            TBL_POSO_CY(TBL_INDEX) = TBL_POSO_CY(TBL_INDEX) + EFCLAMOU;
+           END;
+          WHEN (PREV_YEAR)
+           DO;
+            TBL_NUMBER_PY(TBL_INDEX) = TBL_NUMBER_PY(TBL_INDEX) + 1;
+            TBL_POSO_PY(TBL_INDEX) = TBL_POSO_PY(TBL_INDEX) + EFCLAMOU; OU;
+           END;
+          OTHERWISE
+           DO;
+            GRAM = 'кахос .......................... :';
+            WRITE FILE(PRINT) FROM(LINE);
+            STOP;
+           END;
+         END;
+        CALL ADD_SUMS;
+        CALL ADD_KLIM;
+    END; /*IF TBL_HMERA(TBL_INDEX) = SEARCHDDMM THEN DO;*/
+    END; /*DO TBL_INDEX = 1 TO 400*/
+ END; /*UPDATE_TABLE: PROC;*/
+
+ ADD_SUMS: PROC;
+    DO COUNT1 = 1 TO 12;
+       IF SUM_MONTH(COUNT1) = DTMM2 THEN DO;
+          SELECT(DTYY4);
+          WHEN (CURR_YEAR)
+           DO;
+            SUM_NUMBER_CY(COUNT1) = SUM_NUMBER_CY(COUNT1) + 1;
+            SUM_POSO_CY(COUNT1) = SUM_POSO_CY(COUNT1)+ EFCLAMOU;
+           END;
+          WHEN (PREV_YEAR)
+           DO;
+            SUM_NUMBER_PY(COUNT1) = SUM_NUMBER_PY(COUNT1) + 1;
+            SUM_POSO_PY(COUNT1) = SUM_POSO_PY(COUNT1)+ EFCLAMOU;
+           END;
+          OTHERWISE
+           DO;
+           END;
+         END;
+       END;
+    END;
+ END; /*ADD_SUMS*/
+
+ ADD_KLIM: PROC;
+    MAX_ID = 0;
+    MIN_ID = 0;
+    FOUND = '0'B;
+    DO TBL_METR2 = 1 TO 80;
+       IF FOUND = '1'B THEN GOTO CONTINUE;
+       IF KLI_CODE(TBL_METR2) > 0 THEN MIN_ID = TBL_METR2;
+       IF (KLI_CODE(TBL_METR2) = KLIMAKIO)
+      /*    & (KLI_MONTH(TBL_METR2) = DTMM2) THEN DO; */
+          THEN DO;
+          FOUND = '1'B;
+          MAX_ID = KLI_ID(TBL_METR2);
+          SELECT(DTYY4);
+          WHEN (CURR_YEAR)
+           DO;
+            KLI_NUMBER_CY(TBL_METR2) = KLI_NUMBER_CY(TBL_METR2) + 1;
+            KLI_POSO_CY(TBL_METR2) = KLI_POSO_CY(TBL_METR2)+ EFCLAMOU;
+           END;
+          WHEN (PREV_YEAR)
+           DO;
+            KLI_NUMBER_PY(TBL_METR2) = KLI_NUMBER_PY(TBL_METR2) + 1;
+            KLI_POSO_PY(TBL_METR2) = KLI_POSO_PY(TBL_METR2)+ EFCLAMOU;
+           END;
+          OTHERWISE
+           DO;
+           END;
+         END; /*SELECT*/
+       END; /*IF*/
+    END;    /*DO*/
+
+ CONTINUE:
+    IF FOUND = '0'B  THEN DO;
+       MIN_ID = MIN_ID + 1;
+       TBL_METR2 = MIN_ID;
+       KLI_CODE(TBL_METR2) = KLIMAKIO;
+       KLI_MONTH(TBL_METR2) = DTMM2;
+       SELECT(DTYY4);
+          WHEN (CURR_YEAR)
+           DO;
+            KLI_NUMBER_CY(TBL_METR2) = KLI_NUMBER_CY(TBL_METR2) + 1;
+            KLI_POSO_CY(TBL_METR2) = KLI_POSO_CY(TBL_METR2)+ EFCLAMOU;
+           END;
+          WHEN (PREV_YEAR)
+           DO;
+            KLI_NUMBER_PY(TBL_METR2) = KLI_NUMBER_PY(TBL_METR2) + 1;
+            KLI_POSO_PY(TBL_METR2) = KLI_POSO_PY(TBL_METR2)+ EFCLAMOU;
+           END;
+          OTHERWISE
+           DO;
+           END;
+       END; /*SELECT*/
+       FOUND = '0'B ;
+    END;
+ END; /*ADD_KLIM*/
+
+ HEAD: PROC;
+   LINENO = 0;
+   PAGENO = PAGENO + 1;
+   ZPAGENO = PAGENO;
+   CC = '1';
+   GRAM = 'EMpOPIKH TPApEZA A.E.   ' !!(84)' ' !! '** EF197  **';
+   WRITE FILE (PRINT) FROM (LINE);                                      BK301680
+
+   CC = '0';
+   GRAM = (08)' '!! 'rTATIrTIKA dIAhErHr rHMATxN ETxN ' !!
+          PREV_YEAR !! ' - ' !! CURR_YEAR !! ' (KINHrEIr ApO ' !!
+          DSP_MIN_DATE !! ' Exr ' !! DSP_MAX_DATE !! ')';
+   WRITE  FILE (PRINT) FROM (LINE);
+
+   IF CINDIC = 'S' THEN DO;
+      CC = '0';
+      GRAM = (20)' '!! 'rYcKENTPxTIKH EKTYpxrH OkxN TxN MHNxN ';
+      WRITE  FILE (PRINT) FROM (LINE);
+   END;
+   ELSE DO;
+      CC = '0';
+      GRAM = (5)' '!! 'акакутийг ейтупысг ама лгма ';
+      WRITE  FILE (PRINT) FROM (LINE);
+   END;
+
+   CC   = '0';
+   GRAM = (93) '*'!!'+';
+   WRITE  FILE (PRINT) FROM (LINE);
+
+   CC = '0';
+   GRAM = (19)' '!! 'тяевом етос:' !! CURR_YEAR !!
+          (14)' '!! 'пяогц.етос:' !! PREV_YEAR !!
+          (14)' '!! '%летабокг';
+   WRITE  FILE (PRINT) FROM (LINE);
+
+   CC   = '0';
+   GRAM = (19)' ' !! (16)'-' !! (14)' ' !! (15)'-'
+          !! (11)' ' !! (15)'-' ;
+   WRITE  FILE (PRINT) FROM (LINE);
+
+   CC = '0';
+   GRAM = (1)' '!! 'глеяолгмиа ' !! (3)' ' !! 'сум.сглатым' !!
+          (4)' '!! 'сум.посо' !! (7)' ' !!
+          'сум.сглатым' !! (5)' ' !! 'сум.посо' !!
+          (6)' '!! 'сглата' !! (6)' ' !! 'посо' ;
+
+   WRITE  FILE (PRINT) FROM (LINE);
+   LINENO = 7;
+ END HEAD;
+
+
+ READ_INCARD: PROC;                                                     01486310
+        /*.....           FIRST READ ETOS EXAM           .....*/
+   READ  FILE ( READER ) INTO ( WREADER );
+
+   IF VERIFY(CETOS,'1234567890,') ^= 0 THEN
+     DO;
+       GRAM = '0 кахос еисацыцг тилгс сто етос ';
+       WRITE FILE(PRINT) FROM(LINE);
+       GRAM = ' пеяиевеи лг аяихлгтийа педиа   ';
+       WRITE FILE(PRINT) FROM(LINE);
+       STOP;
+     END;
+
+    CURR_YEAR = CETOS;
+    PREV_YEAR = CETOS - 1 ;
+
+   IF VERIFY(CMONTH,'1234567890,') ^= 0 THEN
+     DO;
+       GRAM = '0 кахос еисацыцг тилгс стом лгма  ';
+       WRITE FILE(PRINT) FROM(LINE);
+       GRAM = ' пеяиевеи лг аяихлгтийа педиа   ';
+       WRITE FILE(PRINT) FROM(LINE);
+       STOP;
+     END;
+
+   IF CMONTH > 12 ! CMONTH < 0 THEN
+      DO;
+        GRAM = 'айуяос лгмас :'!! CMONTH;
+        WRITE FILE(PRINT) FROM(LINE);
+        STOP;
+      END;
+
+   IF CMONTH > 0 THEN
+   DO;
+      MONTH_FROM = CMONTH;
+      MONTH_TO   = CMONTH;
+   END;
+   ELSE
+   DO;
+      MONTH_FROM = 01;
+      MONTH_TO   = 12;
+   END;
+   /*
+   GRAM = 'CETOS:' !! CETOS !! 'CMONTH:' !! CMONTH !!
+          ' MONTH_FROM:' !! MONTH_FROM !!
+          ' MONTH_TO:' !! MONTH_TO;
+   WRITE FILE (PRINT) FROM (LINE);                                      BK301680
+   */
+ END READ_INCARD;                                                       01486410
+
+ HEAD_KLIMAKIO: PROC;                                                   01486310
+        CC = '1';
+        GRAM = 'EMpOPIKH TPApEZA A.E.   ' !!(84)' ' !! '** EF197  **';
+        WRITE FILE (PRINT) FROM (LINE);                                 BK301680
+
+        CC = '0';
+        GRAM = (08)' '!! 'rTATIrTIKA dIAhErHr rHMATxN ETxN ' !!
+             PREV_YEAR !! ' - ' !! CURR_YEAR !! ' (KINHrEIr ApO ' !!
+             DSP_MIN_DATE !! ' Exr ' !! DSP_MAX_DATE !! ')';
+        WRITE  FILE (PRINT) FROM (LINE);
+
+
+        CC = '0';
+        GRAM = (30)' '!! 'амакутийа ама йкилайио ';
+        WRITE  FILE (PRINT) FROM (LINE);
+
+        CC   = '0';
+        GRAM = (93) '*'!!'+';
+        WRITE  FILE (PRINT) FROM (LINE);
+
+        CC = '0';
+        GRAM = (19)' '!! 'тяевом етос:' !! CURR_YEAR !!
+               (14)' '!! 'пяогц.етос:' !! PREV_YEAR !!
+               (14)' '!! '%летабокг';
+        WRITE  FILE (PRINT) FROM (LINE);
+
+        CC   = '0';
+        GRAM = (19)' ' !! (16)'-' !! (14)' ' !! (15)'-'
+               !! (11)' ' !! (15)'-' ;
+        WRITE  FILE (PRINT) FROM (LINE);
+
+        CC = '0';
+        GRAM = (1)' '!! 'йкилайио   ' !! (3)' ' !! 'сум.сглатым' !!
+               (4)' '!! 'сум.посо' !! (7)' ' !!
+               'сум.сглатым' !! (5)' ' !! 'сум.посо' !!
+               (6)' '!! 'сглата' !! (6)' ' !! 'посо' ;
+        WRITE  FILE (PRINT) FROM (LINE);
+
+        LINENO = 8;
+ END HEAD_KLIMAKIO;                                                     01486310
+
+ SORT_KLIMAKIO: PROC;                                                   01486310
+  DO TBL_METR1 = 001 TO 030;
+  DO TBL_METR2 = 001 TO 030;
+    IF KLI_CODE(TBL_METR2) > 0 & KLI_CODE(TBL_METR2)=TBL_METR1 THEN DO;
+       IF LINENO > 54 THEN CALL HEAD_KLIMAKIO;
+          LINEOUT = '';
+          LDATE            = KLI_CODE(TBL_METR2);
+          LCURR_YEAR_NUM  = KLI_NUMBER_CY(TBL_METR2);
+          LCURR_YEAR_POSO = KLI_POSO_CY(TBL_METR2);
+          LPREV_YEAR_NUM  = KLI_NUMBER_PY(TBL_METR2);
+          LPREV_YEAR_POSO = KLI_POSO_PY(TBL_METR2);
+          IF KLI_POSO_CY(TBL_METR2) > 0 &
+          KLI_POSO_PY(TBL_METR2) > 0 THEN DO;
+            TEMP_VAR  = KLI_POSO_CY(TBL_METR2) - KLI_POSO_PY(TBL_METR2);
+            TEMP1_VAR = KLI_POSO_PY(TBL_METR2);
+            TEMP2_VAR = DIVIDE(TEMP_VAR,TEMP1_VAR,15,3);
+            POSOSTO  = TEMP2_VAR * 100;
+            LPERCENTPOS = POSOSTO;
+          END;
+          IF KLI_NUMBER_CY(TBL_METR2) > 0 &
+           KLI_NUMBER_PY(TBL_METR2) > 0 THEN DO;
+            TEMP_VAR    = KLI_NUMBER_CY(TBL_METR2) -
+                          KLI_NUMBER_PY(TBL_METR2);
+            TEMP1_VAR   = KLI_NUMBER_PY(TBL_METR2);
+            TEMP2_VAR   = DIVIDE(TEMP_VAR,TEMP1_VAR,15,3);
+            POSOSTO     = TEMP2_VAR * 100;
+            LPERCENTNUM = POSOSTO;
+          END;
+          WRITE FILE(PRINT) FROM(LINEOUT);
+          CC   = ' ';
+          GRAM = (93) '-';
+          WRITE  FILE (PRINT) FROM (LINE);
+          LINENO = LINENO + 1;
+    END;
+  END;
+  END;
+ END SORT_KLIMAKIO;                                                     01486310
+
+ WRITE_KLIMAKIO: PROC;                                                  01486310
+    CALL HEAD_KLIMAKIO;
+    CALL SORT_KLIMAKIO;
+
+    DO COUNT1 = 1 TO 12 ;
+       IF SUM_NUMBER_CY(COUNT1) > 0  !
+          SUM_POSO_CY(COUNT1)   > 0  !
+          SUM_NUMBER_PY(COUNT1) > 0  !
+          SUM_POSO_PY(COUNT1)   > 0 THEN DO;
+          SCURR_YEAR_NUMK  = SCURR_YEAR_NUMK +
+                             SUM_NUMBER_CY(COUNT1);
+          SCURR_YEAR_POSOK = SCURR_YEAR_POSOK +
+                             SUM_POSO_CY(COUNT1);
+          SPREV_YEAR_NUMK  = SPREV_YEAR_NUMK +
+                             SUM_NUMBER_PY(COUNT1);
+          SPREV_YEAR_POSOK = SPREV_YEAR_POSOK +
+                             SUM_POSO_PY(COUNT1);
+       END;
+    END;
+    IF SCURR_YEAR_NUMK       > 0  !
+       SCURR_YEAR_POSOK      > 0  !
+       SPREV_YEAR_NUMK       > 0  !
+       SPREV_YEAR_POSOK      > 0 THEN DO;
+          CC   = ' ';
+          GRAM = (93) '*'!!'+';
+          WRITE FILE (PRINT) FROM (LINE);
+          LINENO = LINENO + 1;
+          IF SPREV_YEAR_POSOK > 0 THEN DO;
+             TEMP_VAR  = SCURR_YEAR_POSOK - SPREV_YEAR_POSOK;
+             TEMP1_VAR = SPREV_YEAR_POSOK;
+             TEMP2_VAR = DIVIDE(TEMP_VAR,TEMP1_VAR,15,3);
+             POSOSTO  = TEMP2_VAR * 100;
+             SPERCENTPOSK = POSOSTO;
+          END;
+          IF SCURR_YEAR_NUMK > 0 THEN DO;
+             POSOSTO = 0;
+             TEMP_VAR  = SCURR_YEAR_NUMK -
+                         SPREV_YEAR_NUMK;
+             TEMP1_VAR = SPREV_YEAR_NUMK;
+             TEMP2_VAR = DIVIDE(TEMP_VAR,TEMP1_VAR,15,3);
+             POSOSTO  = TEMP2_VAR * 100;
+             SPERCENTNUMK = POSOSTO;
+          END;
+          WRITE FILE(PRINT) FROM(SLINEOUTK);
+          LINENO = LINENO + 1;
+          CC   = ' ';
+          GRAM = (93) '*'!!'+';
+          WRITE  FILE (PRINT) FROM (LINE);
+          LINENO = LINENO + 1;
+     END;
+    /*
+    DO TBL_METR2 = 1 TO 80;
+       IF LINENO > 54 THEN CALL HEAD_KLIMAKIO;
+       IF KLI_CODE(TBL_METR2)  ^= 0 THEN DO;
+          LINEOUT = '';
+          LDATE            = KLI_CODE(TBL_METR2);
+          LCURR_YEAR_NUM  = KLI_NUMBER_CY(TBL_METR2);
+          LCURR_YEAR_POSO = KLI_POSO_CY(TBL_METR2);
+          LPREV_YEAR_NUM  = KLI_NUMBER_PY(TBL_METR2);
+          LPREV_YEAR_POSO = KLI_POSO_PY(TBL_METR2);
+          IF KLI_POSO_CY(TBL_METR2) > 0 &
+          KLI_POSO_PY(TBL_METR2) > 0 THEN DO;
+            TEMP_VAR  = KLI_POSO_CY(TBL_METR2) - KLI_POSO_PY(TBL_METR2);
+            TEMP1_VAR = KLI_POSO_PY(TBL_METR2);
+            TEMP2_VAR = DIVIDE(TEMP_VAR,TEMP1_VAR,15,3);
+            POSOSTO  = TEMP2_VAR * 100;
+            LPERCENTPOS = POSOSTO;
+          END;
+          IF KLI_NUMBER_CY(TBL_METR2) > 0 &
+           KLI_NUMBER_PY(TBL_METR2) > 0 THEN DO;
+            TEMP_VAR    = KLI_NUMBER_CY(TBL_METR2) -
+                          KLI_NUMBER_PY(TBL_METR2);
+            TEMP1_VAR   = KLI_NUMBER_PY(TBL_METR2);
+            TEMP2_VAR   = DIVIDE(TEMP_VAR,TEMP1_VAR,15,3);
+            POSOSTO     = TEMP2_VAR * 100;
+            LPERCENTNUM = POSOSTO;
+          END;
+          WRITE FILE(PRINT) FROM(LINEOUT);
+          LINENO = LINENO + 1;
+       END;
+    END;
+    */
+ END WRITE_KLIMAKIO;                                                    01486410
+
+ WRITE_DETAILS: PROC;                                                   01486310
+    TBL_INDEX = 1;
+    PREV_MONTH = 0;
+    DO TBL_INDEX = 1 TO 400;
+       IF LINENO > 54 THEN CALL HEAD;
+       IF TBL_ID(TBL_INDEX) = 001 THEN DO;
+           IF TBL_INDEX = 1 THEN DO;
+              PREV_MONTH = TBL_MONTH(TBL_INDEX);
+           END;
+           ELSE DO;
+              IF PREV_MONTH ^= TBL_MONTH(TBL_INDEX) THEN DO;
+                 DO COUNT1 = 1 TO 12 ;
+                    IF SUM_MONTH(COUNT1) = PREV_MONTH THEN DO;
+                      CC   = '0';
+                      GRAM = (93) '*'!!'+';
+                      WRITE  FILE (PRINT) FROM (LINE);
+                      LINENO = LINENO + 1;
+                      SCURR_YEAR_NUM  = SUM_NUMBER_CY(COUNT1);
+                      SCURR_YEAR_POSO = SUM_POSO_CY(COUNT1);
+                      SPREV_YEAR_NUM  = SUM_NUMBER_PY(COUNT1);
+                      SPREV_YEAR_POSO = SUM_POSO_CY(COUNT1);
+                      WRITE FILE(PRINT) FROM(SLINEOUT);
+                      LINENO = LINENO + 1;
+                      CC   = '0';
+                      GRAM = (93) '*'!!'+';
+                      WRITE  FILE (PRINT) FROM (LINE);
+                      LINENO = LINENO + 1;
+                    END;
+                 END;
+                 PREV_MONTH = TBL_MONTH(TBL_INDEX);
+              END;
+           END;
+            LINEOUT = '';
+            LDATE            = TBL_HMERA(TBL_INDEX);
+            LCURR_YEAR_NUM   = TBL_NUMBER_CY(TBL_INDEX);
+            LCURR_YEAR_POSO  = TBL_POSO_CY(TBL_INDEX);
+            LPREV_YEAR_NUM   = TBL_NUMBER_PY(TBL_INDEX);
+            LPREV_YEAR_POSO  = TBL_POSO_PY(TBL_INDEX);
+
+        IF TBL_POSO_CY(TBL_INDEX) > 0 &
+           TBL_POSO_PY(TBL_INDEX) > 0 THEN DO;
+            TEMP_VAR  = TBL_POSO_CY(TBL_INDEX) - TBL_POSO_PY(TBL_INDEX);
+            TEMP1_VAR = TBL_POSO_PY(TBL_INDEX);
+            TEMP2_VAR = DIVIDE(TEMP_VAR,TEMP1_VAR,15,3);
+            POSOSTO  = TEMP2_VAR * 100;
+            LPERCENTPOS = POSOSTO;
+        END;
+        IF TBL_NUMBER_CY(TBL_INDEX) > 0 &
+           TBL_NUMBER_PY(TBL_INDEX) > 0 THEN DO;
+           TEMP_VAR  = TBL_NUMBER_CY(TBL_INDEX) -
+                       TBL_NUMBER_PY(TBL_INDEX);
+            TEMP1_VAR = TBL_NUMBER_PY(TBL_INDEX);
+            TEMP2_VAR = DIVIDE(TEMP_VAR,TEMP1_VAR,15,3);
+            POSOSTO  = TEMP2_VAR * 100;
+            LPERCENTNUM = POSOSTO;
+        END;
+            WRITE FILE(PRINT) FROM(LINEOUT);
+            LINENO = LINENO + 1;
+        END;
+    END; /*IF TBL_HMERA(TBL_INDEX) = SEARCHDDMM THEN DO;*/
+ END WRITE_DETAILS;                                                     01486410
+
+ TELOS:
+   DSP_MIN_DATE = MINIMUM_DATE;
+   DSP_MAX_DATE = MAXIMUM_DATE;
+
+   CALL HEAD;
+   IF CINDIC ^= 'S' THEN DO;
+      CALL WRITE_DETAILS;
+      DO COUNT1 = 1 TO 12 ;
+         IF SUM_MONTH(COUNT1) = MONTH_TO THEN DO;
+            CC   = '0';
+            GRAM = (93) '*'!!'+';
+            WRITE  FILE (PRINT) FROM (LINE);
+            SCURR_YEAR_NUM  = SUM_NUMBER_CY(COUNT1);
+            SCURR_YEAR_POSO = SUM_POSO_CY(COUNT1);
+            SPREV_YEAR_NUM  = SUM_NUMBER_PY(COUNT1);
+            SPREV_YEAR_POSO = SUM_POSO_CY(COUNT1);
+            WRITE FILE(PRINT) FROM(SLINEOUT);
+            CC   = '0';
+            GRAM = (93) '*'!!'+';
+            WRITE  FILE (PRINT) FROM (LINE);
+         END;
+      END;
+   END;
+   TOT_NUMBER_PY = 0;
+   TOT_POSO_PY   = 0;
+   TOT_NUMBER_CY = 0;
+   TOT_POSO_CY   = 0;
+   IF CINDIC = 'S' THEN DO;
+      DO COUNT1 = MONTH_FROM TO MONTH_TO;
+         SLINEOUT = '';
+         IF ((SUM_NUMBER_CY(COUNT1) > 0) !
+            (SUM_NUMBER_PY(COUNT1) > 0)) THEN DO;
+            SELECT (SUM_MONTH(COUNT1));
+            WHEN (01)
+               SFIL1 = ' иамоуаяиос';
+            WHEN (02)
+               SFIL1 = 'жебяоуаяиос';
+            WHEN (03)
+               SFIL1 = '    лаятиос';
+            WHEN (04)
+               SFIL1 = '   апяикиос';
+            WHEN (05)
+               SFIL1 = '      лаиос';
+            WHEN (06)
+               SFIL1 = '    иоумиос';
+            WHEN (07)
+               SFIL1 = '    иоукиос';
+            WHEN (08)
+               SFIL1 = '  ауцоустос';
+            WHEN (09)
+               SFIL1 = 'септелбяиос';
+            WHEN (10)
+               SFIL1 = 'ойтыбяиос';
+            WHEN (11)
+               SFIL1 = 'моелбяиос';
+            WHEN (12)
+               SFIL1 = 'дейелбяиос';
+            END;
+            CC   = '0';
+            GRAM = (93) '*'!!'+';
+            WRITE  FILE (PRINT) FROM (LINE);
+            SCURR_YEAR_NUM  = SUM_NUMBER_CY(COUNT1);
+            SCURR_YEAR_POSO = SUM_POSO_CY(COUNT1);
+            SPREV_YEAR_NUM  = SUM_NUMBER_PY(COUNT1);
+            SPREV_YEAR_POSO = SUM_POSO_PY(COUNT1);
+            IF SUM_POSO_PY(COUNT1) > 0 THEN DO;
+               TEMP_VAR  = SUM_POSO_CY(COUNT1) - SUM_POSO_PY(COUNT1);
+               TEMP1_VAR = SUM_POSO_PY(COUNT1);
+               TEMP2_VAR = DIVIDE(TEMP_VAR,TEMP1_VAR,15,3);
+               POSOSTO  = TEMP2_VAR * 100;
+               SPERCENTPOS = POSOSTO;
+            END;
+            IF SUM_NUMBER_PY(COUNT1) > 0 THEN DO;
+               POSOSTO = 0;
+               TEMP_VAR  = SUM_NUMBER_CY(COUNT1) -
+                           SUM_NUMBER_PY(COUNT1);
+               TEMP1_VAR = SUM_NUMBER_PY(COUNT1);
+               TEMP2_VAR = DIVIDE(TEMP_VAR,TEMP1_VAR,15,3);
+               POSOSTO  = TEMP2_VAR * 100;
+               SPERCENTNUM = POSOSTO;
+            END;
+            TOT_NUMBER_PY   = TOT_NUMBER_PY + SUM_NUMBER_PY(COUNT1);
+            TOT_POSO_PY     = TOT_POSO_PY   + SUM_POSO_PY(COUNT1);
+            TOT_NUMBER_CY   = TOT_NUMBER_CY + SUM_NUMBER_CY(COUNT1);
+            TOT_POSO_CY     = TOT_POSO_CY   + SUM_POSO_CY(COUNT1);
+            WRITE FILE(PRINT) FROM(SLINEOUT);
+            CC   = '0';
+            GRAM = (93) '*'!!'+';
+            WRITE  FILE (PRINT) FROM (LINE);
+         END;
+      END;
+      IF (TOT_POSO_CY > 0) ! (TOT_POSO_PY > 0) THEN DO;
+         SCURR_YEAR_NUM  = TOT_NUMBER_CY ;
+         SCURR_YEAR_POSO = TOT_POSO_CY ;
+         SPREV_YEAR_NUM  = TOT_NUMBER_PY ;
+         SPREV_YEAR_POSO = TOT_POSO_PY   ;
+         IF TOT_POSO_PY > 0 THEN DO;
+            TEMP_VAR  = TOT_POSO_CY - TOT_POSO_PY;
+            TEMP1_VAR = TOT_POSO_PY;
+            TEMP2_VAR = DIVIDE(TEMP_VAR,TEMP1_VAR,15,3);
+            POSOSTO  = TEMP2_VAR * 100;
+            SPERCENTPOS = POSOSTO;
+         END;
+         IF TOT_NUMBER_PY > 0 THEN DO;
+            POSOSTO = 0;
+            TEMP_VAR  = TOT_NUMBER_CY -
+                        TOT_NUMBER_PY;
+            TEMP1_VAR = TOT_NUMBER_PY;
+            TEMP2_VAR = DIVIDE(TEMP_VAR,TEMP1_VAR,15,3);
+            POSOSTO  = TEMP2_VAR * 100;
+            SPERCENTNUM = POSOSTO;
+         END;
+         CC   = '0';
+         GRAM = (93) '*'!!'+';
+         WRITE  FILE (PRINT) FROM (LINE);
+         SFIL1 ='цемийа сумока' ;
+         WRITE FILE(PRINT) FROM(SLINEOUT);
+         CC   = '0';
+         GRAM = (93) '*'!!'+';
+         WRITE  FILE (PRINT) FROM (LINE);
+      END;
+   END; /*IF CINDIC = 'S' THEN DO; */
+
+   CALL WRITE_KLIMAKIO;
+
+   CLOSE FILE (PRINT);
+   CLOSE FILE ( EFORIA1 );
+   CLOSE FILE ( READER );
+
+    END EF197 ;
+

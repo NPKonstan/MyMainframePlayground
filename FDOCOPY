@@ -1,0 +1,22 @@
+
+         File_Header
+           Record_Type
+           Filler
+           Sending_Institution
+           Receiving_Institution
+           Service_Identifier
+           Test_Code
+           File_Type
+           File_Identification
+
+
+
+
+
+
+
+
+
+
+
+

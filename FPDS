@@ -1,0 +1,50 @@
+ /* REXX */                                                             00010002
+ /*                                                                     00011018
+ "ISPEXEC LMINIT DATAID(MYPDS) PROJECT(DK) GROUP1(T)                    00012417
+                     GROUP2(XS) TYPE(DKALM) ENQ(SHR)"                   00012618
+  */                                                                    00013118
+ "ISPEXEC LMINIT DATAID(MYPDS) DATASET('DK.T.XS.DKALM')                 00013218
+                 ENQ(SHR) ORG(PS)"                                      00013318
+                                                                        00013418
+ IF RC > 0 THEN DO                                                      00013517
+      SAY ZERRLM                                                        00013617
+      SAY 'SKATA'                                                       00013717
+      EXIT 1                                                            00013817
+ END                                                                    00013917
+ "ISPEXEC LMOPEN DATAID(&MYPDS) OPTION(INPUT) "                         00014017
+ IF RC > 0 THEN DO                                                      00014117
+      SAY RC                                                            00014217
+      EXIT 1                                                            00014317
+ END                                                                    00014417
+                                                                        00014517
+ "ISPEXEC LMMLIST DATAID(&MYPDS)                                        00014617
+     OPTION(SAVE) GROUP(ML) STATS(YES) "                                00014717
+ /*                                                                     00014817
+ "ISPEXEC LMMSTATS DATAID(&MYPDS)                                       00014917
+     MEMBER(AJ278A) USER(KOYTEND) " */                                  00015017
+ IF RC > 0 THEN DO                                                      00015117
+      SAY RC                                                            00015217
+      SAY SKATAS                                                        00015317
+      EXIT 1                                                            00015417
+ END                                                                    00015517
+                                                                        00015617
+ SAY ZLC4DATE                                                           00015717
+ SAY ZLM4DATE                                                           00015817
+ SAY ZLUSER                                                             00015917
+                                                                        00016017
+ "ISPEXEC LMCLOSE DATAID(&MYPDS)"                                       00016117
+                                                                        00016217
+ /*                                                                     00016317
+                                                                        00016417
+ "ISPEXEC DSINFO DATASET('CBG.TEST.JCL')"                               00016517
+                                                                        00016617
+ SAY ZDSVOL                                                             00016717
+ SAY ZDSRF                                                              00016817
+ SAY  'CREATION DATE'                                                   00016917
+ SAY ZDSCDATE                                                           00017017
+ SAY ZDSRDATE                                                           00017117
+                                                                        00018017
+  */                                                                    00019109
+                                                                        00019203
+ EXIT 0                                                                 00020002
+

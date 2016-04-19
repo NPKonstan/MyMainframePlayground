@@ -1,0 +1,35 @@
+ /* REXX */                                                             00010000
+ /*                                                                     00011005
+   SAY SYSCREATE                                                        00012005
+   LISTDSI("BK.T.XS.THEODOG.G0393V00")                                  00013005
+   SAY SYSCREATE                                                        00013105
+                                                                        00014004
+                                                                        00015006
+  HOSTNAME = SYSVAR(SYSNODE)                                            00016006
+  SMTPNODE = SYSVAR(SYSENV)                                             00016106
+  SAY HOSTNAME                                                          00016206
+  SAY SMTPNODE */                                                       00016306
+  SAY 'SYSPLEX NAME...........' MVSVAR("SYSPLEX")                       00016406
+  SAY 'SYSTEM NAME............' MVSVAR("SYSNAME")                       00016506
+  SAY 'OS VERSION.............' MVSVAR("SYSOPSYS")                      00016606
+  SAY 'MVS VERSION............' MVSVAR("SYSMVS")                        00016706
+  SAY 'DFP LEVEL..............' MVSVAR("SYSDFP")                        00016806
+  SAY 'SMS?...................' MVSVAR("SYSSMS")                        00016906
+  SAY 'SMF NAME...............' MVSVAR("SYSSMFID")                      00017006
+  SAY 'SYSTEM CLONE-ID........' MVSVAR("SYSCLONE")                      00017106
+  SAY 'JES VERSION............' SYSVAR("SYSJES")                        00017206
+  SAY 'JES NODENAME...........' SYSVAR("SYSNODE")                       00017306
+  SAY 'HSM VERSION............' SYSVAR("SYSHSM")                        00017406
+  SAY 'RACF VERSION...........' SYSVAR("SYSLRACF")                      00017506
+  SAY 'TSO/E VERSION..........' SYSVAR("SYSTSOE")                       00017606
+  SAY ' '                                                               00017706
+  SAY '- USER' SYSVAR("SYSUID") ' PREFIX SET TO' SYSVAR("SYSPREF")      00017806
+  SAY '  EXECUTING IN.........' SYSVAR("SYSENV")                        00017906
+  SAY '  USING LOGON PROC.....' SYSVAR("SYSPROC")                       00018006
+  SAY '  TERMINAL-ID..........' STRIP(SYSVAR("SYSTERMID"),'L')          00018106
+  SAY '  TERMINAL LINES.......' STRIP(SYSVAR("SYSLTERM"),'L')           00018206
+  SAY '  SCREEN WIDTH.........' STRIP(SYSVAR("SYSWTERM"),'L')           00018306
+  SAY '  ISPF?................' SYSVAR("SYSISPF")                       00018406
+  SAY '  CPU TIME USED........' STRIP(SYSVAR("SYSCPU"),'L')             00019006
+ EXIT 0                                                                 00020000
+

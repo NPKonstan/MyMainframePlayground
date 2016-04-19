@@ -1,0 +1,2558 @@
+ DK554:   PROCEDURE OPTIONS(MAIN);
+ /********************************************************************/
+ /* пяоцяалла DB2 BATCH                                              */
+ /********************************************************************/
+ /*              пЯЭЦЯАЛЛА ЦИА ПАЯОВч АЯВЕъОУ СТО MIS               */
+ /********************************************************************/
+ /* тО ПЯЭЦЯАЛЛА АУТЭ ЕъМАИ ЕПщЙТАСГ ТОУ dkbalm ПОУ  ПАЯщВЕИ ДЕДОЛЕМА*/
+ /* СТА СУСТчЛАТА ALM ЙАИ FTP ЦИА ТО Risk-Managment.                 */
+ /* тА ЕПИПКщОМ ДЕДОЛщМА ПЯОЙЕИТАИ МА ВЯГСИЛОПОИГХОЩМ СТО MIS        */
+ /* TА ПЕДъА ТОУ MISREC ПОУ АЯВъФОУМ АПО ALM АМчЙОУМ СТО ПАКИО       */
+ /* TА ПЕДъА ТОУ MISREC ПОУ АЯВъФОУМ АПО MIS АМчЙОУМ СТО мщО СЩСТГЛА */
+ /*                                                                  */
+ /*  Output:                                                         */
+ /********************************************************************/
+ /********************************************************************/
+ /* Input :                                                          */
+ /*      Aяве╨о 1                                                    */
+ /*         лЕэКО тam20 400 byte     DK.P.XS.TAM20BIG                */
+ /*                                                                  */
+ /*                                                                  */
+ /*  Output:                                                         */
+ /********************************************************************/
+ /********************************************************************/
+ /*           PROGRAM NAME: DK553      LOAD MODULE: DK553            */
+ /********************************************************************/
+ /* 02-04-2006 NPK                                                   */
+ /********************************************************************/
+ /*** From Dkbalm Start**************************************/
+ /*                                                         */
+ /*  INTERFACE FOR ALM SYSTEM                               */
+ /*  диабафы аявеио тал20     & дглиоуяцы  аявеио циа а.L.M */
+ /*                                                         */
+ /***********************************************************/
+ /* IF THE PROGRAM  IS  USED FOR TEST ONLY                  */
+ /* VARIABLE IS_TEST HAS VALUE YES                          */
+ /* IN PRODUCTION YOU HAVE TO CHANGE THIS VALUE             */
+ /***********************************************************/
+ /* Aккацес                                                 */
+ /***********************************************************/
+ /*22-01-2004                                               */
+ /*           тыяа паиямеи тгм текеутаиа еяцасилг ап то JCL */
+ /*           паяалетяийа                                   */
+ /* еписгс пяостехгйе мео педио сто аявеио (ALMK_EPIT)      */
+ /* KAI KAкеитаи г яоутима поу епистяежеи то йулаимолемо епи*/
+ /***********************************************************/
+ /*26-01-2004                                               */
+ /*     KAкеитаи г яоутима DKR002 епистяежеи TO пистытийо   */
+ /*     йаи та пихама дуо вяеыстийа епитойиа                */
+ /***********************************************************/
+ /*31-03-2004                                               */
+ /*     пяосхгйг меым йахокийым 5114 йаи 5150               */
+ /***********************************************************/
+ /*21-04-2004                                               */
+ /*     аккацг дейаьгжиым йахокийым  ста йахокийа 5121,5120 */
+ /***********************************************************/
+ /*04-05-2004                                               */
+ /*     аккацг :тыяа паиямеи тгм текеутаиа еяцасилг апо     */
+ /*     CONTROL CARD                                        */
+ /*     KAI вягсилопоиеи тгм VALDATE                        */
+ /***********************************************************/
+ /***********************************************************/
+ /*19-04-2005                                               */
+ /* аккацг :пяосхгйг тяиым меым педиым поу пяоеявомтаи апо  */
+ /*         TO Aявеио DK.P.XS.TRLOIPFN                      */
+ /*                                                         */
+ /* ALMAVBAL    MESO лгмиаио бакеяиайо упокоипо             */
+ /* ALMC_OR_D   ENдеинг вяеыстийоу г пистытийоу упокоипоу   */
+ /*             C=вяеыстийо,D=пистытийо                     */
+ /* ALMENTOKOS  ENдеинг емтойоу г атойоу коцаяиасл.         */
+ /*             1=емтойос  ,0=атойос                        */
+ /*                                                         */
+ /***********************************************************/
+ /***********************************************************/
+ /*13-05-2005                                               */
+ /* аккацг :амти циа вягсг стгм диаияесг тоу педиоу TKRHMPER*/
+ /*         вягсилопоиы то педио лу_HMPER поу пеяиевеи      */
+ /*         то сумоко тым глеяым тоу пяогцоулемоу лгма      */
+ /***********************************************************/
+ /*25-05-2005 лГМ ДИПКОЛЕТЯэР ТО КОЦИСТИЙЭ УПЭКОИПО         */
+ /***********************************************************/
+ /***********************************************************/
+ /*31-05-2005 ЛГДЕМИСЛЭР ЕПИКЕЙТИЙэ  ТОУ КОЦИСТИЙОЩ УПЭКОИПОУ*/
+ /*аМ ЕъМАИ АЯМГТИЙЭ ТО КОЦИСТИЙО УПЭКОИПО ALMSCBE = 1      */
+ /* ЛГДЕМъФЫ ТГМ                                            */
+ /* ЕЦЦЯАЖч ПОУ exЕИ ALMC_OR_D = C                          */
+ /*                                                        **/
+ /*пяосовг:лЭМОМ СТГ ПЕЯъПТЫСГ ПОУ ЕВЫ ДЩО ЕЦЦЯАЖщР ЛГДЕМъФЫ*/
+ /* дГКАДч ЭТАМ tot_pist > 0 and tot_xre > 0               **/
+ /***********************************************************/
+ /***********************************************************/
+ /*05-10-2005                                               */
+ /* аккацг :цИА Salary Salary Plus                          */
+ /* Athanasios Sainis  08/09/2005 10:48 ПЛ                  */
+ /*аЯИХЛЭР еЦЦЯэЖОУ : 90DC3B4D09EAF2EDC22570760029705E      */
+ /***********************************************************/
+ /*** From Dkbalm End  **************************************/
+ /***********************************************************/
+ DCL PLIXOPT CHAR(39) VAR EXT  INIT ('ERRCOUNT(0)');
+
+ DCL CZX3VDAT CHAR(8); FETCH CZXDATEP;
+ DCL CZXDATEP ENTRY OPTIONS(INTER,ASM) ;
+ DATE: PROC IRREDUCIBLE RETURNS(CHAR(6)) ;
+         CALL CZXDATEP          ( CZX3VDAT) ;
+         RETURN (CZX3VDAT) ;
+         END DATE ;
+
+ % INCLUDE  RISBP2AF ;
+  DCL RISBPD2A ENTRY (PTR) ; FETCH RISBPD2A ;
+
+
+  DCL DKR001 ENTRY (CHAR(10),    /*глеяолгмиа*/
+                   FIXED(8))    /*аяихлос коцаяиаслоу           */
+     RETURNS(PIC'S99V.99');     /*епитойио*/
+  FETCH DKR001 ;
+
+  DCL DKR002 ENTRY (FIXED(7,0),  /*йахокийо 6 ьгжиа*//*INPUT*/
+                   PIC '(7)9',  /*глеяолгмиа аYYMMDD опоу а=1*//*INP*/
+                   FIXED(13,2), /*посом*/ /*INPUT*/
+                   FIXED(11,2), /*ояио оVERDRAFT коцаяиаслоу*//*INP*/
+                   FIXED(5,2),  /*пистытийо епитойио*//*OUTPUT*/
+                   PIC'999V.99',/*вяеыстийо епитойио 1 *//*OUTPUT*/
+                   PIC'999V.99')/*вяеыстийо епитойио 2*//*OUTPUT*/
+    RETURNS( FIXED (1));        /*йыдийос кахоус 1=кахос 0=сысто*/
+  FETCH DKR002 ;
+
+ DCL DKR4TO6B EXTERNAL ENTRY(FIXED(5),
+                            CHAR(2),
+                            CHAR(1),
+                            FIXED(9,0),
+                            FIXED(3,0)
+                            ) RETURNS(FIXED(7));
+ /*********************************************************************/
+ /* аутг г яоутима    дглиоуяцеи 6-ьгжио йахокийо йатахесеым          */
+ /* паиямеи сам INPUT :                                               */
+ /*                                                                   */
+ /*  т20KATHOF     FIXED(5,0) = 4-ьгжио йахокийо (пакио)              */
+ /*  T20EPAGELMA   CHAR (2)   = йыдийос епаццеклатос                  */
+ /*  T20FN         CHAR (1)   = жусийо-молийо пяосыпо ('u'-'N')       */
+ /*  T20ARLOGTAM   FIXED(9,0) = аяихлос коцаяиаслоу   09.12.2004      */
+ /*                                                                   */
+ /* Eпистяежеи  OUPUT :                                               */
+ /*  ERROR_FLG     FIXED(3)   = емдеинг кахоус        09.12.2004      */
+ /*  ERROR_FLAG =  2 - пяобкгла сто аявеио BKREL                      */
+ /*                                                                   */
+ /* йаи епистяежеи                                                    */
+ /*     KATHOLR   FIXED(7)  6-ьгжио йахокийо йатахесеым               */
+ /*********************************************************************/
+ FETCH DKR4TO6B;
+
+
+ % INCLUDE  TAM20BIG ;
+ /********************************************************************/
+ /* MEGALO TAM20           DK.P.XS.TAM20BIG */
+ /********************************************************************/
+  DCL INFILE1 FILE  SEQUENTIAL INPUT ENV(FB RECSIZE(417));
+
+  DCL MISFILE FILE RECORD OUTPUT ENV(FB RECSIZE(500) );                 00180002
+
+  DCL PRT    FILE RECORD OUTPUT   ENV(FB RECSIZE(133) CTLASA);
+  DCL MISPRT FILE RECORD OUTPUT   ENV(FB RECSIZE(133) CTLASA);
+
+  DCL ETAIRIE FILE RECORD DIRECT INPUT KEYED ENV ( VSAM );
+
+ % INCLUDE  CUAVDCDS  ;
+
+ /***************************/
+ /*DB2 DECLARATIONS         */
+ /***************************/
+
+ /*-богхгтийос пимайас циа то лис ------------------*/
+ EXEC SQL                                                               01460000
+          INCLUDE CTISDK01;                                             01510300
+ EXEC SQL                                                               01460000
+          INCLUDE T04CNV97;                                             01510300
+ EXEC SQL                                                               01460000
+          INCLUDE T04DBA01;                                             01510300
+ EXEC SQL                                                               01460000
+          INCLUDE T06TC060;                                             01510300
+ /*-пмайас циа лесо лгмиаио коцистийо упокоипо --*/
+ EXEC SQL                                                               01460000
+          INCLUDE CTISBK02;                                             01510300
+ EXEC SQL                                                               01510500
+            INCLUDE SQLCA;                                              01510600
+                                                                        01510400
+ DCL     LINE                CHAR (133);
+ DCL 1   LNX                 BASED(ADDR(LINE)),
+      2  CTLCHR              CHAR(1)      INIT('1'),
+      2  GRAMH               CHAR(132)    INIT(' ');
+
+ DCL 1   ERLINE              ,
+      2  ERLIN1       CHAR(1)      INIT('1'),
+      2  ERLIN2       CHAR(132)    INIT(' ');
+
+ DCL     WS_MSG              CHAR (132);
+
+ DCL FILE1_FLAG FIXED (1) INIT(0);
+ DCL FILE1_EOF  FIXED (1) INIT(0);
+
+ % INCLUDE  DAYRTNS ;
+
+
+ DCL  COUNT_ADRANIS  FIXED(15) INIT(0);
+ DCL  COUNT_CLOSED   FIXED(15) INIT(0);
+ DCL  COUNT_NORMAL   FIXED(15) INIT(0);
+
+
+ DCL  F1_RECS  FIXED(15) INIT(0);
+ DCL  F2_RECS  FIXED(15) INIT(0);
+ DCL  F3_RECS  FIXED(15) INIT(0);
+ DCL  F4_RECS  FIXED(15) INIT(0);
+ DCL  DB2_RECS FIXED(15) INIT(0);
+ DCL  F1_REJECTED_RECS FIXED(15) INIT(0);
+ DCL  F2_REJECTED_RECS FIXED(15) INIT(0);
+ DCL  F3_REJECTED_RECS FIXED(15) INIT(0);
+ DCL  F4_REJECTED_RECS FIXED(15) INIT(0);
+ DCL  TOT_IMS_POSO     FIXED(15,2) INIT(0);
+ DCL  PIC_IMS_POSO  PIC'SZZZ.ZZZ.ZZZ.ZZ9V,99' INIT(0);
+ DCL 1   REC_COUNTERS,
+      2  REC_APO             FIXED (15)  INIT(0),
+      2  REC_CNT             FIXED (15)  INIT(0),
+      2  REC_ROOT            FIXED (15)  INIT(0),
+      2  REC_TOT             FIXED (15)  INIT(0),
+      2  REC_ERROR           FIXED (15)  INIT(0),
+      2  REC_CONTROL         FIXED (15)  INIT(0),
+      2  TOT_NORMAL_REC      FIXED (15)  INIT(0);
+
+ DCL     TODAY               PIC '99.99.9999' INIT(0);
+ DCL     WREC                PIC 'ZZZ.ZZZ.ZZZ.ZZZ.ZZ9' INIT(0);
+ DCL     II                  PIC '99'    INIT(0);
+ DCL     J                   PIC '99'    INIT(0);
+
+ DCL     MY_DATETIME         CHAR (17)         ;
+ DCL     MY_DATE             PIC '(7)9' INIT(0);
+ DCL 1   MY_DATEX            BASED(ADDR(MY_DATE)),
+      2  MY_CENTURY         CHAR(01),
+      2  MY_YEAR            CHAR(02),
+      2  MY_MONTH           PIC '99',
+      2  MY_DAY             CHAR(02);
+
+ /*лчМАР еТОР аМАЖОЯэР -сУМчХЫР О ПЯОГЦОЩЛЕМОР ЛчМАР ТОУ ЛчМА ЯОчР*/
+ DCL   WS_MNTH       FIXED DEC(2,0)   INIT(0);
+ DCL   WS_YEAR       FIXED DEC(5,0)   INIT(0);
+
+ DCL 1 TOTALS,
+ /*леса лгмиаиа коцистийо упокоипа лгма вяеыстийа-пистытийа*/
+   2 TOT_XRE_LOGIST       PIC'S(12)9V,99' INIT(0),
+   2 TOT_PIST_LOGIST      PIC'S(12)9V,99' INIT(0),
+ /*леса лгмиаиа бакеяиайа упокоипа лгма вяеыстийа-пистытийа*/
+   2 TOT_XRE_VDAVGBL      PIC'S(12)9V,99' INIT(0),
+   2 TOT_PIST_VCAVGBL     PIC'S(12)9V,99' INIT(0),
+ /*леса лгмиаиа бакеяиайа упокоипA пеяиодоу вя-пист (сыяеутийа)*/
+   2 TOT_XRE_VDSAVGBL     PIC'S(12)9V,99' INIT(0),
+   2 TOT_PIST_VCSAVGBL    PIC'S(12)9V,99' INIT(0),
+ /*вЯЕЫСТИЙОъ пИСТЫТИЙОъ йАТАКОЦИСХщМТЕР ТЭЙОИ лГМЭР*/
+   2 TOT_XRE_DMINTRST     PIC'S(12)9V,99' INIT(0),
+   2 TOT_PIST_CMINTRST    PIC'S(12)9V,99' INIT(0),
+ /*вЯЕЫСТИЙОъ пИСТЫТИЙОъ йАТАКОЦИСХщМТЕР ТЭЙОИ пЯОГЦОУЛщМОУ лГМЭР*/
+   2 TOT_XRE_DMINTRST_PREV     PIC'S(12)9V,99' INIT(0),
+   2 TOT_PIST_CMINTRST_PREV    PIC'S(12)9V,99' INIT(0),
+ /*вЯЕЫСТИЙОъ пИСТЫТИЙОъ йАТАКОЦИСХщМТЕР ТЭЙОИ EНАЛчМОУ*/
+   2 TOT_XRE_DKATALOG     PIC'S(12)9V,99' INIT(0),
+   2 TOT_PIST_CKATALOG    PIC'S(12)9V,99' INIT(0),
+ /* вяеыстийои тойои лгма ONLINE йкеисилатым */
+   2  TOT_XRE_ONLINE  PIC'S(13)9V,99' INIT(0),
+ /* пистытийои тойои лгма ONLINE йкеисилатым */
+   2  TOT_PIST_ONLINE PIC'S(13)9V,99' INIT(0);
+   /*DATA APO RISPB2AF*/
+  DCL 1  FROM_RISBP2AF,
+       2 WS_CIDB      FIXED (9,0),
+       2 WS_CIDB_NEW  FIXED (9,0),
+       2 WS_CUSTNAME  CHAR(40),
+       2 WS_RESPCENT  CHAR(12),
+       2 WS_CUSTCATEG CHAR(1),
+       2 WS_CUSTSUBC  CHAR(1),
+       2 WS_CUSTSEGM  CHAR(2);
+
+ DCL SUM_X     PIC'S(13)9V,99' INIT(0);
+ DCL SUM_P     PIC'S(13)9V,99' INIT(0);
+
+ /*RUN DATE FROM JCL*/
+ DCL TODAYX      CHAR(8);
+ DCL  1 SYSDATE  BASED(ADDR(TODAYX)),
+             2 SYSYY  CHAR(4),
+             2 SYSMM  CHAR(2),
+             2 SYSDD  CHAR(2);
+ DCL  1 PICDATE  BASED(ADDR(SYSDATE)),
+             2 PICYY  PIC'(4)9',
+             2 PICMM  PIC'(2)9',
+             2 PICDD  PIC'(2)9';
+ /************************************************************/
+ /****COPY APO DK554 *****************************************/
+ /************************************************************/
+ DCL 1 MISREC ,
+   2 ALMNUMBER  CHAR(20)      ,  /* APихлос коцаяиаслоу              */
+   2 ALMBALANCE PIC'(12)9V.99'  ,/* диахесило                        */
+   2 ALMBALUER  PIC'(12)9V.99'  ,/* диахесило Oпыс пио памы          */
+   2 ALMCURCODE CHAR(3)        , /* молисла                          */
+   2 ALMRATE    PIC'(4)9V.99999',/* епитойио пистытийо               */
+   2 ALMBASIS   CHAR(1)        ,/*  D---> мотгимG ELSE               */
+   2 ALMDATE    CHAR(8)        ,/*  HM/NIA Yпокоипоу DDMMYYYY        */
+   2 ALMSPRCODE CHAR(4)        ,/*  йахокийо 4-ьгжио                 */
+   2 ALMKATH    CHAR(15)       ,/*  йахокийо 10ЬГЖИО                 */
+   2 ALMDESCR   CHAR(30)       ,/*  пеяицяажг йахокийоу              */
+   2 ALMCUSNAME CHAR(35)       ,/* пкгяес омолатепымуло пекатг       */
+   2 ALMCIDBNUM CHAR(20)       ,/* CIDB NUMBER                       */
+   2 ALMINSTRID CHAR(40)       ,/*  SPACES                           */
+   2 ALMUSERFL  CHAR(2)        ,/*  SPACES                           */
+   2 ALMSAVGBAL PIC'(12)9V.99' ,/* 0.0                               */
+   2 ALMBANK    CHAR(4)        ,/* COD-BRANCH                        */
+   2 ALMBRANCH  CHAR(4)        ,/* COD-BRANCH                        */
+   2 ALMCOST    CHAR(7)        ,/* COD-BRANCH                        */
+   2 ALMKAPEL   CHAR(1)        ,/* жусийо ╧ молийо пяосыпо           */
+   2 ALMTRAP    CHAR(1)        ,/* йыдийос тяапефас поу амгйеи пекатгс*/
+   2 ALMSCB     CHAR(1)  ,/* пяосгло CURRENT BALANCE 1<0  2>=0      */
+   2 ALMSCBE    CHAR(1)  ,/* пяосгло CURRENT BALANCE EURO 1<0 2>=0  */
+   2 ALMSAB     CHAR(1)  ,/* пяос.лесоу лгмиаиоу бакеяиайоу уп.лгма*/
+   2 ALMK_EPIT  PIC'S99V.99',/*епитойио  йулаимолемо   */
+   2 ALM_X1     PIC'999V.99',/* епитойио  вяеыстийо 1памы OVERD */
+   2 ALM_X2     PIC'999V.99',/* епитойио  вяеыстийо 2           */
+   2 ALMOVERD   PIC'(11)9V.99' ,/*POSO OVERDRAFT   */
+   2 ALMAVBAL   PIC'(12)9V.99' ,/* MESO лгмиаио бакеяиайо упокоипо */
+   2 ALMC_OR_D  CHAR(1)        ,/* ENдеинг вяеыстийоу г пистытийоу
+                                упокоипоу C=вяеыстийо,D=пистытийо */
+   2 ALMENTOKOS CHAR(1)        ,/* ENдеинг емтойоу г атойоу коцаяиасл.
+                                атойос = 0 емтойос = 1            */
+
+   /* йыдий╪с й╦мтяоу еух╬мгс                       */
+   2 MIS_RESPONSIBILITY_CENTRE           CHAR (12) ,
+   /* пекатеиай╧ ол╒да                              */
+   2 MIS_CUSTOMER_SUB_SEGMENT            CHAR  (2) ,
+   /*  йыдий╪с  = 70                                */
+   2 MIS_SOURCE_APPLICATION_CODE         CHAR  (2) ,
+   /* глеяолгм╨а амо╨цлатос коцаяиасло╬             */
+   2 MIS_ACCOUNT_ORIGINATION_DATE        CHAR (8) ,
+   /* йат╒стасг коцаяиасло╬ 1:Eмеяц╪с 2:адяам╧с 3:йкеист╪с*/
+   2 MIS_ACCOUNT_STAGE                   CHAR  (1) ,
+   /*╦мдеинг ейт╬пысгс EXTRAIT 0:дем апост╦ккетаи 1: апост╦ккетаи*/
+   2 MIS_EXTRAIT_FLAG                    CHAR  (1) ,
+   /* йыдий╪с коцистийо╬ й╦мтяоу циа коцистий╪ уп╪коипо (пед╨о 2)*/
+   2 MIS_BOOK_BAL_CENTRE                 PIC  '(4)9' ,
+   /*йыдий╪с "коцистий╧с" ежаялоц╧с циа коцистий╪ уп╪коипо (пед╨о 2)*/
+   2 MIS_BOOK_BAL_APPLICATION_CODE       CHAR  (2) ,
+   /*л╦сO лгмиа╨O коцистий╪ уп╪коипо                */
+   2 MIS_AVG_BOOK_BAL_EUR_TOTAL          PIC '(12)9V.99' ,
+   /*емдеинг вяеыстийо╬ пистытийо╬ л╦соу лгмиа╨оу коцист.упок*/
+   2 CRDT_DEBT_CODE_1                    CHAR  (1) ,
+   /* пя╪сгло лесоу бакеяиайоу упокоипоу пеяиодоу 2>=0 1<0   */
+   2 MIS_AVG_VALUE_BAL_SIGN            CHAR  (1) ,
+   /*л╦сO бакеяиай╪  уп╪коипо пеяи╪доу (сыяяеутий╪ */
+   2 MIS_AVG_VALUE_BAL_EUR_TOTAL         PIC '(12)9V.99' ,
+   /*емдеинг вяеыстийо╬ пистытийо╬ л╦соу суссыяеутийо╬ бакея.упок */
+   2 CRDT_DEBT_CODE_2                    CHAR  (1) ,
+   /* пя╪сгло                                       */
+   2 MIS_INTER_R_P_TOTAL_SIGN            CHAR  (1) ,
+   /* пист.т╪йои л╧ма - (йатакоцисхемтес + дедоукеулемои тяевоусгS
+      пеяиодоу - дедоукеулемои  пяогцоулемгс пеяиодоу)*/
+   2 MIS_CRDT_INTER_R_P                  PIC '(12)9V.99' ,
+   /* пя╪сгло                                       */
+   2 MIS_DEBT_INTER_SIGN_CODE            CHAR  (1) ,
+   /* XRE .т╪йои л╧ма - (йатакоцисхемтес + дедоукеулемои тяевоусгS
+      пеяиодоу - дедоукеулемои  пяогцоулемгс пеяиодоу)*/
+   2 MIS_DEBT_INTER_R_P                  PIC '(12)9V.99' ,
+   /* 10ь╧жиос йыдий╪с цемийо╬ йахокийо╬ пистытий©м  т╪йым*/
+   2 MIS_INTER_P_R_CRDT_ACT              CHAR  (10) ,
+   /* йыдий╪с коцистийо╬ й╦мтяоу                    */
+   2 MIS_INTER_P_R_CRDT_CENTRE           char (4)  ,
+   /*йыдий╪с "коцистий╧с" ежаялоц╧с                 */
+   2 MIS_INTER_P_R_CRDT_APPLIC_CODE      CHAR  (2) ,
+   /* 10ь╧жиос йыдий╪с цемийо╬ йахокийо╬ вяеыстий©м  т╪йым*/
+   2 MIS_INTER_P_R_DEBT_ACT              CHAR  (10) ,
+   /*йыдий╪с коцистийо╬ й╦мтяоу                     */
+   2 MIS_INTER_P_R_DEBT_CENTRE           CHAR (4)   ,
+   /* йыдий╪с "коцистий╧с" ежаялоц╧с                */
+   2 MIS_INTER_P_R_DEBT_APPLIC_CODE      CHAR  (2) ,
+   /*10ь╧жиос йыдий╪с цемийо╬ йахокийо╬ вяеыстий©м пяобк╦ьеым*/
+   2 MIS_ACCR_INTER_R_P_DEBT_ACT         CHAR  (10) ,
+   /* йыдий╪с коцистийо╬ й╦мтяоу                    */
+   2 MIS_ACCR_INTER_R_P_DEBT_CENTRE      CHAR (4)   ,
+   /* йыдий╪с "коцистий╧с" ежаялоц╧с                */
+   2 MIS_INTER_ACCR_DEBT_APPL_CODE       CHAR  (2) ,
+   /*10ь╧жиос йыдий╪с цемийо╬ йахокийо╬ пистытий©м пяобк╦ьеым*/
+   2 MIS_ACCR_INTER_R_P_CRDT_ACT         CHAR  (10) ,
+   /*йыдий╪с коцистийо╬ й╦мтяоу                     */
+   2 MIS_ACCR_INTER_R_P_CRDT_CENTRE      CHAR (4)   ,
+   /*йыдий╪с "коцистий╧с" ежаялоц╧с                 */
+   2 MIS_INTR_ACCR_CRDT_APPL_CODE CHAR  (2) ,
+   /*йатгцоя╨а пек╒тг                               */
+   2 MIS_CUSTOMER_CATEGORY               CHAR  (1) ,
+   /* уп╪йатгцоя╨а пек╒тг                           */
+   2 MIS_CUSTOMER_SUB_CATEGORY           CHAR  (1) ,
+   /* CIDB пяогцо╬лемоу л╧ма                        */
+   2 MIS_PREV_MONTH_CIDB                 PIC '(9)9' ,
+   /* апк©с FILLER                             */
+   2 ALMFILLER  CHAR(26)  ;
+
+   /* -------------------------------------------------------------- */
+   /*           RECORD VSAM APXEIOY DK.TRAP.EPIX                     */
+   /*           RECORD SIZE = 100                                    */
+   /* -------------------------------------------------------------- */
+
+ % INCLUDE  DKSPACC ;
+
+     /* DECLARATIONS                                                 */
+     DCL T_KEY CHAR(10) BASED(ADDR( DSA_ARLOG));
+     DCL 1  T_KER       BASED(ADDR( DSA_ARLOG)),
+          2 T_KER60     BIT(60)                ,
+          2 T_KER04     BIT(04)                ;
+
+     DCL  EOF          FIXED(1)       INIT(0)  ;
+
+     DCL  FLAG         FIXED(1)       INIT(0)  ;
+
+     DCL  WS_CUSTOMER_FOUND FIXED(1)  INIT(0)  ;
+
+     /****************************/
+     /*SOME VARIABLES FOR TESTING*/
+     /****************************/
+
+     /*IF IT IS TEST IS_TEST HAS VALUE YES*/
+     /*IN PRODUCTION YOU HAVE TO PUT NO  */
+
+     DCL  IS_TEST          CHAR(3)   INIT('NO ');
+     DCL  REC_COUNTER      FIXED(15) INIT(0);
+     DCL  MAX_REC_COUNTER  FIXED(2)  INIT(9 ); /*MAXIMUM NUMBER OF*/
+                                               /*RECORDS FOR TESTING*/
+     /***************************/
+     /*SOME VARIABLES FOR TOTALS*/
+     /***************************/
+   DCL   SYNOLO_KATHOLIKOY  PIC'ZZZZ.ZZZ.ZZZ.ZZ9V,99-' INIT(0);
+   DCL   TOTAL_REC_KATHOLIKOY PIC'ZZZ.ZZZ.ZZ9' INIT(0);
+   DCL   MY_SYNOLO_KATHOLIKOY  FIXED(15,2) INIT(0);
+
+   DCL 1 COUNTERS ,
+      2 CNT_REC_READ               PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_REJECT_CYPR        PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_PROCCED            PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_REJECT_T04CNV97    PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_REJECT_T04DOM01    PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_PROCCED_RIGHT      PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_WRITTEN            PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_FISICAL            PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_BIG_COMPANY        PIC 'ZZZ.ZZZ.ZZ9' ,
+      2 CNT_REC_SMALL_COMPANY      PIC 'ZZZ.ZZZ.ZZ9' ;
+
+
+
+ DCL WNAME_60   CHAR(60) INIT(' ');
+ DCL WNAME      CHAR(35) INIT(' ');
+ DCL WDATE      PIC'(8)9' INIT(0);
+ DCL WKAPELDS   CHAR(25) INIT(' ');
+ DCL WPOSO      FIXED(15,2);
+ DCL WPOSO1     FIXED(15,2);
+ DCL WKATHO     PIC'(10)9' INIT(0);
+
+ DCL WFLAG      CHAR(1) INIT(' ');
+ DCL WKAPEL     PIC'99';
+ DCL WTRAPEL    PIC'9';
+ DCL WARPEL     PIC'(8)9';
+ DCL WLOGAR     PIC'(4)9';
+ DCL WCIDB      CHAR(18) INIT(' ');
+ DCL I          PIC'99';
+ DCL WKATMA     PIC'(4)9';
+ DCL WPELATH  DEC FIXED(9,0) INIT(0)  ;
+ DCL WPEL       PIC'(8)9';
+ DCL CNTRYP     FIXED(9) INIT(0);
+ DCL CNTRWR     FIXED(9) INIT(0);
+ DCL CNTRCI     FIXED(9) INIT(0);
+ DCL WYPOL      FIXED(15,2) INIT (0);
+
+ DCL TOT_XRE   PIC'S(12)9V,99' INIT(0);
+ DCL TOT_PIST  PIC'S(12)9V,99' INIT(0);
+
+ DCL WS_ARLOG      FIXED(8);
+ DCL WS_PIC9_ARLOG   PIC '(8)9'  ;
+ DCL WS_PIC9_ARKATMA PIC '(3)9'  ;
+
+ DCL 1 WS_PIC9_KATH_B PIC '(6)9' ;
+
+ DCL  MY_KSRKWDEP       CHAR(2) INIT('');
+ DCL  MY_KSRFN          CHAR(1) INIT('');
+ DCL  MY_KATHOL1  FIXED(7,0)               INIT(0);
+ DCL  WS_KATH_NEW   PIC'(6)9' INIT (0);
+ DCL  WS_KATH_NEW1  CHAR(6) BASED(ADDR(WS_KATH_NEW));
+ DCL  WS_KATH_OLD   PIC'(6)9' INIT (931900);
+ DCL  WS_KATH_OLD1  CHAR(6) BASED(ADDR(WS_KATH_OLD));
+
+ DCL  EOF_INFILE1   FIXED(1) INIT (0);
+ DCL  EOF_TOKAR     FIXED(1) INIT (0);
+
+ DCL  READ_INFILE1   FIXED(1) INIT (0);
+ DCL  READ_TOKAR     FIXED(1) INIT (0);
+
+  DCL   ORIO1     FIXED(9) INIT(067);
+  DCL   P1KATHOL(67)   CHAR(58)    INIT (
+         '506001 / 5000000005-IdIxTxN                               ',
+         '506002 / 5001000009-ETAIPEIxN                             ',
+         '506003 / 5002000002-dHMOrIxN OPcANIrMxN                   ',
+         '506004 / 5003000006-dHMOrIxN EpIXEIPHrExN                 ',
+         '506005 / 5004000000-pIrTxTIKxN IdPYMATxN-TPApEZxN         ',
+         '506006 / 5004000018-rYNdEdEMENxN TPApEZxN-IdPYMATxN       ',
+         '506007 / 5004000026-TPApEZxN EnxTEP.METETPEw.rE dPX       ',
+         '506008 / 5001000009-DINERS                                ',
+         '506009 / 5001000009-биаме а.е.                            ',
+         '506086 / 5004000000-пистытийым идяулатым-тяапефым         ',
+         '506099 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '506801 / 5011000010 pPONOMIAKOr kOc/rMOr KATAhErExN       ',
+         '506899 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '507801 / 5011000001 TPEXOYMENxN k/rMxN KATAhErExN         ',
+         '507899 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '508001 / 5000000005-IdIxTxN                               ',
+         '508002 / 5001000009-ETAIPEIxN                             ',
+         '508003 / 5002000002-dHMOrIxN OPcANIrMxN                   ',
+         '508004 / 5003000006-dHMOrIxN EpIXEIPHrExN                 ',
+         '508005 / 5004000000-pIrTxTIKxN IdPYMATxN-TPApEZxN         ',
+         '508006 / 5004000018-rYNdEdEMENxN TPApEZxN-IdPYMATxN       ',
+         '508007 / 5004000026-TPApEZxN EnxTEP.METETPEw.rE dPX       ',
+         '508099 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '509005 / 5004000000-pIrTxTIKxN IdPYMATxN-TPApEZxN         ',
+         '509006 / 5004000018-rYNdEdEMENxN TPApEZxN-IdPYMATxN       ',
+         '509099 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '510001 / 5000000013-IdIxTxN                               ',
+         '510002 / 5001000017-ETAIPEIxN                             ',
+         '510099 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ' ,
+         '511401 / 5011000001-EMPORIKI SALARY                       ',
+         '511402 / 5011000001-EMPORIKI SALARY PLUS                  ',
+         '511430 / 5011000001-EMPORIKI SALARY (еИДИЙОъ )            ',
+         '511499 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '511501 / 5304000005-IdIxTxN                               ',
+         '511599 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '511601 / 5000000048-IdIxTxN                               ',
+         '511602 / 5001000041-ETAIPEIxN                             ',
+         '511603 / 5002000045-dHMOrIxN OPcANIrMxN                   ',
+         '511604 / 5003000049-dHMOrIxN EpIXEIPHrExN                 ',
+         '511605 / 5004000042-pIrTxTIKxN IdPYMATxN-TPApEZxN         ',
+         '511606 /           -rYNdEdEMENxN TPApEZxN-IdPYMATxN       ',
+         '511607 /           -TPApEZxN EnxTEP.METETPEw.rE dPX       ',
+         '511699 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '511701 / 5304000005-IdIxTxN                               ',
+         '511799 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '512001 / 5310000003-IdIxTxN                               ',
+         '512002 / 5310000003-ETAIPEIxN                             ',
+         '512003 / 5311000007-dHMOrIxN OPcANIrMxN                   ',
+         '512004 / 5312000001-dHMOrIxN EpIXEIPHrExN                 ',
+         '512099 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '512101 / 5310000003-IdIxTxN                               ',
+         '512102 / 5310000003-ETAIPEIxN                             ',
+         '512103 / 5311000007-dHMOrIxN OPcANIrMxN                   ',
+         '512104 / 5312000001-dHMOrIxN EpIXEIPHrExN                 ',
+         '512199 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '512201 / 5001000009-pPONOMIAKOr EpIXEIPHrExN              ',
+         '512299 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '515001 / 5100000007-IdIxTxN                               ',
+         '515002 / 5001000009-ETAIPEIxN                             ',
+         '515003 / 5002000002-dHMOrIxN OPcANIrMxN                   ',
+         '515004 / 5003000006-dHMOrIxN EpIXEIPHrExN                 ',
+         '515005 / 5004000000-pIrTxTIKxN IdPYMATxN-TPApEZxN         ',
+         '515006 / 5004000018-rYNdEdEMENxN TPApEZxN-IdPYMATxN       ',
+         '515007 / 5004000026-TPApEZxN EnxTEP.METETPEw.rE dPX       ',
+         '515099 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ',
+         '530001 / 5100000007-TAMIEYTHPIOY                          ',
+         '530099 /           -*** ME kAhOr KxdIKO EpAccEkMATOr ***  ');
+
+ DCL LAT      CHAR(24) INIT ('ABcdEZHhIKkMNnOpPrTYuXwx');
+ DCL GRE      CHAR(24) INIT ('абцдефгхийклмнопястужвьы');
+
+
+ /*    пимайас циа тест     */
+ DCL   P_TEST (20) FIXED(9);
+ P_TEST = '';
+ DCL  READER  FILE  RECORD  INPUT  ENV(
+                 FB    RECSIZE(080)             );
+ DCL 1 REC_READER,
+          2 CC_ACNT   PIC '(8)9',
+          2 CC_       CHAR(72);
+
+
+ DCL READER_EOF       FIXED (1) INIT(0);
+ DCL REC_READER_COUNT FIXED(15) INIT(0);
+
+ DCL XRE_TOK   FIXED(15,2);
+ DCL PIST_TOK  FIXED(15,2);
+
+ DCL    LIMIT  FIXED(3) INIT(20);
+ DCL    INDX   FIXED(3) INIT(0);
+ DCL    INDEX  FIXED(3) INIT(0);
+
+ DCL   1 PINAX(LIMIT),
+        2 P_KATHOL4       CHAR(4)    ,
+        2 P_PIST_LOGIST   FIXED(15,2),
+        2 P_PIST_VCSAVGBL FIXED(15,2),
+        2 P_PIST_VCAVGBL  FIXED(15,2),
+        2 P_PIST_TOK      FIXED(15,2),
+        2 P_XRE_LOGIST    FIXED(15,2),
+        2 P_XRE_VDSAVGBL  FIXED(15,2),
+        2 P_XRE_VDAVGBL   FIXED(15,2),
+        2 P_XRE_TOK       FIXED(15,2),
+        2 P_SYNOLO        FIXED(15,2);
+
+   PINAX = '';
+
+ DCL KATHOL        FIXED (7,0)    ;
+ DCL P_KATHOL      PIC'(6)9'    ;
+ DCL PIC_KATHO PIC'9999';
+ DCL POSON     DEC  FIXED(13,2);
+ DCL OVERDRAFT DEC  FIXED(11,2);
+ DCL EPITOKIO  FIXED (5,2);
+ DCL TEMP_BALANCE PIC'(12)9V.99' INIT(0);
+ DCL TEMP_BAL_EUR PIC'(12)9V.99' INIT(0);
+
+
+ DCL 1 MY_KSRKATMA ,
+             2 FFF      PIC '9' ,
+             2 T20TRAP  PIC '9' ,
+             2 T20KATMA PIC '999';
+
+ DCL 1 MY_KSRKATMA_CHAR BASED (ADDR(MY_KSRKATMA)),
+             2 FFC            CHAR (1),
+             2 T20TRAP_CHAR   CHAR (1),
+             2 T20KATMA_CHAR  CHAR (3);
+ DCL  MY_KSRKATMA_XX  CHAR(5) BASED (ADDR(MY_KSRKATMA)) ;
+
+ DCL INCOUNT FIXED(1) ;
+ DCL WLINE   CHAR(133);
+ DCL   1   RECREAD,
+             2 C1        CHAR(1)         INIT(' '),
+             2 CDATE     CHAR(6)         INIT(' '),
+             2 C3        CHAR(73)        INIT(' ');
+
+ DCL 1 MY_RECREAD_X BASED (ADDR(RECREAD)) ,
+       2 MY_RECREAD CHAR(12),
+       2 FILLER     CHAR(68);
+
+   DCL    WS_KEY_ACCN1      DEC FIXED(9,0);
+   DCL    WS_KEY_YEAR       DEC FIXED(5,0);
+   DCL    WS_KEY_MONTH      DEC FIXED(3,0);
+   DCL    WS_KEY_YEAR_PREV  DEC FIXED(5,0);
+   DCL    WS_KEY_MONTH_PREV DEC FIXED(3,0);
+  /**                                                   *****/
+   DCL 1 WW_DATE_WRK,
+        2   WS_DD_WRK PIC '(2)9',
+        2   F1                  CHAR(1)              INIT('.'),
+        2   WS_MM_WRK PIC '(2)9',
+        2   F2                  CHAR(1)              INIT('.'),
+        2   WS_YY_WRK PIC '(4)9';
+  /** LAST WORKING DATE OF A GIVEN MONTH ********************/
+   DCL WS_DATE_WRK CHAR(10) BASED(ADDR(WW_DATE_WRK));
+
+  /** LAST WORKING DATE OF A GIVEN MONTH IN 7 CHARS FORMAT **/
+ /* A YYMMDD A=1-->2000 A=0-->1900  */
+  DCL MYDATE      PIC'(7)9' BASED(ADDR(PIC_MYDATE));
+  DCL 1 PIC_MYDATE  ,
+             2 PFF  PIC'9' ,
+             2 PYY  PIC'99',
+             2 PMM  PIC'99',
+             2 PDD  PIC'99';
+
+  /**********************************************************/
+  /* пъМАЙЕР АМТИСТ.кОЦАЯ.йАХОКИЙОЩ-пЯОИЭМТЫМ ЛЕ 10-ЬчЖИoУР */
+  /* ЙЫДИЙОЩР кОЦИСТГЯъОУ ЦИА ТЭЙОУР ЙАИ ПЯОБКщЬЕИР ТЭЙЫМ   */
+  /**********************************************************/
+   /* коцаяиаслои йахокийоу     тойым еналгмоу           */
+   DCL    ORIO FIXED(3) INIT (31);
+   DCL    1 P1_TOKOI(ORIO)  ,
+             2 P1_KATHOLIKO CHAR(6)
+             INIT(
+                  '506001','506002','506003','506004','506005',
+                  '506006','506007','506008','506009','506086',
+                  '506801','507801','511401','511402','511430','511701',
+                  '512201','515001','512001','512002','512003','512004',
+                  '512101','512102','512103','512104','511601','511602',
+                  '511603','511604','511605'  ) ,
+             2 P1_PISTOTIKO CHAR(10)
+             INIT(
+                   '6500000005','6500010001','6500020006','6500030001',
+                   '6500040007','6500040015','6500040104','6500010001',
+                   '6500010001','6500040007','6500110013','6500110005',
+                   '6500110005','6500110005','6500110005','6503040008',
+                   '6500010001','6501000009','6503100001','6503100001',
+                   '6503110006','6503120001','6503100001','6503100001',
+                   '6503110006','6503120001','6500000005','6500010001',
+                   '6500020006','6500030001','6500040007' ),
+             2 P1_XREOSTIKO CHAR(10)
+             INIT('7139000000','7139010005','7139020001','7139030006',
+                  '7139110042','7139110051','7139110034','7139010005',
+                  '7139010005','7139110042','7139110018','7139110000',
+                  '7139110000','7139110000','7139110000','7139040001',
+                  '7139010005','6501000009','0006969909','0006969919',
+                  '0006969929','0006969939','0006969806','0006969816',
+                  '0006969826','0006969836','7139000000','7139010005',
+                  '7139020001','7139030006','7139110042' );
+
+        /* коцаяиаслои йахокийоу коц.пяобкеьеым тойым         */
+   DCL    1 P2_PROVL(ORIO)  ,
+             2 P2_KATHOLIKO CHAR(6) INIT(
+               '506801','507801','511401','511402','511430','511601',
+               '511602','511603','511604','511605','511701','512201',
+               '506001','506002','506003','506004','506005','506006',
+               '506007','506008','506009','506086','512001','512002',
+               '512003','512004','512101','512102','512103','512104',
+               '515001' ),
+          /***********                 **********************/
+             2 P2_PISTOTIKO CHAR(10) INIT(
+                '6599030068','6599030017','6599030017','6599030017',
+                '6599030017','6599030025','6599030025','6599030025',
+                '6599030025','6599030025','6599030076','6599030025',
+                '6599030025','6599030025','6599030025','6599030025',
+                '6599030025','6599030025','6599030025','6599030025',
+                '6599030025','6599030025','6599100007','6599100007',
+                '6599100007','6599100007','6599100007','6599100007',
+                '6599100007','6599100007','6599030009' ),
+          /***********                 **********************/
+             2 P2_XREOSTIKO CHAR(10) INIT(
+                '7199000057','7199000006','7199000006','7199000006',
+                '7199000006','7199000014','7199000014','7199000014',
+                '7199000014','7199000014','7199000065','7199000014',
+                '7199000014','7199000014','7199000014','7199000014',
+                '7199000014','7199000014','7199000014','7199000014',
+                '7199000014','7199000014','7199000103','7199000103',
+                '7199000103','7199000103','7199000103','7199000103',
+                '7199000103','7199000103','6599030009' );
+
+    DCL PIST_10  CHAR  (10)  ;
+    DCL XRE_10   CHAR  (10)  ;
+ DCL (ONFILE,ONCODE,ONKEY,PRIORITY,TIME,VERIFY) BUILTIN;
+ DCL (DATETIME,SUBSTR,NULL,ADDR,UNSPEC,TRANSLATE) BUILTIN;
+ DCL (ABS ,DIVIDE,ROUND,CHAR) BUILTIN ;
+
+  /** ON  CONDITIONS *****************************************/
+  ON ERROR BEGIN;
+     ON ERROR SYSTEM;
+     PUT SKIP LIST('ESKASE TO DK554');
+  END;
+  /*******************************************************************/
+   ON ENDFILE(INFILE1)
+           BEGIN ;
+            FILE1_FLAG = 1;
+            FILE1_EOF  = 1;
+   END;
+  /*******************************************************************/
+   ON ENDFILE(READER)
+           BEGIN ;
+            READER_EOF  = 1;
+   END;
+  /*******************************************************************/
+   ON KEY (ETAIRIE)
+      BEGIN;
+        IF ONCODE = 51 THEN DO ;    /* KEY NOT FOUND */
+           FLAG = 1 ;
+         END ;
+      END; /*       */
+  /*******************************************************************/
+  /***********    M A I N   P R O G R A M    *************************/
+  /*******************************************************************/
+ %PAGE;
+    CALL A100_START                              ;
+    CALL A200_MAIN                               ;
+    CALL A300_FINAL                              ;
+
+  /**************************************************************
+  *  A100_START            START                                *
+  **************************************************************/
+   A100_START            : PROC;
+
+          CNT_REC_READ              = 0 ;
+          CNT_REC_REJECT_CYPR       = 0 ;
+          CNT_REC_PROCCED           = 0 ;
+          CNT_REC_REJECT_T04CNV97   = 0 ;
+          CNT_REC_REJECT_T04DOM01   = 0 ;
+          CNT_REC_PROCCED_RIGHT     = 0 ;
+          CNT_REC_WRITTEN           = 0 ;
+          CNT_REC_FISICAL           = 0 ;
+          CNT_REC_BIG_COMPANY       = 0 ;
+          CNT_REC_SMALL_COMPANY     = 0 ;
+
+          PINAX = '';
+
+          OPEN FILE(INFILE1);
+          OPEN FILE(READER );
+          OPEN FILE(MISFILE);
+          OPEN FILE(ETAIRIE) ;
+          OPEN FILE(PRT) ;
+
+          TAM20BIG = '';
+          MISREC = '';
+          IF IS_TEST = 'YES' THEN DO;
+              CALL A105_LOAD_TEST_TABLE                ;
+          END;
+          CALL A110_FIND_PERIOD_REFER                  ;
+          CALL A115_FIND_PERIOD_REFER_PREV             ;
+          CALL A120_FIND_LAST_WORK_DATE                ;
+
+          READ FILE(INFILE1) INTO (TAM20BIG);
+
+     END  A100_START   ;
+  /**************************************************************
+  *  A100_START                  END                            *
+  **************************************************************/
+  /**************************************************************
+  *  A105_LOAD_TEST_TABLE  START                                *
+  **************************************************************/
+   A105_LOAD_TEST_TABLE :PROC  ;
+      DO WHILE ( READER_EOF  = 0   ) ;
+         REC_READER_COUNT =   REC_READER_COUNT + 1;
+         READ  FILE(READER)  INTO(REC_READER) ;
+         IF (REC_READER_COUNT <= 20 ) THEN DO;
+               P_TEST(REC_READER_COUNT) =    CC_ACNT ;
+         END;
+      END; /*DO WHILE END*/
+
+   END A105_LOAD_TEST_TABLE  ;
+  /**************************************************************
+  *  A105_LOAD_TEST_TABLE  END                                  *
+  **************************************************************/
+
+  /**************************************************************
+  *  IS_FOR_TEST            START                               *
+  **************************************************************/
+     IS_FOR_TEST   : PROC (WS_TEST_ACCN) RETURNS (FIXED(1));
+       DCL RC1        FIXED(1) ;
+       DCL WS_TEST_ACCN FIXED(9,0) ;
+       DCL FOUND FIXED(1) ;
+       DCL I FIXED(15) ;
+       DCL J FIXED(15) ;
+       FOUND = 0;
+       IF (REC_READER_COUNT <= 20 ) THEN DO;
+          J = REC_READER_COUNT ;
+       END;
+       ELSE DO;
+          J = 20;
+       END;
+
+       DO I = 1 TO J;
+          IF (WS_TEST_ACCN = P_TEST(I) ) THEN DO;
+             FOUND = 1;
+          END;
+       END;
+       IF FOUND  = 1 THEN DO;
+          RC1 = 1;
+       END;
+       ELSE DO;
+          RC1 = 0;
+       END;
+
+       RETURN (RC1);
+     END  IS_FOR_TEST          ;
+  /**************************************************************
+  *  IS_FOR_TEST                 END                            *
+  **************************************************************/
+  /**************************************************************
+  *  A110_FIND_PERIOD_REFER       START                         *
+  **************************************************************/
+     A110_FIND_PERIOD_REFER: PROC;
+
+     WS_KEY_YEAR  = 0 ;
+     WS_KEY_MONTH = 0 ;
+     /*гЛЕЯОЛГМъА яОчР аПЭ ТГМ DATE JCL          */
+     TODAYX            = '20'!!
+                          SUBSTR(DATE,1,2) !! /*ETOS */
+                          SUBSTR(DATE,3,2) !! /*MHNAS*/
+                          SUBSTR(DATE,5,2) ;/*HMERA*/
+     /* о пЯОГЦОЩЛЕМОР лчМАР АПО ТГМ ГЛЕЯОЛГМъА ЯОчР*/
+     IF ( PICMM = 1 ) THEN DO;
+       WS_KEY_YEAR  = PICYY - 1;
+       WS_KEY_MONTH = 12 ;
+     END;
+     ELSE DO;
+       WS_KEY_YEAR  = PICYY ;
+       WS_KEY_MONTH = PICMM - 1;
+     END;
+     PUT SKIP LIST('цИА гЛЕЯОЛГМъА яОчР : ',TODAYX);
+     PUT SKIP LIST('гЛЕЯОЛГМъА AМАЖОЯэР еТОР: ',char(ws_key_year),
+                   ' лчМАР ',char(ws_key_month));
+     END  A110_FIND_PERIOD_REFER;
+  /**************************************************************
+  *  A110_FIND_PERIOD_REFER      END                            *
+  **************************************************************/
+  /**************************************************************
+  *  A115_FIND_PERIOD_REFER_PREV   START                        *
+  **************************************************************/
+     A115_FIND_PERIOD_REFER_PREV: PROC;
+
+     WS_KEY_YEAR_PREV  = 0 ;
+     WS_KEY_MONTH_PREV = 0 ;
+     /*гЛЕЯОЛГМъА яОчР аПЭ ТГМ DATE JCL          */
+     TODAYX            = '20'!!
+                          SUBSTR(DATE,1,2) !! /*     */
+                          SUBSTR(DATE,3,2) !! /*MHNAS*/
+                          SUBSTR(DATE,5,2) ;/*    */
+     /* дЩО лчМЕР пЯъМ  АПО ТГМ ГЛЕЯОЛГМъА ЯОчР*/
+     IF ( PICMM = 1 ) THEN DO;/*дЩО лчМЕР пЯъМ ТОМ цЕМэЯГ ЕИМАИ мОщЛБЯ*/
+       WS_KEY_YEAR_PREV  = PICYY - 1;
+       WS_KEY_MONTH_PREV = 11 ;
+     END;
+     ELSE DO;/*дЩО лчМЕР пЯъМ ТОМ жКЕБэЯГ ЕИМАИ дЕЙщЛБЯГР ТОУ пЯОГЦОЩЛ*/
+       IF ( PICMM = 2 ) THEN DO
+         WS_KEY_YEAR_PREV  = PICYY - 1;
+         WS_KEY_MONTH_PREV = 12 ;
+       END;
+       ELSE DO;
+         WS_KEY_YEAR_PREV  = PICYY ; /*дУЭ ЛчМЕР пъСЫ СТОМ иДИО ВЯЭМО*/
+         WS_KEY_MONTH_PREV = PICMM - 2;
+       END;
+       END;
+     PUT SKIP LIST('цИА гЛЕЯОЛГМъА яОчР : ',TODAYX);
+     PUT SKIP LIST('пЯОГЦ.гЛЕЯОЛГМъА AМАЖОЯэР еТОР: ',
+                    char(ws_key_year_prev),
+                   ' пЯОГЦ.лчМАР ',char(ws_key_month_prev));
+
+     END  A115_FIND_PERIOD_REFER_PREV;
+  /**************************************************************
+  *  A115_FIND_PERIOD_REFER_PREV  END                           *
+  **************************************************************/
+  /**************************************************************
+  *  A120_FIND_LAST_WORK_DATE      START                        *
+  **************************************************************/
+     A120_FIND_LAST_WORK_DATE   : PROC;
+      DCL I    FIXED(3) ;
+
+          WS_YY_WRK =   WS_KEY_YEAR    ;
+          WS_MM_WRK =   WS_KEY_MONTH   ;
+          DO I= 31 TO  1 BY -1;
+              WS_DD_WRK =   I    ;
+              IF (A121_IS_WORK_DATE(WS_DATE_WRK) ) = 0 THEN DO;
+                 PUT SKIP LIST ('LAST WORK DATE FOR YEAR ',WS_YY_WRK);
+                 PUT SKIP LIST ('LAST WORK DATE FOR MONTH ',WS_MM_WRK);
+                 PUT SKIP LIST ('IS : ',WS_DATE_WRK);
+                 /*жтиавмы тгм летабкгтг MYDATE циа епитойиа йтк*/
+                 PFF = '1';
+                 PDD = WS_DD_WRK;
+                 PMM = WS_MM_WRK;
+                 PYY = SUBSTR(WS_YY_WRK,3,2);
+
+                 GO TO SKIP; /*DONT LOOP*/
+              END;
+          END;
+          SKIP:;
+
+     END  A120_FIND_LAST_WORK_DATE   ;
+  /**************************************************************
+  *  A120_FIND_LAST_WORK_DATE     END                           *
+  **************************************************************/
+  /**************************************************************
+  *  A121_IS_WORK_DATE             START                        *
+  **************************************************************/
+     A121_IS_WORK_DATE  : PROC (WS_IN_DATE) RETURNS (FIXED(1));
+       DCL RC         FIXED(1) ;
+       DCL WS_IN_DATE CHAR(10) ;
+          EXEC SQL
+               SELECT COD_PAIS INTO :T06TC060.COD_PAIS
+               FROM  T06TC060
+               WHERE FEC_SIGLO = :WS_IN_DATE
+               AND COD_PAIS = '0009'
+             ;
+          IF SQLCODE = 100 THEN DO;/*IS WORKING DATE*/
+             RC= 0;
+          END;
+          ELSE                  DO;
+             RC= 1;
+          END;
+          RETURN (RC);
+     END  A121_IS_WORK_DATE          ;
+  /**************************************************************
+  *  A121_IS_WORK_DATE            END                           *
+  **************************************************************/
+  /**************************************************************
+  *  GET_YEAR                      START                        *
+  **************************************************************/
+     GET_YEAR     : PROC (WS_IN_FDATE) RETURNS (FIXED(5,0));
+       DCL RC         FIXED(5,0);
+       DCL WS_IN_FDATE FIXED(7) ;
+       DCL MY_IN_DATE  PIC '9999999';
+           MY_IN_DATE = WS_IN_FDATE ;
+
+       DCL 1  MY_KSRHMTS_PIC BASED(ADDR(MY_IN_DATE)),
+            2  KSR_EON PIC'9',
+            2  KSR_YY  PIC'99',
+            2  KSR_MM  PIC'99',
+            2  KSR_DD  PIC'99';
+
+     DCL KSR_20_OR_19 PIC '99';
+
+     IF KSR_EON =  0  THEN KSR_20_OR_19 =  19 ;
+     ELSE                  KSR_20_OR_19 =  20 ;
+
+     RC = (KSR_20_OR_19 * 100 ) + KSR_YY;
+     IF IS_TEST = 'YES' THEN DO;
+     PUT SKIP LIST('цИА ТО кОЦАЯИАСЛЭ ',char(ksrarlog));
+     PUT SKIP LIST('гЛЕЯОЛГМъА йКЕИСИЛАТОР ',char(WS_IN_FDATE));
+     PUT SKIP LIST('еТОР аМОъЦЛАТОР кОЦАЯ: ',char(RC         ));
+     END;
+       RETURN (RC);
+     END  GET_YEAR          ;
+  /**************************************************************
+  *  GET_YEAR                     END                           *
+  **************************************************************/
+  /**************************************************************
+  *  A200_MAIN               START                              *
+  **************************************************************/
+     A200_MAIN             : PROC;
+
+       DO WHILE (FILE1_EOF  = 0 ) ;
+          /*EAN то етос йкеисилатос тоу коцаяиаслоу, еимаи лийяотеяо
+           апо то етос амажояас,  дем том калбамоуле упоьим */
+          IF (KSRAKYR = '1') & ( GET_YEAR(KSRHMTS) < WS_KEY_YEAR)
+              & ( GET_YEAR(KSRHMTA) < WS_KEY_YEAR)
+              THEN GO TO SKIP;
+
+          F1_RECS = F1_RECS + 1;
+
+          PIC_IMS_POSO=PIC_IMS_POSO  + (KSRDYPOL + KSREKKRE);
+          CALL  A210_GET_DB2_DATA   ;
+          CALL  A215_CALL_RISBPD2A  ;
+          CALL  A216_CALL_RISBPD2A_PREV;
+          CALL  A220_LOAD_ALM_DATA  ;
+          CALL  A225_LOAD_MIS_DATA  ;
+          CALL  A227_WRITE_MIS      ;
+          /*
+          IF IS_TEST = 'YES' THEN DO;
+             IF 1 = IS_FOR_TEST(KSRARLOG) THEN DO;
+                  CALL PRINT_FOR_TEST       ;
+             END;
+           END; */
+
+          SKIP:;
+          TOTALS = '';
+          READ FILE(INFILE1) INTO (TAM20BIG);
+
+       END; /*DO WHILE END*/
+
+     END  A200_MAIN    ;
+  /**************************************************************
+  *  A200_MAIN                   END                            *
+  **************************************************************/
+  /**************************************************************
+  *  A210_GET_DB2_DATA       START                              *
+  **************************************************************/
+     A210_GET_DB2_DATA     : PROC;
+         CTISDK01 = '';
+
+         CTISDK01.KEY_ACCN1 = KSRARLOG;
+         CTISDK01.KEY_YEAR =  WS_KEY_YEAR  ;
+         CTISDK01.KEY_MONTH = WS_KEY_MONTH ;
+
+    EXEC SQL SELECT
+                  NUM_VDAVGBL  ,
+                  NUM_VCAVGBL  ,
+                  NUM_VDSAVGBL ,
+                  NUM_VCSAVGBL ,
+                  NUM_DMINTRST ,
+                  NUM_CMINTRST ,
+                  NUM_DCINTRST ,
+                  NUM_CCINTRST ,
+                  NUM_DKATALOG ,
+                  NUM_CKATALOG
+    INTO :CTISDK01.NUM_VDAVGBL  ,
+         :CTISDK01.NUM_VCAVGBL  ,
+         :CTISDK01.NUM_VDSAVGBL ,
+         :CTISDK01.NUM_VCSAVGBL ,
+         :CTISDK01.NUM_DMINTRST ,
+         :CTISDK01.NUM_CMINTRST ,
+         :CTISDK01.NUM_DCINTRST ,
+         :CTISDK01.NUM_CCINTRST ,
+         :CTISDK01.NUM_DKATALOG ,
+         :CTISDK01.NUM_CKATALOG
+     FROM CTISDK01
+     WHERE  KEY_ACCN1 =  :CTISDK01.KEY_ACCN1  AND
+            KEY_YEAR  =  :CTISDK01.KEY_YEAR   AND
+            KEY_MONTH =  :CTISDK01.KEY_MONTH
+         ;
+     IF SQLCODE = 0 THEN DO;
+       /* лесо бакеяиайо вяеыстийо упокоипо ПЕЯИОДОУ (сыяеутийо)*/
+        TOT_XRE_VDSAVGBL  = CTISDK01.NUM_VDSAVGBL;
+       /* лесо бакеяиайо пистытийо упокоипо ПЕЯИЭДОУ (сыяеутийо)*/
+        TOT_PIST_VCSAVGBL = CTISDK01.NUM_VCSAVGBL;
+
+       /* лесо бакеяиайо вяеыстийо упокоипо лгма */
+        TOT_XRE_VDAVGBL = CTISDK01.NUM_VDAVGBL;
+       /* лесо бакеяиайо пистытийо упокоипо лгма */
+        TOT_PIST_VCAVGBL = CTISDK01.NUM_VCAVGBL;
+
+       /* вяеыстийои тойои лгма пяоупокоцисхемтес*/
+        TOT_XRE_DMINTRST = CTISDK01.NUM_DMINTRST;
+       /* пистытийои тойои лгма пяоупокоцисхемтес*/
+        TOT_PIST_CMINTRST= CTISDK01.NUM_CMINTRST;
+
+       /* вяеыстийои тойои йАТАКОЦИСХЕМТЕР еНАЛчМОУ (пЯАЦЛАТИЙОъ)*/
+        TOT_XRE_DKATALOG= CTISDK01.NUM_DKATALOG;
+       /* пистытийои тойои йАТАКОЦИСХщМТЕР еНАЛчМОУ (пЯАЦЛАТИЙОъ */
+        TOT_PIST_CKATALOG= CTISDK01.NUM_CKATALOG;
+
+       /* вяеыстийои тойои лгма ONLINE йкеисилатым */
+        TOT_XRE_ONLINE  =     CTISDK01.NUM_DCINTRST ;
+       /* пистытийои тойои лгма ONLINE йкеисилатым */
+        TOT_PIST_ONLINE =     CTISDK01.NUM_CCINTRST;
+
+     END;
+     ELSE DO ;
+          PUT SKIP LIST('DB2 ERROR SQLCODE : ',CHAR(SQLCODE ));
+          PUT SKIP LIST('KSRARLOG : ',CHAR(KSRARLOG));
+          PUT SKIP LIST('MONTH : ',CHAR(WS_KEY_MONTH ));
+          PUT SKIP LIST('YEAR  : ',CHAR(WS_KEY_YEAR  ));
+     END;
+
+     /*******************************************************/
+     /*еуяесг пяоупокоцисхемтым т╪йым пяогцоул╦мгс пеяиодоу */
+     /*******************************************************/
+     CTISDK01.KEY_ACCN1 = KSRARLOG  ;
+     CTISDK01.KEY_YEAR  = WS_KEY_YEAR_PREV  ;
+     CTISDK01.KEY_MONTH = WS_KEY_MONTH_PREV ;
+
+     EXEC SQL SELECT
+                   NUM_DMINTRST ,
+                   NUM_CMINTRST
+    INTO :CTISDK01.NUM_DMINTRST ,
+         :CTISDK01.NUM_CMINTRST
+    FROM CTISDK01
+    WHERE
+      KEY_ACCN1 = :CTISDK01.KEY_ACCN1 AND
+      KEY_YEAR  = :CTISDK01.KEY_YEAR  AND
+      KEY_MONTH = :CTISDK01.KEY_MONTH
+       ;
+     IF SQLCODE = 0 THEN DO;
+
+       /* вяеыстийои тойои лгма  дедоукеулемои-пяоупокоцисхемтес*/
+        TOT_XRE_DMINTRST_PREV = CTISDK01.NUM_DMINTRST;
+       /* пистытийои тойои лгма  дедоукеулемои-пяоупокоцисхемтес*/
+        TOT_PIST_CMINTRST_PREV= CTISDK01.NUM_CMINTRST;
+
+     END;
+     ELSE DO ;
+
+          TOT_XRE_DMINTRST_PREV  = 0;
+          TOT_PIST_CMINTRST_PREV = 0;
+
+          PUT SKIP LIST('DB2 ERROR SQLCODE : ',CHAR(SQLCODE ));
+          PUT SKIP LIST('KSRARLOG  : ',CHAR(KSRARLOG));
+          PUT SKIP LIST('MONTH PREV: ',CHAR(WS_KEY_MONTH_PREV ));
+          PUT SKIP LIST('YEAR PREV : ',CHAR(WS_KEY_YEAR_PREV  ));
+     END;
+
+     /************************************************************/
+     /*еуяесг лесоу лгмиаиоу коцистийоу упокоипоу лгма пистытийоу*/
+     /************************************************************/
+     TOT_PIST_LOGIST = 0;
+
+     ISBK02.KEY_NUM_ETOS     = WS_KEY_YEAR  ;
+     ISBK02.KEY_NUM_MHNAS    = WS_KEY_MONTH ;
+     ISBK02.KEY_COD_EFARM    = '70';
+     ISBK02.KEY_COD_ARLOG    = KSRARLOG;
+     ISBK02.KEY_COD_KLIMAKIO = '02';/*пистысеис = '02' вяеысеис ='01'*/
+
+     EXEC SQL
+         SELECT  AMT_MMLY
+         INTO   :ISBK02.AMT_MMLY
+         FROM CTISBK02
+         WHERE KEY_NUM_ETOS     = :ISBK02.KEY_NUM_ETOS  AND
+               KEY_NUM_MHNAS    = :ISBK02.KEY_NUM_MHNAS AND
+               KEY_COD_EFARM    = :ISBK02.KEY_COD_EFARM AND
+               KEY_COD_ARLOG    = :ISBK02.KEY_COD_ARLOG AND
+               KEY_COD_KLIMAKIO = :ISBK02.KEY_COD_KLIMAKIO;
+     IF SQLCODE = 0 THEN DO;
+         TOT_PIST_LOGIST = ISBK02.AMT_MMLY ;
+     END;
+     ELSE DO ;
+         TOT_PIST_LOGIST = 0;
+     END;
+     /************************************************************/
+     /*еуяесг лесоу лгмиаиоу коцистийоу упокоипоу лгма вяеыстийоу*/
+     /************************************************************/
+     TOT_XRE_LOGIST  = 0;
+
+     ISBK02.KEY_NUM_ETOS     = WS_KEY_YEAR  ;
+     ISBK02.KEY_NUM_MHNAS    = WS_KEY_MONTH ;
+     ISBK02.KEY_COD_EFARM    = '70';
+     ISBK02.KEY_COD_ARLOG    = KSRARLOG;
+     ISBK02.KEY_COD_KLIMAKIO = '01';/*пистысеис = '02' вяеысеис ='01'*/
+
+     EXEC SQL
+         SELECT  AMT_MMLY
+         INTO   :ISBK02.AMT_MMLY
+         FROM CTISBK02
+         WHERE KEY_NUM_ETOS     = :ISBK02.KEY_NUM_ETOS  AND
+               KEY_NUM_MHNAS    = :ISBK02.KEY_NUM_MHNAS AND
+               KEY_COD_EFARM    = :ISBK02.KEY_COD_EFARM AND
+               KEY_COD_ARLOG    = :ISBK02.KEY_COD_ARLOG AND
+               KEY_COD_KLIMAKIO = :ISBK02.KEY_COD_KLIMAKIO;
+     IF SQLCODE = 0 THEN DO;
+         TOT_XRE_LOGIST = ISBK02.AMT_MMLY ;
+     END;
+     ELSE DO ;
+         TOT_XRE_LOGIST = 0;
+     END;
+
+     END  A210_GET_DB2_DATA ;
+  /**************************************************************
+  *  A210_GET_DB2_DATA           END                            *
+  **************************************************************/
+  /**************************************************************
+  *  A215_CALL_RISBPD2A      START                              *
+  **************************************************************/
+     A215_CALL_RISBPD2A    : PROC;
+      DCL  INP_CALLING_APPL CHAR(02) INIT('70');
+      DCL  INP_MM           PIC'(2)9'   ;
+      DCL  INP_EEEE         PIC'(4)9'   ;
+      DCL  INP_NUM_AR_LOGAR CHAR(16)   ;
+      DCL  PIC_LOGAR        PIC'(8)9'   ;
+      DCL  CHAR_LOGAR       CHAR(8)   ;
+      DCL  INP_COD_EFARM    CHAR(02) INIT('70');
+      DCL  INP_KATMA1       CHAR(4);
+      DCL  INP_KATMA2       CHAR(4);
+      DCL  INP_SERVICE_TYPE CHAR(01) INIT(' ');
+
+      INP_MM    =  WS_KEY_MONTH;
+      INP_EEEE  =  WS_KEY_YEAR;
+      PIC_LOGAR =  KSRARLOG ;
+      CHAR_LOGAR =PIC_LOGAR  ;
+      INP_NUM_AR_LOGAR =CHAR_LOGAR!! (8)' ';
+      MY_KSRKATMA = KSRKATMA ;
+      INP_KATMA1 = '0'!!T20KATMA_CHAR;
+      INP_KATMA2 = '0'!!T20KATMA_CHAR;
+      /*
+      ERLIN2= ' KSRARLOG = '!!CHAR_LOGAR!!' ETOS ='!!INP_EEEE
+            !!' MONTH= '!!INP_MM !!' INPUT LOG ' !!INP_NUM_AR_LOGAR
+            !!' KATMA= '!!INP_KATMA1;
+      WRITE FILE(PRT) FROM(ERLINE);
+      */
+      RISBP2AF_REC                     = '';
+      RISBP2AF_REC_R.I_CALLING_APPL    = '70' ;
+      RISBP2AF_REC_R.I_NUM_YEAR        = INP_EEEE;
+      RISBP2AF_REC_R.I_NUM_MONTH       = INP_MM;
+      RISBP2AF_REC_R.I_COD_PERSONA     = 0;
+      RISBP2AF_REC_R.I_COD_EFARM       = '70' ;
+      RISBP2AF_REC_R.I_NUM_AR_LOGAR    = INP_NUM_AR_LOGAR;
+      RISBP2AF_REC_R.I_NUM_PARTICIP    = '01';
+      RISBP2AF_REC_R.I_ACCOUNT_BRANCH  = INP_KATMA1 ;
+      RISBP2AF_REC_R.I_TRANS_BRANCH    = INP_KATMA2 ;
+      RISBP2AF_REC_R.I_SERVICE_TYPE    = ' ';
+      ERLIN1= ' ';
+      /*
+      ERLIN2=  RISBP2AF_REC_R.I_NUM_YEAR!!' '!!
+               RISBP2AF_REC_R.I_NUM_MONTH!!' '!!
+               RISBP2AF_REC_R.I_COD_EFARM!!' '!!
+               RISBP2AF_REC_R.I_NUM_AR_LOGAR!!' '!!
+               RISBP2AF_REC_R.I_NUM_PARTICIP!!' '!!
+               RISBP2AF_REC_R.I_ACCOUNT_BRANCH!!' '!!
+               RISBP2AF_REC_R.I_TRANS_BRANCH!!' '!!
+               RISBP2AF_REC_R.I_SERVICE_TYPE;
+         WRITE FILE(PRT) FROM(ERLINE); */
+
+      CALL RISBPD2A(ADDR(RISBP2AF_REC));
+
+      FROM_RISBP2AF = '';
+
+      IF RISBP2AF_REC_R.O_RETV    ^= 0 !
+         RISBP2AF_REC_R.O_SQLCODE ^= 0 !
+         RISBP2AF_REC_R.O_STATUS ^= '' THEN DO;
+
+         ERLIN1= ' ';
+
+         ERLIN2= ' ACCOUNT= '!!INP_NUM_AR_LOGAR!!' KATMA='!!INP_KATMA1
+                 !!' RETV='!!RISBP2AF_REC_R.O_RETV
+                 !!' SQLCODE='!!RISBP2AF_REC_R.O_SQLCODE
+                 !!' STATUS='!!RISBP2AF_REC_R.O_STATUS;
+         WRITE FILE(PRT) FROM(ERLINE);
+     END;
+     ELSE DO;
+       IF RISBP2AF_REC_R.O_COD_PERSONA_NEW ^= 0 THEN
+              FROM_RISBP2AF.WS_CIDB_NEW =
+              RISBP2AF_REC_R.O_COD_PERSONA_NEW;
+
+        FROM_RISBP2AF.WS_CUSTNAME =
+        RISBP2AF_REC_R.O_NOM_DENOM;
+        FROM_RISBP2AF.WS_RESPCENT =
+        RISBP2AF_REC_R.O_RESP_CENTER;
+        FROM_RISBP2AF.WS_CUSTCATEG =
+        RISBP2AF_REC_R.O_IND_TIPO_PERSONA;
+        FROM_RISBP2AF.WS_CUSTSUBC =
+        RISBP2AF_REC_R.O_IND_SEUDONIMOS;
+        FROM_RISBP2AF.WS_CUSTSEGM =
+        RISBP2AF_REC_R.O_COD_SEGMENT_G;
+        /*ас паяоуле то омола апо тг яоутима,ма амебеи г емтяопиа*/
+        /*тоу сустглатос (дуо жояес то идио педио) мпй 09-05-2006*/
+        ALMCUSNAME = SUBSTR(FROM_RISBP2AF.WS_CUSTNAME,1,35);
+
+     END;
+     END  A215_CALL_RISBPD2A;
+  /**************************************************************
+  *  A215_CALL_RISBPD2A          END                            *
+  **************************************************************/
+  /**************************************************************
+  *  A216_CALL_RISBPD2A_PREV     START                          *
+  **************************************************************/
+     A216_CALL_RISBPD2A_PREV    : PROC;
+      DCL  INP_CALLING_APPL CHAR(02) INIT('70');
+      DCL  INP_MM           PIC'(2)9'   ;
+      DCL  INP_EEEE         PIC'(4)9'   ;
+      DCL  INP_NUM_AR_LOGAR CHAR(16)   ;
+      DCL  PIC_LOGAR        PIC'(8)9'   ;
+      DCL  CHAR_LOGAR       CHAR(8)   ;
+      DCL  INP_COD_EFARM    CHAR(02) INIT('70');
+      DCL  INP_KATMA1       CHAR(4);
+      DCL  INP_KATMA2       CHAR(4);
+      DCL  INP_SERVICE_TYPE CHAR(01) INIT(' ');
+
+      INP_MM    =  WS_KEY_MONTH_PREV;
+      INP_EEEE  =  WS_KEY_YEAR_PREV;
+      PIC_LOGAR =  KSRARLOG ;
+      CHAR_LOGAR =PIC_LOGAR  ;
+      INP_NUM_AR_LOGAR =CHAR_LOGAR!! (8)' ';
+      MY_KSRKATMA = KSRKATMA ;
+      INP_KATMA1 = '0'!!T20KATMA_CHAR;
+      INP_KATMA2 = '0'!!T20KATMA_CHAR;
+      /*
+      ERLIN2= ' KSRARLOG = '!!CHAR_LOGAR!!' ETOS ='!!INP_EEEE
+            !!' MONTH= '!!INP_MM !!' INPUT LOG ' !!INP_NUM_AR_LOGAR
+            !!' KATMA= '!!INP_KATMA1;
+      WRITE FILE(PRT) FROM(ERLINE);
+      */
+      RISBP2AF_REC                     = '';
+      RISBP2AF_REC_R.I_CALLING_APPL    = '70' ;
+      RISBP2AF_REC_R.I_NUM_YEAR        = INP_EEEE;
+      RISBP2AF_REC_R.I_NUM_MONTH       = INP_MM;
+      RISBP2AF_REC_R.I_COD_PERSONA     = 0;
+      RISBP2AF_REC_R.I_COD_EFARM       = '70' ;
+      RISBP2AF_REC_R.I_NUM_AR_LOGAR    = INP_NUM_AR_LOGAR;
+      RISBP2AF_REC_R.I_NUM_PARTICIP    = '01';
+      RISBP2AF_REC_R.I_ACCOUNT_BRANCH  = INP_KATMA1 ;
+      RISBP2AF_REC_R.I_TRANS_BRANCH    = INP_KATMA2 ;
+      RISBP2AF_REC_R.I_SERVICE_TYPE    = ' ';
+      ERLIN1= ' ';
+      /*
+      ERLIN2=  RISBP2AF_REC_R.I_NUM_YEAR!!' '!!
+               RISBP2AF_REC_R.I_NUM_MONTH!!' '!!
+               RISBP2AF_REC_R.I_COD_EFARM!!' '!!
+               RISBP2AF_REC_R.I_NUM_AR_LOGAR!!' '!!
+               RISBP2AF_REC_R.I_NUM_PARTICIP!!' '!!
+               RISBP2AF_REC_R.I_ACCOUNT_BRANCH!!' '!!
+               RISBP2AF_REC_R.I_TRANS_BRANCH!!' '!!
+               RISBP2AF_REC_R.I_SERVICE_TYPE;
+         WRITE FILE(PRT) FROM(ERLINE); */
+
+      CALL RISBPD2A(ADDR(RISBP2AF_REC));
+
+      IF RISBP2AF_REC_R.O_RETV    ^= 0 !
+         RISBP2AF_REC_R.O_SQLCODE ^= 0 !
+         RISBP2AF_REC_R.O_STATUS ^= '' THEN DO;
+
+         ERLIN1= ' ';
+
+         ERLIN2= ' ACCOUNT= '!!INP_NUM_AR_LOGAR!!' KATMA='!!INP_KATMA1
+                !!' YEAR_PREV '!!CHAR(WS_KEY_YEAR_PREV)!!
+                ' MONTH_PREV '!!CHAR(WS_KEY_MONTH_PREV)!!
+                 ' KATMA='!!INP_KATMA1
+                 !!' RETV='!!RISBP2AF_REC_R.O_RETV
+                 !!' SQLCODE='!!RISBP2AF_REC_R.O_SQLCODE
+                 !!' STATUS='!!RISBP2AF_REC_R.O_STATUS;
+         WRITE FILE(PRT) FROM(ERLINE);
+     END;
+     ELSE DO;
+       IF RISBP2AF_REC_R.O_COD_PERSONA_NEW ^= 0 THEN
+              FROM_RISBP2AF.WS_CIDB_NEW =
+              RISBP2AF_REC_R.O_COD_PERSONA_NEW;
+
+        FROM_RISBP2AF.WS_CIDB =
+        RISBP2AF_REC_R.O_COD_PERSONA;
+
+     END;
+     END  A216_CALL_RISBPD2A_PREV;
+  /**************************************************************
+  *  A216_CALL_RISBPD2A_PREV     END                            *
+  **************************************************************/
+  /**************************************************************
+  *  A220_LOAD_ALM_DATA      START                              *
+  **************************************************************/
+     A220_LOAD_ALM_DATA     :PROC;
+
+       CNT_REC_READ    = CNT_REC_READ  + 1;
+       CNT_REC_PROCCED = CNT_REC_PROCCED   + 1;
+
+       CALL A221_FILL_TRIVIAL  ;    /* ломо та еуйока  еды         */
+       CALL A222_KATHOLIKO_10      ;
+       CALL A223_DESCR_KATHOLIKOY ; /* пеяицяажг йахокийоу         */
+       CALL A224_CIDB_NUMBER      ; /* аяихлос   CIDB              */
+
+       IF  WS_CUSTOMER_FOUND = 0 THEN
+            CALL A225_CUSTOMER_NAME; /* омолатепымуло пекатг        */
+
+       CALL A226_FILL_RATE        ; /* епитойио ейтойислоу         */
+       CALL A227_TRAPEZIKH_MONADA ; /* тяапефIKH MONAда
+                                        паяайокоухгсгс коцаяиаслоу  */
+
+     END  A220_LOAD_ALM_DATA;
+  /**************************************************************
+  *  A220_LOAD_ALM_DATA          END                            *
+  **************************************************************/
+  /**************************************************************
+  *  A221_FILL_TRIVIAL        START                             *
+  *                                                             *
+  **************************************************************/
+     A221_FILL_TRIVIAL      : PROC;
+
+      DCL ERROR_FLG FIXED(3);
+      /*йыдийос кахоус 1=кахос 0=сысто*/
+      DCL ERR_COD   FIXED (1)    INIT(1);
+
+     MISREC = '';
+
+     WS_PIC9_ARLOG =    KSRARLOG ;
+     ALMNUMBER     =    WS_PIC9_ARLOG ;
+
+     ALMBALANCE    =    (KSRDYPOL + KSREKKRE) ;
+     ALMBALUER     =    (KSRDYPOL + KSREKKRE) ;
+     TEMP_BALANCE  =    ALMBALANCE;
+     TEMP_BAL_EUR  =    ALMBALUER;
+
+     ALMOVERD      =    KSROVERD;
+
+     IF (KSRDYPOL + KSREKKRE) >= 0 THEN DO;
+       ALMSCB     = '2' ; /*пяосгло CURRENT BALANCE хетийо*/
+       ALMSCBE    = '2';  /*пяосгло CURRENT BALANCE EUR хетийо    */
+     END;
+     ELSE DO ;
+       ALMSCB     = '1' ; /*пяосгло CURRENT BALANCE аямгтийо */
+       ALMSCBE    = '1';  /*пяосгло CURRENT BALANCE EUR аямгтийо  */
+     END;
+
+     ALMCURCODE    =    'EUR'         ;
+     ALMBASIS      =    'D'           ;
+     ALMINSTRID    =    (40)' '       ;
+     ALMSAVGBAL    =    0             ;
+     ALMSAB        =    '2';
+
+     ALMUSERFL     =    (2)' '        ;
+     ALMBANK          =    '0'!!T20KATMA_CHAR;
+     ALMBRANCH        =    '0'!!T20KATMA_CHAR;
+     ALMCOST          =    '0'!!T20KATMA_CHAR;
+
+     /*бяес 6-ьгжио йахокийо*/
+
+     MY_KSRKWDEP  = KSRKWDEP ;
+     MY_KSRFN     = KSRFN    ;
+     ERROR_FLG    = 0 ;
+     MY_KATHOL1   = 0 ;
+
+
+     MY_KATHOL1   = DKR4TO6B(KSRKATHO, MY_KSRKWDEP,MY_KSRFN ,
+                                KSRARLOG ,ERROR_FLG   );
+
+     WS_PIC9_KATH_B   =    MY_KATHOL1 ; /*бяес 6-ьгжио йахокийо*/
+     WS_KATH_NEW      =    MY_KATHOL1 ;
+
+     PIC_KATHO = KSRKATHO;
+     ALMSPRCODE       =    PIC_KATHO        ;  /*тетяаьгжио йахокийо*/
+
+     ALMKAPEL         =    KSRFN            ;  /*жусийо молийо*/
+                         /*LAST WORKING DATE*/
+     ALMDATE          =  WS_DD_WRK!!       /*FORMAT DDMMYYYY */
+                         WS_MM_WRK!!
+                         WS_YY_WRK;
+
+     /* ******************************************************  */
+     /* ои йатгцояиес 5060,5120,5121,5116 лпояоум ма пеяиевоум  */
+     /* йаи емтойоус йаи атойоус коцаяиаслоус  ои аккес йатгцояи*/
+     /* ес еимаи памта емтойес                                 */
+     /*             1=емтойос  ,0=атойос                        */
+     /* NPK 20-06-2006 ME THN богхеиа тоу йоутемтайг *********  */
+     SELECT(ALMSPRCODE);
+         WHEN ('5060','5120','5121') DO;
+             IF KSRKATEP = '1' THEN /* емтойос */
+                ALMENTOKOS  = '1';
+             ELSE
+                ALMENTOKOS  = '0';
+         END;
+         WHEN ('5116') DO;
+             IF MY_KATHOL1   =  511605  THEN
+                ALMENTOKOS  = '0';
+             ELSE
+                ALMENTOKOS  = '1';
+         END;
+         OTHERWISE   ALMENTOKOS  = '1';
+     END;/*SELECT*/
+
+     END  A221_FILL_TRIVIAL     ;
+  /**************************************************************
+  *  A221_FILL_TRIVIAL               END                        *
+  **************************************************************/
+
+  /**************************************************************
+  *  A222_KATHOLIKO_10      START                               *
+  *                                                             *
+  **************************************************************/
+     A222_KATHOLIKO_10      : PROC;
+        DCL I      PIC  '99'  INIT (0);
+
+        ALMKATH    =(15)' ';   /*  йахокийо 10ЬГЖИО   */
+
+        DO I = 1 TO ORIO1 ;
+            IF WS_PIC9_KATH_B = SUBSTR(P1KATHOL(I),1,6) THEN DO;
+               ALMKATH  = SUBSTR(P1KATHOL(I),10,10);
+               GO TO OUT;
+            END;
+            ELSE DO;
+               IF I = ORIO1 THEN DO;
+            ERLIN2 = 'пяобкгла:дем бяехгйе йахокийо : '                 !!
+                !! WS_PIC9_KATH_B !!' циа то коцая. '!!KSRARLOG;
+              WRITE FILE(PRT) FROM(ERLINE);
+
+               END;
+            END;
+
+        END;
+     OUT: ;
+     END  A222_KATHOLIKO_10     ;
+  /**************************************************************
+  *  A222_KATHOLIKO_10               END                        *
+  **************************************************************/
+
+  /**************************************************************
+  *  A223_DESCR_KATHOLIKOY    START                             *
+  *                                                             *
+  **************************************************************/
+     A223_DESCR_KATHOLIKOY  : PROC;
+        DCL I      PIC  '99'  INIT (0);
+
+        ALMDESCR   =(30)' ';       /*  пеяицяажг йахокийоу    */
+
+        DO I = 1 TO ORIO1 ;
+            IF WS_PIC9_KATH_B = SUBSTR( P1KATHOL(I),1,6)
+               THEN DO;
+               ALMDESCR  = SUBSTR(P1KATHOL(I),21,30);
+               ALMDESCR  = TRANSLATE(ALMDESCR,GRE,LAT);
+            END;
+        END;
+
+     END  A223_DESCR_KATHOLIKOY ;
+  /**************************************************************
+  *  A223_DESCR_KATHOLIKOY    END                               *
+  **************************************************************/
+
+  /**************************************************************
+  *  A224_CIDB_NUMBER         START                             *
+  *                                                             *
+  **************************************************************/
+     A224_CIDB_NUMBER       : PROC;
+
+       WPELATH = 0;                                                        05280
+
+       WS_CUSTOMER_FOUND   = 0;
+
+       T04CNV97.COD_PELATH = 0;
+
+       /* CREATE ACCOUNT NUMBER FOR T04CNV97 */
+
+       WCIDB    =  WS_PIC9_ARLOG!!(8)' '!!'01';
+
+       EXEC SQL
+            SELECT  COD_PELATH                                             05270
+            INTO :T04CNV97.COD_PELATH
+            FROM   T04CNV97                                                05290
+            WHERE  T04CNV97.COD_EFARM      = '70'   AND                    05300
+                   T04CNV97.NUM_AR_LOGAR   = :WCIDB                        05310
+            WITH UR;                                                       05320
+                                                                           05330
+       IF SQLCODE ^= 0   THEN  DO;
+                                                                           05330
+          WS_CUSTOMER_FOUND   = 1;
+                                                                           05330
+          IF IS_TEST ^= 'YES' THEN DO;
+            CNT_REC_REJECT_T04CNV97 = CNT_REC_REJECT_T04CNV97 +1;
+            ERLIN2 = 'пяобкгла **** еуяесг пекатг стом т04CNV97 : '     !!
+                   !!' Aяихл.коцая. '
+                   !! WCIDB
+                   !!'  SQLCODE  : '!!SQLCODE;
+          /*  WRITE FILE(PRT) FROM(ERLINE); */
+          END;
+
+       END;
+
+       WPEL       =  T04CNV97.COD_PELATH ;                              05270000
+
+       ALMCIDBNUM = WPEL ;                                              05270000
+
+     END  A224_CIDB_NUMBER      ;
+  /**************************************************************
+  *  A224_CIDB_NUMBER         END                               *
+  **************************************************************/
+
+  /**************************************************************
+  *  A225_CUSTOMER_NAME       START                             *
+  *                                                             *
+  **************************************************************/
+     A225_CUSTOMER_NAME     : PROC;
+
+          EXEC SQL
+            SELECT
+                NOM_DENOM_SOCIAL
+
+            INTO :T04DBA01.NOM_DENOM_SOCIAL
+                FROM  T04DBA01
+                WHERE  COD_PERSONA      = :T04CNV97.COD_PELATH
+                       AND COD_EMPRESA  = '0012'
+                       AND FEC_BAJA       IS  NULL
+            WITH UR;                                                       05320
+
+       IF SQLCODE ^= 0   THEN DO;
+          CNT_REC_REJECT_T04DOM01 =   CNT_REC_REJECT_T04DOM01   + 1 ;
+          ERLIN2 = 'пяобк. стгм еуяесг ONOM.пек. стом т04DOM1 : '       !!
+      !!'COD_PERS:'!!T04CNV97.COD_PELATH !!' SQLCODE  : '!!SQLCODE;
+
+          IF IS_TEST ^= 'YES' THEN DO;
+                  WRITE FILE(PRT) FROM(ERLINE);
+          END;
+       ALMCUSNAME = '';
+       END;
+       ELSE  DO;
+           CNT_REC_PROCCED_RIGHT  = CNT_REC_PROCCED_RIGHT + 1;
+           ALMCUSNAME = SUBSTR(NOM_DENOM_SOCIAL   ,1,35);
+       END;
+
+
+     END  A225_CUSTOMER_NAME    ;
+
+  /**************************************************************
+  *  A225_CUSTOMER_NAME       END                               *
+  **************************************************************/
+
+  /**************************************************************
+  *  A226_FILL_RATE         START                               *
+  *  Eды йакоумтаи ои яоутимес DKR002 ,DKR001                   *
+  *  поу епистяежоум то пистытийо,то вяеыстийо епитойио 1,      *
+  *  то вяеыстийо епитойио 2, йаи то йулаимолемо епитойио       *
+  **************************************************************/
+     A226_FILL_RATE         : PROC;
+
+        ALMRATE    = 0;   /* KANONIKO EPITOKIO */
+        ALMK_EPIT  = 0.0; /*INITIALIZE йулаимолемо епитойио*/
+        ALM_X1     = 0.0; /*INITIALIZE вяеыстийо 1 епитойио*/
+        ALM_X2     = 0.0; /*INITIALIZE вяеыстийо 2 епитойио*/
+
+      IF ((KSRDYPOL + KSREKKRE) ^= 0 ) THEN DO ;
+
+        /*START веияислос тым йахокийым 5060 йаи 5121 START*/
+         IF (MY_KATHOL1 = 506001 !
+             MY_KATHOL1 = 506002 !
+             MY_KATHOL1 = 506003 !
+             MY_KATHOL1 = 506004 !
+             MY_KATHOL1 = 506005 !
+             MY_KATHOL1 = 506006 !
+             MY_KATHOL1 = 506099 !
+             MY_KATHOL1 = 512101 !
+             MY_KATHOL1 = 512102 !
+             MY_KATHOL1 = 512103 !
+             MY_KATHOL1 = 512104 !
+             MY_KATHOL1 = 512199 ) THEN DO;
+
+             IF (KSRKATEP = '1')   THEN DO; /*еам еимаи емтойос*/
+                /*KANONIKO EPITOKIO*/
+                CALL GET_RATES;
+                IF (KSRDYPOL + KSREKKRE) > 0 THEN DO;
+                      /*епистяожг йулаимолемоу епитойиоу*/
+                        WS_ARLOG =  KSRARLOG ;/*FROM 9 TO 8*/
+                        ALMK_EPIT=  DKR001(WS_DATE_WRK,WS_ARLOG);
+                END;
+             END;
+             ELSE DO;/*ATOKOS 5060,5121*/
+                IF (KSRDYPOL + KSREKKRE) < 0 THEN DO;
+                     CALL GET_RATES;
+                END;
+                ELSE DO;
+                     ALMRATE = 0.0;
+                END;
+             END;    /*END OF  IF (KSRKATEP = '1')      */
+         END;       /*END OF   IF (KSRKATHO = 506001 !    */
+                  /*END   веияислос тым йахокийым 5060 йаи 5121 END  */
+         ELSE DO;/*Eды веияифоластE та упокоипа йахокийа*/
+                CALL GET_RATES;
+         END;/*TEкос веияислоу тым упокоипым йахокийым  */
+     END;/*END OF IF ((KSRDYPOL + KSREKKRE) ^= 0 ) */
+
+     END  A226_FILL_RATE ;
+
+  /**************************************************************
+  *  A226_FILL_RATE         END                                 *
+  **************************************************************/
+  /**************************************************************
+  *  GET_RATES              START                               *
+  **************************************************************
+  *H PROCEDURE аутг йакеи тг яоутима DKR002
+   йаи целифеи та педиа
+   ALMRATE=пистытийо епитойио ALM_X1,ALM_X2 Xяеыстийа 1,2
+  ***************************************************************/
+   GET_RATES  : PROC;
+
+     /*йыдийос кахоус 1=кахос 0=сысто*/
+     DCL ERR_COD FIXED(1) INIT(0);
+
+     /* 31-03-2004 FETCH   DKR002;*/
+     ERR_COD = DKR002(MY_KATHOL1 ,  /*йахокийо 6 ьгжиа*//*INPUT*/
+                      MYDATE,   /*глеяолгмиа аYYMMDD опоу а=1*//*INP*/
+                      (KSRDYPOL + KSREKKRE), /*посом*/ /*INPUT*/
+                      KSROVERD, /*ояио оVERDRAFT коцаяиаслоу*//*INP*/
+                      EPITOKIO, /*пистытийо епитойио*//*OUTPUT*/
+                      ALM_X1,   /*вяеыстийо епитойио 1 *//*OUTPUT*/
+                      ALM_X2);  /*вяеыстийо епитойио 2*//*OUTPUT*/
+
+     ALMRATE=  EPITOKIO   ;
+
+   END GET_RATES;
+  /**************************************************************
+  *  GET_RATES              END                                 *
+  **************************************************************/
+  /**************************************************************
+  *  A227_TRAPEZIKH_MONADA   START                              *
+  *  апо то VSAM ---> DK.TRAP.EPIX                              *
+  *  еам  KSRFN = 'N'  еимаи  молийо пяосыпо                    *
+  *  еам упаявеи сто VSAM       ALMTRAP = 1                     *
+  *  еам DEN упаявеи сто VSAM   ALMTRAP = 2                     *
+  *                                                             *
+  *  еам  KSRFN дем еимаи = 'N' Eимаи  жусийо пяосыпо           *
+  *        TOTE   ALMTRAP = 5                                   *
+  *                                                             *
+  **************************************************************/
+     A227_TRAPEZIKH_MONADA  : PROC;
+
+       IF KSRFN = 'N' THEN
+       DO ; /*EAN EINAI ETAIREIA*/
+
+          /* целифы то йкеиди TOу VSAM */
+           DSA_ARLOG =  KSRARLOG;
+
+           T_KER04 = '1111'B;  /*BALE F NA TOY BRISKETE*/
+           DSA_PARALHPTHS = 1 ;
+
+           READ FILE (ETAIRIE) INTO (DSA_REC) KEY (T_KEY) ;
+           IF FLAG = 0 THEN /* лецакг етаияиа  , упаявеи сто VSAM */
+           DO;
+                ALMTRAP = '1' ; /*MEцакым епивеиягсеым*/
+                CNT_REC_BIG_COMPANY  = CNT_REC_BIG_COMPANY  + 1;
+           END;
+           ELSE
+           DO;
+                ALMTRAP = '2' ; /*епивеиягсеым*/
+                CNT_REC_SMALL_COMPANY = CNT_REC_SMALL_COMPANY + 1;
+           END;
+
+           FLAG = 0 ; /* RESET FLAG */
+       END;
+       ELSE
+       DO;
+                ALMTRAP = '5'; /*Iдиытым*/
+                CNT_REC_FISICAL  = CNT_REC_FISICAL  + 1;
+       END;
+
+     END  A227_TRAPEZIKH_MONADA ;
+
+  /**************************************************************
+  *       A227_TRAPEZIKH_MONADA      END                        *
+  **************************************************************/
+
+  /**************************************************************
+  *  WRITE_ALM              :                                   *
+  *                                                             *
+  **************************************************************/
+     WRITE_ALM              : PROC;
+
+
+       WRITE FILE(MISFILE ) FROM(MISREC);
+
+       CNT_REC_WRITTEN = CNT_REC_WRITTEN + 1;
+
+     /*DONT CLEAR RECORD HERE I NEED IT AFTER 19-04-2005*/
+
+     END  WRITE_ALM             ;
+
+  /**************************************************************
+  *  WRITE_ALM                   END                            *
+  **************************************************************/
+  /**************************************************************
+  *  PRINT_FOR_TEST                                             *
+  **************************************************************/
+     PRINT_FOR_TEST        : PROC;
+
+         ERLINE =
+            'коцая.  ' !!  ALMNUMBER    !!
+            ' BALANCE ' !!  ALMBALANCE   !!
+            ' молисла ' !!  ALMCURCODE   !!
+            ' RATE    ' !!  ALMRATE      !!
+            ' тек.еяц.глеяа ' !!  ALMDATE       ;
+        WRITE FILE(PRT) FROM(ERLINE);
+
+         ERLINE =
+            'йулаимо ' !!  ALMK_EPIT    !!
+            ' SPRCODE ' !!  ALMSPRCODE   !!
+            ' KATH    ' !!  ALMKATH      !!
+            ' DESCR   ' !!  ALMDESCR      ;
+        WRITE FILE(PRT) FROM(ERLINE);
+
+         ERLINE =
+            'ONOMA ' !!  ALMCUSNAME   !!
+            ' CIDB ' !!  ALMCIDBNUM   !!
+            ' SAVGBAL ' !!  ALMSAVGBAL   !!
+            ' BANK ' !!  ALMBANK      !!
+            ' BRANCH  ' !!  ALMBRANCH    !!
+            ' COST    ' !!  ALMCOST      !!
+            ' KAPEL   ' !!  ALMKAPEL     !!
+            ' TRAP    ' !!  ALMTRAP     ;
+
+        WRITE FILE(PRT) FROM(ERLINE);
+
+         ERLINE =
+            'ALMAVBAL ' !!ALMAVBAL    !!
+            ' ALMC_OR_D  ' !!ALMC_OR_D   !!
+            ' ALMENTOKOS ' !!ALMENTOKOS  ;
+        WRITE FILE(PRT) FROM(ERLINE);
+
+         ERLINE =
+            'MIS RESPONC ' !! MIS_RESPONSIBILITY_CENTRE ;
+        WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' пекатеиайг олада ' !!
+     MIS_CUSTOMER_SUB_SEGMENT ;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' DATE ACC.OPEND ' !!
+     MIS_ACCOUNT_ORIGINATION_DATE;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' Kатастасг коцаяиасло╬  ' !!
+     MIS_ACCOUNT_STAGE ;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' йыд коц й╦м циа коц уп╪к ' !!
+     MIS_BOOK_BAL_CENTRE ;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' йыд коц циа коцист уп╪к ' !!
+     MIS_BOOK_BAL_APPLICATION_CODE ;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' лс лгм коц уп╪к ' !!
+     MIS_AVG_BOOK_BAL_EUR_TOTAL;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' вя-пист л╦соу лгм коц.упок ' !!
+     CRDT_DEBT_CODE_1;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' лс бак уп╪к сыя  ' !!
+     MIS_AVG_VALUE_BAL_EUR_TOTAL;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' вя. пист л╦с сус бакя.упок  ' !!
+     CRDT_DEBT_CODE_2 ;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' пя╪сгло  ' !!
+     MIS_INTER_R_P_TOTAL_SIGN;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' пист.т╪йои л╧ма '!!
+     MIS_CRDT_INTER_R_P;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' пя╪сгло    ' !!
+     MIS_DEBT_INTER_SIGN_CODE ;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' XRE .т╪йои л╧ма ' !!
+     MIS_DEBT_INTER_R_P;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' 10ь╧жиос пист т╪йым ' !!
+     MIS_INTER_P_R_CRDT_ACT;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' йыд коц й╦мтяоу ' !!
+     MIS_INTER_P_R_CRDT_CENTRE;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' йыд коц ежа ' !!
+     MIS_INTER_P_R_CRDT_APPLIC_CODE ;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' йыд цем йах вя т╪й ' !!
+     MIS_INTER_P_R_DEBT_ACT ;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' йыд коц й╦м ' !!
+     MIS_INTER_P_R_DEBT_CENTRE;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' йыд коц ежая ' !!
+     MIS_INTER_P_R_DEBT_APPLIC_CODE ;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' йыд цем йах вя пяобк ' !!
+     MIS_ACCR_INTER_R_P_DEBT_ACT;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' йыд коц й╦мт ' !!
+     MIS_ACCR_INTER_R_P_DEBT_CENTRE;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' йыд коц еж ' !!
+     MIS_INTER_ACCR_DEBT_APPL_CODE;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' йыд цем йах пист пяобк ' !!
+     MIS_ACCR_INTER_R_P_CRDT_ACT ;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' йыд коц йEм  ' !!
+     MIS_ACCR_INTER_R_P_CRDT_CENTRE;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' йыд коц  еж ' !!
+     MIS_INTR_ACCR_CRDT_APPL_CODE;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' йатгц пек ' !!
+     MIS_CUSTOMER_CATEGORY ;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' уп╪й пек╒тг  ' !!
+     MIS_CUSTOMER_SUB_CATEGORY;WRITE FILE(PRT) FROM(ERLINE);
+         ERLINE =
+   ' CIDB пяогц л╧ма  ' !!
+     MIS_PREV_MONTH_CIDB ;WRITE FILE(PRT) FROM(ERLINE);
+
+     END  PRINT_FOR_TEST ;
+  /***********************************************/
+  /**   PRINT FOR TEST   *************************/
+  /***********************************************/
+
+  /**************************************************************
+  *  A225_LOAD_MIS_DATA      START                              *
+  **************************************************************/
+     A225_LOAD_MIS_DATA    : PROC;
+
+   /* йемтяо еухумгс                                */
+     MIS_RESPONSIBILITY_CENTRE = FROM_RISBP2AF.WS_RESPCENT ;
+   /* пекатеиайг ол╒да                              */
+     MIS_CUSTOMER_SUB_SEGMENT  = FROM_RISBP2AF.WS_CUSTSEGM ;
+   /*йатгцояиа пекатг                               */
+     MIS_CUSTOMER_CATEGORY     = FROM_RISBP2AF.WS_CUSTCATEG ;
+   /* уп╪йатгцоя╨а пекатг                           */
+     MIS_CUSTOMER_SUB_CATEGORY = FROM_RISBP2AF.WS_CUSTSUBC ;
+   /* CIDB пяогцоулемоу лгма                        */
+     MIS_PREV_MONTH_CIDB       = WS_CIDB          ;
+   /*  йыдий╪с  = 70                                */
+     MIS_SOURCE_APPLICATION_CODE  = '70' ;
+   /*╦мдеинг ейт╬пысгс EXTRAIT 0:дем апост╦ккетаи 1: апост╦ккетаи*/
+     MIS_EXTRAIT_FLAG  = '0';
+   /* глеяолгм╨а амо╨цлатос коцаяиасло╬             */
+     DCL   MY_KSRHMAN  PIC '9999999';
+     DCL 1  MY_KSRHMAN_CHAR  BASED(ADDR(MY_KSRHMAN)),
+            2  KSR_EON CHAR(1),
+            2  KSR_YY  CHAR(2),
+            2  KSR_MM  CHAR(2),
+            2  KSR_DD  CHAR(2);
+
+     DCL KSR_20_OR_19 CHAR(2);
+     MY_KSRHMAN = KSRHMAN;
+     IF KSR_EON = '0' THEN KSR_20_OR_19 = '19';
+     ELSE                  KSR_20_OR_19 = '20';
+
+
+     MIS_ACCOUNT_ORIGINATION_DATE  = KSR_DD!!KSR_MM!!KSR_20_OR_19
+                                     !!KSR_YY;
+   /*йат╒стасг коцаяиасло╬ 1:Eмеяц╪с 2:адяам╧с 3:йкеист╪с*/
+     IF KSRAKYR = '1' THEN DO; /*йкеистос коцаяиаслос*/
+               MIS_ACCOUNT_STAGE = '3';
+               COUNT_CLOSED = COUNT_CLOSED + 1;
+
+     END;
+     ELSE DO;
+               IF (FIND_LAST_TRANS_PERIOD() = 1 ) THEN DO;
+                     MIS_ACCOUNT_STAGE = '2'  ; /*адяамгс*/
+               COUNT_ADRANIS= COUNT_ADRANIS + 1;
+               END;
+               ELSE DO;
+                     MIS_ACCOUNT_STAGE = '1'  ;/*Eмеяц╪с*/
+               COUNT_NORMAL = COUNT_NORMAL  + 1;
+               END;
+       /*                                                       */
+     END;
+
+   /* пист.т╪йои л╧ма - (йатакоцисхемтес + дедоукеулемои тяевоусгS
+      пеяиодоу - дедоукеулемои  пяогцоулемгс пеяиодоу)*/
+      /*пяосовг стгм пея╨птысг поу упаявоум омкиме тойои
+        дем пяепеи ма паиямоуле то посо пяоупокоцисх╦мтым тойым лгмос
+        мпй 18-05-2006 */
+     IF(TOT_PIST_ONLINE = 0) THEN DO;
+     MIS_CRDT_INTER_R_P  = TOT_PIST_CKATALOG +
+                           TOT_PIST_CMINTRST -
+                           TOT_PIST_CMINTRST_PREV;
+     PIST_TOK            = TOT_PIST_CKATALOG +
+                           TOT_PIST_CMINTRST -
+                           TOT_PIST_CMINTRST_PREV;
+   END;
+   ELSE DO;
+     MIS_CRDT_INTER_R_P  = TOT_PIST_CKATALOG +    TOT_PIST_ONLINE -
+                           TOT_PIST_CMINTRST_PREV;
+     PIST_TOK            = TOT_PIST_CKATALOG + TOT_PIST_ONLINE -
+                           TOT_PIST_CMINTRST_PREV;
+
+   END;
+   /* пя╪сгло пистытийым тойым                      */
+   IF (PIST_TOK           >=0 ) THEN DO;
+        MIS_INTER_R_P_TOTAL_SIGN = '2';
+   END;
+   ELSE DO;
+        MIS_INTER_R_P_TOTAL_SIGN = '1';
+   END;
+
+
+   /* XRE .т╪йои л╧ма - (йатакоцисхемтес + дедоукеулемои тяевоусгS
+      пеяиодоу - дедоукеулемои  пяогцоулемгс пеяиодоу)*/
+      /*пяосовг стгм пея╨птысг поу упаявоум омкиме тойои
+        дем пяепеи ма паиямоуле то посо пяоупокоцисх╦мтым тойым лгмос
+        мпй 18-05-2006 */
+     IF (TOT_XRE_ONLINE = 0 ) THEN DO;
+     MIS_DEBT_INTER_R_P  = TOT_XRE_DKATALOG +
+                           TOT_XRE_DMINTRST -
+                           TOT_XRE_DMINTRST_PREV;
+     XRE_TOK             = TOT_XRE_DKATALOG +
+                           TOT_XRE_DMINTRST -
+                           TOT_XRE_DMINTRST_PREV;
+     END;
+     ELSE DO;
+     MIS_DEBT_INTER_R_P  = TOT_XRE_DKATALOG + TOT_XRE_ONLINE -
+                           TOT_XRE_DMINTRST_PREV;
+     XRE_TOK             = TOT_XRE_DKATALOG + TOT_XRE_ONLINE -
+                           TOT_XRE_DMINTRST_PREV;
+     END;
+
+   /* пя╪сгло  XREOSTIKON TOKON                     */
+   IF (XRE_TOK >= 0) THEN DO;
+       MIS_DEBT_INTER_SIGN_CODE = '2';
+   END;
+   ELSE DO;
+       MIS_DEBT_INTER_SIGN_CODE = '1';
+   END;
+
+   /* йыдий╪с коцистийо╬ й╦мтяоу циа коцистий╪ уп╪коипо (пед╨о 2)*/
+      IF T20KATMA_CHAR = '431' THEN
+            MIS_BOOK_BAL_CENTRE  = '0998';
+      ELSE
+            MIS_BOOK_BAL_CENTRE  = '0'!!T20KATMA_CHAR;
+   /*йыдий╪с "коцистий╧с" ежаялоц╧с циа коцистий╪ уп╪коипо (пед╨о 2)*/
+     MIS_BOOK_BAL_APPLICATION_CODE ='KA';
+
+    PIST_10 ='';
+    XRE_10  ='';
+    CALL SCAN_P1(WS_KATH_NEW1);/*EYяесг 10-ьгжиым йыдийым тойым*/
+
+
+   /* 10ь╧жиос йыдий╪с цемийо╬ йахокийо╬ пистытий©м  т╪йым*/
+     MIS_INTER_P_R_CRDT_ACT = PIST_10;
+   /* йыдий╪с коцистийо╬ й╦мтяоу                    */
+      IF T20KATMA_CHAR = '431' THEN
+                MIS_INTER_P_R_CRDT_CENTRE ='0998';
+      ELSE
+                MIS_INTER_P_R_CRDT_CENTRE ='0'!!T20KATMA_CHAR;
+   /*йыдий╪с "коцистий╧с" ежаялоц╧с                 */
+     MIS_INTER_P_R_CRDT_APPLIC_CODE = 'TO';
+   /* 10ь╧жиос йыдий╪с цемийо╬ йахокийо╬ вяеыстий©м  т╪йым*/
+     MIS_INTER_P_R_DEBT_ACT =  XRE_10;
+   /*йыдий╪с коцистийо╬ й╦мтяоу                     */
+      IF T20KATMA_CHAR = '431' THEN
+                MIS_INTER_P_R_DEBT_CENTRE ='0998';
+      ELSE
+                MIS_INTER_P_R_DEBT_CENTRE  = '0'!!T20KATMA_CHAR;
+   /* йыдий╪с "коцистий╧с" ежаялоц╧с                */
+     MIS_INTER_P_R_DEBT_APPLIC_CODE = 'TO';
+    PIST_10 ='';
+    XRE_10  ='';
+    CALL SCAN_P2(WS_KATH_NEW1);/*EYяесг 10-ьгж йыд пяобкеь.тойым*/
+   /*10ь╧жиос йыдий╪с цемийо╬ йахокийо╬ вяеыстий©м пяобк╦ьеым*/
+     MIS_ACCR_INTER_R_P_DEBT_ACT= XRE_10;
+   /* йыдий╪с коцистийо╬ й╦мтяоу                    */
+      IF T20KATMA_CHAR = '431' THEN
+            MIS_ACCR_INTER_R_P_DEBT_CENTRE ='0998';
+      ELSE
+            MIS_ACCR_INTER_R_P_DEBT_CENTRE = '0'!!T20KATMA_CHAR;
+   /* йыдий╪с "коцистий╧с" ежаялоц╧с                */
+     MIS_INTER_ACCR_DEBT_APPL_CODE = 'pT';
+   /*10ь╧жиос йыдий╪с цемийо╬ йахокийо╬ пистытий©м пяобк╦ьеым*/
+     MIS_ACCR_INTER_R_P_CRDT_ACT = PIST_10;
+   /*йыдий╪с коцистийо╬ й╦мтяоу                     */
+      IF T20KATMA_CHAR = '431' THEN
+           MIS_ACCR_INTER_R_P_CRDT_CENTRE  ='0998';
+      ELSE
+           MIS_ACCR_INTER_R_P_CRDT_CENTRE  = '0'!!T20KATMA_CHAR;
+   /*йыдий╪с "коцистий╧с" ежаялоц╧с                 */
+    MIS_INTR_ACCR_CRDT_APPL_CODE ='pT';
+
+     END  A225_LOAD_MIS_DATA;
+  /**************************************************************
+  *  A225_LOAD_MIS_DATA          END                            *
+  **************************************************************/
+  /**************************************************************
+  *  A227_WRITE_MIS          START                              *
+  **************************************************************/
+     A227_WRITE_MIS        : PROC;
+
+     DCL CREDIT_REC FIXED(1);
+     DCL DEBIT_REC  FIXED(1);
+     DCL WS_TEMP_CREDIT_INTEREST PIC '(12)9V.99';
+     DCL WS_TEMP_DEBIT_INTEREST  PIC '(12)9V.99';
+
+     WS_TEMP_CREDIT_INTEREST = 0            ;
+     WS_TEMP_DEBIT_INTEREST  = 0            ;
+
+     CREDIT_REC = 0;
+     DEBIT_REC  = 0;
+
+     /*EAN йапоио апо та пистытийа поса еимаи диажояетийо апо лгдем
+       тоте ха цяаьы сто аявеио ема пистытийо RECORD*/
+
+     IF ( TOT_PIST_LOGIST   =  0 ) &
+        ( TOT_PIST_VCSAVGBL =  0 ) &
+        ( TOT_PIST_VCAVGBL  =  0 ) THEN DO;
+        CREDIT_REC  = 0;
+     END;
+     ELSE DO;
+        CREDIT_REC  = 1;
+     END;
+
+     /*EAN йапоио апо та вяеыстийа поса еимаи диажояетийо апо лгдем
+       тоте ха цяаьы сто аявеио ема вяеыстийо RECORD*/
+     IF ( TOT_XRE_LOGIST   =  0 ) &
+        ( TOT_XRE_VDSAVGBL =  0 ) &
+        ( TOT_XRE_VDAVGBL  =  0 ) THEN DO;
+        DEBIT_REC  = 0;
+     END;
+     ELSE DO;
+        DEBIT_REC  = 1;
+     END;
+
+     /*AN TA памта еимаи лгдем цяажы ломо ема CREDIT RECORD*/
+     IF ( TOT_PIST_LOGIST   =  0 ) &
+        ( TOT_PIST_VCSAVGBL =  0 ) &
+        ( TOT_PIST_VCAVGBL  =  0 ) &
+        ( TOT_XRE_LOGIST    =  0 ) &
+        ( TOT_XRE_VDSAVGBL  =  0 ) &
+        ( TOT_XRE_VDAVGBL   =  0 ) THEN DO;
+        CREDIT_REC  = 1;
+        DEBIT_REC   = 0;
+     END;
+
+      /*************************************************************/
+      /*************************************************************/
+     /*еам пяепеи ма цяажтоум дуо RECORD пяепеи ма лгдемисхоум та
+       педиа циа ма лгм дипколетягхоум                           */
+
+     IF (CREDIT_REC = 1 ) & ( DEBIT_REC = 1) THEN DO;
+
+        /*сысе тоу тойоус се педиа циати ха та сбусеис пио йаты*/
+        WS_TEMP_CREDIT_INTEREST = MIS_CRDT_INTER_R_P;
+        WS_TEMP_DEBIT_INTEREST  = MIS_DEBT_INTER_R_P;
+        /*RECORD CREDIT*/
+        MIS_DEBT_INTER_R_P = 0; /*MH дипколетяас том тойо*/
+        MIS_AVG_BOOK_BAL_EUR_TOTAL  = TOT_PIST_LOGIST;
+        CRDT_DEBT_CODE_1 = 'C';
+        MIS_AVG_VALUE_BAL_EUR_TOTAL = TOT_PIST_VCSAVGBL;
+        IF TOT_PIST_VCSAVGBL >= 0 THEN
+               MIS_AVG_VALUE_BAL_SIGN = '2';
+        ELSE
+               MIS_AVG_VALUE_BAL_SIGN = '1';
+
+        CRDT_DEBT_CODE_2 = 'C';
+        ALMAVBAL                    = TOT_PIST_VCAVGBL;
+        IF TOT_PIST_VCAVGBL >= 0 THEN
+              ALMSAB        =    '2';
+        ELSE
+              ALMSAB        =    '1';
+        ALMC_OR_D        = 'C';
+
+        WRITE FILE(MISFILE ) FROM(MISREC);
+        CNT_REC_WRITTEN = CNT_REC_WRITTEN + 1;
+     /*еам пяепеи ма цяажтоум дуо RECORD пяепеи ма лгдемисхоум та
+       педиа  ALMBALANCE ,ALMBALUER                               */
+        ALMBALANCE= 0;
+        ALMBALUER = 0;
+        /*RECORD DEBIT*/
+        MIS_DEBT_INTER_R_P  = WS_TEMP_DEBIT_INTEREST;/*RESET INTEREST*/
+        MIS_CRDT_INTER_R_P  = 0;/*лгм дипколетяас том тойо*/
+        MIS_AVG_BOOK_BAL_EUR_TOTAL  = TOT_XRE_LOGIST;
+        CRDT_DEBT_CODE_1 = 'D';
+        MIS_AVG_VALUE_BAL_EUR_TOTAL = TOT_XRE_VDSAVGBL;
+        IF TOT_XRE_VDSAVGBL  >= 0 THEN
+               MIS_AVG_VALUE_BAL_SIGN = '2';
+        ELSE
+               MIS_AVG_VALUE_BAL_SIGN = '1';
+        CRDT_DEBT_CODE_2 = 'D';
+        ALMAVBAL                    = TOT_XRE_VDAVGBL;
+        IF TOT_XRE_VDAVGBL >= 0 THEN
+              ALMSAB        =    '2';
+        ELSE
+              ALMSAB        =    '1';
+        ALMC_OR_D        = 'D';
+
+        WRITE FILE(MISFILE ) FROM(MISREC);
+        CNT_REC_WRITTEN = CNT_REC_WRITTEN + 1;
+
+     END;
+     ELSE DO;
+          IF (CREDIT_REC = 1 )  THEN DO;/*ломо пистытийо RECORD*/
+              /*RECORD CREDIT*/
+              MIS_AVG_BOOK_BAL_EUR_TOTAL  = TOT_PIST_LOGIST;
+              CRDT_DEBT_CODE_1 = 'C';
+              MIS_AVG_VALUE_BAL_EUR_TOTAL = TOT_PIST_VCSAVGBL;
+              IF TOT_PIST_VCSAVGBL >= 0 THEN
+                     MIS_AVG_VALUE_BAL_SIGN = '2';
+              ELSE
+               MIS_AVG_VALUE_BAL_SIGN = '1';
+              CRDT_DEBT_CODE_2 = 'C';
+              ALMAVBAL                    = TOT_PIST_VCAVGBL;
+             IF TOT_PIST_VCAVGBL >= 0 THEN
+                ALMSAB        =    '2';
+             ELSE
+                 ALMSAB        =    '1';
+              ALMC_OR_D        = 'C';
+
+              WRITE FILE(MISFILE ) FROM(MISREC);
+              CNT_REC_WRITTEN = CNT_REC_WRITTEN + 1;
+
+          END;
+          ELSE DO;/* DEBIT_REC = 1 MONO XREOSTIKO RECORD*/
+              /*RECORD DEBIT*/
+              MIS_AVG_BOOK_BAL_EUR_TOTAL  = TOT_XRE_LOGIST;
+              CRDT_DEBT_CODE_1 = 'D';
+              MIS_AVG_VALUE_BAL_EUR_TOTAL = TOT_XRE_VDSAVGBL;
+              IF TOT_XRE_VDSAVGBL  >= 0 THEN
+                     MIS_AVG_VALUE_BAL_SIGN = '2';
+              ELSE
+                     MIS_AVG_VALUE_BAL_SIGN = '1';
+              CRDT_DEBT_CODE_2 = 'D';
+              ALMAVBAL                    = TOT_XRE_VDAVGBL;
+              IF TOT_XRE_VDAVGBL >= 0 THEN
+                ALMSAB        =    '2';
+              ELSE
+                 ALMSAB        =    '1';
+              ALMC_OR_D        = 'D';
+
+              WRITE FILE(MISFILE ) FROM(MISREC);
+              CNT_REC_WRITTEN = CNT_REC_WRITTEN + 1;
+          END;
+     END;
+
+     CALL A228_FILL_TOTALS  ;
+
+     END  A227_WRITE_MIS    ;
+  /**************************************************************
+  *  A227_WRITE_MIS              END                            *
+  **************************************************************/
+  /**************************************************************
+  *  A228_FILL_TOTALS         START                             *
+  *                                                             *
+  **************************************************************/
+     A228_FILL_TOTALS            : PROC;
+
+         DO INDEX=1        TO LIMIT;
+
+            IF P_KATHOL4(INDEX) =  ALMSPRCODE  THEN DO;
+                P_PIST_LOGIST  (INDEX)=P_PIST_LOGIST  (INDEX) +
+                                       TOT_PIST_LOGIST;
+                P_PIST_VCSAVGBL(INDEX)=P_PIST_VCSAVGBL(INDEX) +
+                                       TOT_PIST_VCSAVGBL ;
+                P_PIST_VCAVGBL (INDEX)=P_PIST_VCAVGBL (INDEX) +
+                                       TOT_PIST_VCAVGBL ;
+                P_PIST_TOK    (INDEX) =P_PIST_TOK     (INDEX) +
+                                       PIST_TOK;
+                P_XRE_LOGIST  (INDEX) =P_XRE_LOGIST   (INDEX) +
+                                       TOT_XRE_LOGIST ;
+                P_XRE_VDSAVGBL(INDEX) =P_XRE_VDSAVGBL (INDEX) +
+                                       TOT_XRE_VDSAVGBL;
+                P_XRE_VDAVGBL (INDEX) =P_XRE_VDAVGBL  (INDEX) +
+                                       TOT_XRE_VDAVGBL ;
+                P_XRE_TOK    (INDEX)  =P_XRE_TOK      (INDEX) +
+                                       XRE_TOK;
+               GO TO EXIT;
+            END;
+
+         END;/* DO END FIRST TIME*/
+
+         /*SECOND TIME */
+         DO INDEX=1        TO LIMIT;
+
+            IF P_KATHOL4(INDEX) = '    '         THEN DO;
+                 P_KATHOL4(INDEX) = ALMSPRCODE ;
+                 P_PIST_LOGIST  (INDEX)= TOT_PIST_LOGIST;
+                 P_PIST_VCSAVGBL(INDEX)= TOT_PIST_VCSAVGBL ;
+                 P_PIST_VCAVGBL (INDEX)= TOT_PIST_VCAVGBL ;
+                 P_PIST_TOK    (INDEX) = PIST_TOK;
+                 P_XRE_LOGIST  (INDEX) = TOT_XRE_LOGIST;
+                 P_XRE_VDSAVGBL(INDEX) = TOT_XRE_VDSAVGBL;
+                 P_XRE_VDAVGBL (INDEX) = TOT_XRE_VDAVGBL ;
+                 P_XRE_TOK    (INDEX)  = XRE_TOK;
+
+                 GO TO EXIT;
+            END;
+
+         END;/* DO END  SECOND TIME*/
+
+        ERLIN1 = '0';
+        ERLIN2='** пяобкгла пяобкгла пяобкгла *******     ';
+        WRITE FILE(PRT   ) FROM (ERLINE);
+        ERLIN2=' о деийтгс непеяасе то ояио : '!!LIMIT       ;
+        WRITE FILE(PRT   ) FROM (ERLINE);
+        ERLIN2=' о деийтгс Eциме           : '!!INDEX       ;
+        WRITE FILE(PRT   ) FROM (ERLINE);
+        ERLIN2=' йакесте том пяоцяалатистг              ';
+        WRITE FILE(PRT   ) FROM (ERLINE);
+        ERLIN2=' TELOS пяоцяалатос DK554       ';
+        WRITE FILE(PRT   ) FROM (ERLINE);
+        ERLIN2 =  ' хA KANEI CANCEL CANCEL CANCEL     ' ;
+        WRITE FILE(PRT   ) FROM (ERLINE);
+
+     EXIT:;/*NORMAL END*/
+        TOT_PIST_LOGIST  = 0;
+        TOT_PIST_VCSAVGBL= 0;
+        TOT_PIST_VCAVGBL = 0;
+        PIST_TOK         = 0;
+        TOT_XRE_LOGIST   = 0;
+        TOT_XRE_VDSAVGBL = 0;
+        TOT_XRE_VDAVGBL  = 0;
+        XRE_TOK          = 0;
+
+     END A228_FILL_TOTALS          ;
+  /**************************************************************
+  *  A228_FILL_TOTALS         END                               *
+  *                                                             *
+  **************************************************************/
+  /**************************************************************
+  *  A300_FINAL              START                              *
+  **************************************************************/
+   A300_FINAL            : PROC;
+      /*EKTYпысг сулжымиас циа вягсг сто MIS*/
+      CALL A305_UNLOAD_TOTALS ;
+
+      ERLIN1    = '1';  /*SKIP LINE*/
+
+      ERLIN2 = '   ейтупысг сумокым тоу пяоцяаллатос *DK554*   ';
+      WRITE FILE(PRT) FROM(ERLINE);
+
+      ERLIN1    = ' ';
+      ERLIN2 = ' глеяолгмиа KAI ыяа яогс :  ' !!DATETIME ;
+      WRITE FILE(PRT) FROM(ERLINE);
+
+      ERLIN2 = 'сумоко еццяажым поу упаявоум стг басг  : '!!
+      CNT_REC_READ                  ;
+      WRITE FILE(PRT) FROM(ERLINE);
+      ERLIN2 = 'сумокийо посом йатахесеым стг басг    : '!!
+                PIC_IMS_POSO;
+      WRITE FILE(PRT) FROM(ERLINE);
+
+      ERLIN2 = 'сумоко еццяажым Aккым тяапефым г йупяоу       :'!!
+      CNT_REC_REJECT_CYPR           ;
+      WRITE FILE(PRT) FROM(ERLINE);
+
+      ERLIN2 = 'сумоко еццяажым поу епенеяцасхгйам            :'!!
+      CNT_REC_PROCCED               ;
+      WRITE FILE(PRT) FROM(ERLINE);
+
+
+      ERLIN2 = 'сумоко еццяажым поу EINAI сыстес йах ока      :'!!
+      CNT_REC_PROCCED_RIGHT         ;
+      WRITE FILE(PRT) FROM(ERLINE);
+
+      ERLIN2 = 'сумоко еццяажым поу цяажтгйам сто аявеио MIS   :'!!
+      CNT_REC_WRITTEN               ;
+      WRITE FILE(PRT) FROM(ERLINE);
+
+      ERLIN2 = 'сумоко коцая.  поу амгйоум се жусийа пяосыпа : '!!
+      CNT_REC_FISICAL            ;
+      WRITE FILE(PRT) FROM(ERLINE);
+
+      ERLIN2 = 'сумоко коцая. поу амгйоум се MEцакес етаияеиес: '!!
+      CNT_REC_BIG_COMPANY        ;
+      WRITE FILE(PRT) FROM(ERLINE);
+
+      ERLIN2 = 'сумоко коцая. поу амгйоум се MH MEцакес етаияеиес:'!!
+      CNT_REC_SMALL_COMPANY      ;
+      WRITE FILE(PRT) FROM(ERLINE);
+
+      ERLIN2 = 'сумоко йкеисхемтым коцаяиаслым :'!!
+      CHAR(COUNT_CLOSED)         ;
+      WRITE FILE(PRT) FROM(ERLINE);
+
+      ERLIN2 = 'сумоко адяамым     коцаяиаслым :'!!
+      CHAR(COUNT_ADRANIS)        ;
+      WRITE FILE(PRT) FROM(ERLINE);
+
+      ERLIN2 = 'сумоко KAмомийым   коцаяиаслым :'!!
+      CHAR(COUNT_NORMAL )        ;
+      WRITE FILE(PRT) FROM(ERLINE);
+
+      KARATELOS:;
+        CLOSE FILE(INFILE1);
+        CLOSE FILE(MISFILE);
+        CLOSE FILE(ETAIRIE) ;
+        CLOSE FILE(READER ) ;
+     TELOS2:
+
+     END  A300_FINAL   ;
+  /**************************************************************
+  *  A305_UNLOAD_TOTALS       START                             *
+  *                                                             *
+  **************************************************************/
+     A305_UNLOAD_TOTALS     : PROC;
+
+      DCL    LIM   FIXED(3) INIT(20);
+      DCL    IND   FIXED(3) INIT(0);
+
+      ERLIN1 = '1'       ;
+
+      ERLIN2 = 'сЩМОКА йАТАХщСЕЫМ цИА MIS АМэ йАХОКИЙЭ  * DK554 * ';
+      WRITE FILE(MISPRT) FROM(ERLINE);
+      ERLIN1 = '0'       ;
+      ERLIN2 =' гЛЕЯОЛГМъА яОчР : '!!TODAYX;
+      WRITE FILE(MISPRT) FROM(ERLINE);
+      ERLIN2 ='гЛЕЯОЛГМъА AМАЖОЯэР  :еТОР  '!!char(ws_key_year)!!
+             ' лчМАР ' !!char(ws_key_month) ;
+      WRITE FILE(MISPRT) FROM(ERLINE);
+      ERLIN2 = 'сЩМОКО еЦЦЯАЖЧМ пОУ цЯэЖТГЙАМ сТО аЯВЕъО MIS   :'!!
+      CNT_REC_WRITTEN               ;
+      WRITE FILE(MISPRT) FROM(ERLINE);
+      ERLIN1 = ' '       ;
+      DO IND=1 TO LIM ;
+         IF P_KATHOL4(IND)> '    ' THEN DO;
+           ERLIN2 = 'сЩМОКА     йАХОКИЙОЩ: ' !!P_KATHOL4(IND);
+           WRITE FILE(MISPRT) FROM(ERLINE);
+
+           ERLIN2 = 'лщСА лГМИАъА кОЦИСТИЙэ уПЭКОИПА пИСТЫТИЙэ: ' !!
+                     CHAR(P_PIST_LOGIST(IND)) !! ' вЯЕЫСТИЙэ: ' !!
+                     CHAR(P_XRE_LOGIST  (IND));
+           WRITE FILE(MISPRT) FROM(ERLINE);
+
+           ERLIN2 = 'лщСА бАКЕЯИАЙэ уПЭК. сЫЯЯЕУТИЙэ пИСТЫТИЙэ: ' !!
+                     CHAR(P_PIST_VCSAVGBL(IND))!!' вЯЕЫСТИЙэ: ' !!
+                     CHAR(P_XRE_VDSAVGBL(IND));
+           WRITE FILE(MISPRT) FROM(ERLINE);
+
+           ERLIN2 = 'лщСА бАКЕЯИАЙэ уПЭК. лГМИАъА    пИСТЫТИЙэ: ' !!
+                     CHAR(P_PIST_VCAVGBL (IND))!!' вЯЕЫСТИЙэ: ' !!
+                     CHAR(P_XRE_VDAVGBL (IND));
+           WRITE FILE(MISPRT) FROM(ERLINE);
+
+           ERLIN2 = 'тЭЙОИ пИСТЫТИЙОъ : ' !!CHAR(P_PIST_TOK(IND))!!
+                    'тЭЙОИ вЯЕЫСТИЙОъ : ' !!CHAR(P_XRE_TOK    (IND));
+           WRITE FILE(MISPRT) FROM(ERLINE);
+
+
+        END;
+      END;
+
+     END A305_UNLOAD_TOTALS     ;
+  /**************************************************************
+  *  A305_UNLOAD_TOTALS         END                             *
+  *                                                             *
+  **************************************************************/
+ /**************************************************************
+ *  SCAN_P1                         START                      *
+ **************************************************************/
+ SCAN_P1      :PROC (KATH) ;
+    DCL KATH     CHAR  (6)  ;
+    DCL INDX     FIXED (3)  ;
+    DCL FOUND    FIXED (1)  ;
+        FOUND = 0           ;
+    PIST_10 ='';
+    XRE_10  ='';
+
+    DO INDX = 1 TO ORIO ;
+       IF KATH = P1_KATHOLIKO (INDX) THEN DO;
+            PIST_10 = P1_PISTOTIKO (INDX);
+            XRE_10  = P1_XREOSTIKO (INDX);
+            FOUND = 1;
+            GO TO LEAVE;
+        END      ;
+     END      ;
+     LEAVE:;
+     IF FOUND = 0 THEN DO;
+            PIST_10 = '999999999'         ;
+            XRE_10  = '999999999'         ;
+     END      ;
+   END SCAN_P1      ;
+  /**************************************************************
+  *  SCAN_P1                         END                        *
+  **************************************************************/
+ /**************************************************************
+ *  SCAN_P2                         START                      *
+ **************************************************************/
+ SCAN_P2      :PROC (KATH) ;
+    DCL KATH     CHAR  (6)  ;
+    DCL INDX     FIXED (3)  ;
+    DCL FOUND    FIXED (1)  ;
+        FOUND = 0           ;
+    PIST_10 ='';
+    XRE_10  ='';
+
+    DO INDX = 1 TO ORIO ;
+       IF KATH = P2_KATHOLIKO (INDX) THEN DO;
+            PIST_10 = P2_PISTOTIKO (INDX);
+            XRE_10  = P2_XREOSTIKO (INDX);
+            FOUND = 1;
+            GO TO LEAVE;
+        END      ;
+     END      ;
+     LEAVE:;
+     IF FOUND = 0 THEN DO;
+            PIST_10 = '999999999'         ;
+            XRE_10  = '999999999'         ;
+     END      ;
+   END SCAN_P2      ;
+  /**************************************************************
+  *  SCAN_P2                         END                        *
+  **************************************************************/
+
+  /**************************************************************
+  *  FIND_LAST_TRANS_PERIOD : PROC;                             *
+  *                                                             *
+  **************************************************************/
+  FIND_LAST_TRANS_PERIOD:  PROC RETURNS (FIXED(1,0));
+       DCL RC         FIXED(1,0);
+
+     /*сЩМОКО гЛЕЯЧМ аПО ТГМ ТЕКЕУТАъА  ЙъМГСГ ТОУ КОЦАЯИАСЛОЩР*/
+      DCL DAYS_FROM_LAST_TRANS      FIXED DEC(6,0) INIT(0);
+
+      DCL 1 WW_DATE_APO,
+           2   WS_DD_APO PIC '(2)9',
+           2   F1                  CHAR(1)              INIT('.'),
+           2   WS_MM_APO PIC '(2)9',
+           2   F2                  CHAR(1)              INIT('.'),
+           2   WS_YY_APO PIC '(4)9';
+      DCL WS_DATE_APO CHAR(10) BASED(ADDR(WW_DATE_APO));
+      DCL 1 WW_DATE_EOS,
+           2   WS_DD_EOS PIC '(2)9' ,
+           2   F1                  CHAR(1)              INIT('.'),
+           2   WS_MM_EOS PIC '(2)9',
+           2   F2                  CHAR(1)              INIT('.'),
+           2   WS_YY_EOS PIC '(4)9';
+      DCL WS_DATE_EOS CHAR(10) BASED(ADDR(WW_DATE_EOS));
+
+       DCL MY_DATE  PIC '9999999';
+           MY_DATE = KSRHMTS     ;
+
+       DCL 1  MY_KSRHMTS_PIC BASED(ADDR(MY_DATE)),
+            2  KSR_EON PIC'9',
+            2  KSR_YY  PIC'99',
+            2  KSR_MM  PIC'99',
+            2  KSR_DD  PIC'99';
+
+     DCL KSR_20_OR_19 PIC '99';
+
+           IF KSR_EON =  0  THEN KSR_20_OR_19 =  19 ;
+           ELSE                  KSR_20_OR_19 =  20 ;
+
+           /*глеяолгмиа текеутаиас сумаккацгс тоу коцаяиаслоу*/
+           WS_DD_APO = KSR_DD;
+           WS_MM_APO = KSR_MM;
+           WS_YY_APO = (KSR_20_OR_19 * 100) + KSR_YY;
+
+           /*текеутаиа еяцасилг глеяа стгм пеяиодо амажояас  */
+           WS_DD_EOS = PDD;
+           WS_MM_EOS = PMM;
+           WS_YY_EOS = 2000 + PYY;
+
+           EXEC SQL
+                SELECT DAYS(:WS_DATE_EOS) - DAYS(:WS_DATE_APO)
+                       INTO :DAYS_FROM_LAST_TRANS
+                FROM SYSIBM.SYSDUMMY1 ;
+    /*O кОЦАЯИАСЛЭР ЕВЕИ МА ЙИМГХЕъ ПэМЫ АПО щМА ВЯЭМО*/
+    IF DAYS_FROM_LAST_TRANS > 365 THEN
+       RC = 1;
+    ELSE
+       RC = 0;
+
+    RETURN (RC);
+
+    END FIND_LAST_TRANS_PERIOD  ;
+ END DK554;
+

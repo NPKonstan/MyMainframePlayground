@@ -1,0 +1,750 @@
+*PROCESS XOPTS(EXCI)                                                    00010000
+  NIS MACRO FLAG(W) SOURCE MARGINS(2,72,1) XREF LIST LANGLVL(SPROG)     00020000
+  SYSTEM(MVS);                                                          00030000
+ SERVIOB: PROC (PARAM) OPTIONS(MAIN);                                   00040000
+ /********************************************************************/ 00050000
+ /*                                                                  */ 00060000
+ /* PROGRAM_NAME : SERVIOB                                           */ 00070000
+ /*                                                                  */ 00080000
+ /* INPUT :                                                          */ 00090000
+ /*                                                                  */ 00100000
+ /*                                                                  */ 00110000
+ /* OUTPUT :                                                         */ 00120000
+ /*                                                                  */ 00130000
+ /*                                                                  */ 00140000
+ /********************************************************************/ 00150000
+                                                                        00160000
+ /*==================================================================*/ 00170000
+ /*  Include return code values                                      */ 00180000
+ /*==================================================================*/ 00190000
+ %INCLUDE DFHXCRCL;                                                     00200000
+                                                                        00210000
+ /*==================================================================*/ 00220000
+ /*  Include Parameter list structure and values                     */ 00230000
+ /*==================================================================*/ 00240000
+ %INCLUDE DFHXCPLL;                                                     00250000
+                                                                        00260000
+ DCL RETAREA CHAR(20);                                                  00270000
+                                                                        00280000
+ DCL DPL_RETAREA CHAR(12);                                              00290000
+                                                                        00300000
+ DCL LINK_RETAREA CHAR(20);                                             00310000
+                                                                        00320000
+ /*==================================================================*/ 00330000
+ /*  Initialise target information variables.                        */ 00340000
+ /*==================================================================*/ 00350000
+                                                                        00360000
+ DCL TARGET_TRANSID         CHAR(4)       INIT('FILM');                 00370000
+ DCL TARGET_SYSTEM          CHAR(8)       INIT('CICSTEST');             00380000
+ DCL TARGET_PROGRAM         CHAR(8)       INIT('SERVIOC ');             00390000
+ /*                                                                     00400000
+ DCL TARGET_USERID          CHAR(8)       INIT('CICSADM ');             00410000
+ DCL USERID_PTR             PTR  BASED(ADDR(TARGET_USERID));            00420000
+ */                                                                     00430000
+                                                                        00440000
+ /*==================================================================*/ 00450000
+ /*  Define Commarea struct.                                         */ 00460000
+ /*==================================================================*/ 00470000
+                                                                        00480000
+  dcl  1 COMMAREA,                                                      00490000
+         2 ca_input,                                                    00500000
+           3 ca_serv_command   CHAR(4) INIT(''),                        00510000
+           3 ca_serv_group     CHAR(4) INIT(''),                        00520000
+           3 ca_counter        PIC '99' INIT(''),                       00530000
+           3 ca_names(70)      CHAR(8) INIT(''),                        00540000
+         2 ca_output,                                                   00550000
+           3 ca_error_msg    CHAR(80),                                  00560000
+           3 ca_normal_count PIC '999',                                 00570000
+           3 ca_error_count  PIC '999',                                 00580000
+           3 ca_error_def    PIC '999',                                 00590000
+           3 ca_error_det(200),                                         00600000
+             5 ca_error_servname char(8),                               00610000
+             5 ca_error_resp2    PIC '99999',                           00620000
+             5 ca_error_descr    CHAR(20);                              00630000
+                                                                        00640000
+ /*==================================================================*/ 00650000
+ /*  Initialise Commarea length and Data length(in bytes).           */ 00660000
+ /*==================================================================*/ 00670000
+                                                                        00680000
+ DCL EXEC_COM_LEN            FIXED BIN(31) INIT(3959);                  00690000
+ DCL EXEC_DAT_LEN            FIXED BIN(31) INIT(570);                   00700000
+                                                                        00710000
+ /*==================================================================*/ 00720000
+ /*  Declare program specific variables and flags.                   */ 00730000
+ /*==================================================================*/ 00740000
+ DCL (ONCODE,DATE,TIME) BUILTIN;                                        00750000
+                                                                        00760000
+ DCL ABORT                  CHAR(3)       INIT('NO ');                  00770000
+ DCL LINKMSG                CHAR(120)     INIT(' ');                    00780000
+ DCL TARGET_PROGRAM_RETCODE FIXED BIN(31) INIT(0);                      00790000
+ DCL 1 EXEC_MSG_AREA BASED(EXEC_MSG_PTR),                               00800000
+      3 EXEC_MSG_TEXT       CHAR(120);                                  00810000
+ DCL 1 EXCI_MSG_AREA  BASED(EXCI_MSG_PTR),                              00820000
+      3 EXCI_MSG_LEN        FIXED BIN(15),                              00830000
+      3 FILLER              FIXED BIN(15),                              00840000
+      3 EXCI_MSG_TEXT       CHAR(116);                                  00850000
+ DCL BATCH_RETURN_CODE      FIXED BIN(31) INIT(0);                      00860000
+ DCL PARAM CHAR(19)         VARYING;                                    00870000
+ DCL PARAM_LENGTH           FIXED BINARY(15);                           00880000
+ DCL FLAG_INSTALLED         PIC '99999'  INIT(0);                       00890000
+                                                                        00900000
+ /*==================================================================*/ 00910000
+ /*  Program messages for output.                                    */ 00920000
+ /*==================================================================*/ 00930000
+                                                                        00940000
+ DCL    MSG00    CHAR(80) INIT(' ');                                    00950000
+ DCL    MSG01    CHAR(80) INIT('*===================== SERV I/O    Batch00960000
+  Client Program =======================*');                            00970000
+ DCL    MSG02    CHAR(80) INIT('*                                       00980000
+                                        *');                            00990000
+ DCL    MSG03    CHAR(80) INIT('*  EXEC Level Processor.                01000000
+                                        *');                            01010000
+ DCL    MSG04    CHAR(80) INIT('*    Setting up the EXEC level call.    01020000
+                                        *');                            01030000
+ DCL    MSG05    CHAR(80) INIT('*    The Link Request has successfully c01040000
+ ompleted.                              *');                            01050000
+ DCL    MSG06    CHAR(80) INIT('*    Server Response:                   01060000
+                                        *');                            01070000
+ DCL    MSG10    CHAR(80) INIT('*      A serious error was detected.    01080000
+                                        *');                            01090000
+ DCL    MSG11    CHAR(80) INIT('*    The Link Request has failed.  Retur01100000
+ n codes are:                           *');                            01110000
+ DCL    MSG13    CHAR(80) INIT('*    A message was received from the tar01120000
+ get CICS system:                       *');                            01130000
+ DCL    MSG14    CHAR(80) INIT('*    >>>> Aborting further processing <<01140000
+ <<                                     *');                            01150000
+ DCL    MSG15    CHAR(80) INIT('*  CALL Level Processor.                01160000
+                                        *');                            01170000
+ DCL    MSG31    CHAR(80) INIT('*=================== End of SERV I/O    01180000
+ Batch Client Program ==================*');                            01190000
+ DCL    MSG32    CHAR(80) BASED(MSG_PTR);    /* Parameter message    */ 01200000
+ DCL    MSGX1    CHAR(80) INIT('*  ADSMS201 File Updated from Developmen01210000
+ t                                      *');                            01220000
+ DCL    MSGX2    CHAR(80) INIT('* дем упаявеи то SERVICE сто DEVELOPMENT01230000
+                                        *');                            01240000
+ DCL    MSGX3    CHAR(80) INIT('SERVICE DEFINED TO TARGET FCP ADSMS201  01250000
+                                         ');                            01260000
+ DCL    MSGXX    CHAR(80) INIT('ENTRY POINT ADSMS201                    01270000
+                                         ');                            01280000
+ DCL    1 MSG_AREA,                                                     01290000
+          2 MSG_FILL1    CHAR(21) INIT('*  Parameters:  CICS='),        01300000
+          2 MSG_APPLID   CHAR(8),                                       01310000
+          2 MSG_FILL3    CHAR(09) INIT(' COMMAND='),                    01320000
+          2 MSG_CMD      CHAR(4),                                       01330000
+          2 MSG_FILL4    CHAR(07) INIT(' GROUP='),                      01340000
+          2 MSG_GROUP    CHAR(4),                                       01350000
+          2 MSG_FILL5    CHAR(3)  INIT('  *'),                          01360000
+          2 MSG_FILL6    CHAR(64) INIT('');                             01370000
+ DCL MSG_PTR  POINTER;                                                  01380000
+                                                                        01390000
+ DCL    MSG33    CHAR(80) INIT('*===================         Input Name 01400000
+ List                 ==================*');                            01410000
+ DCL    MSG34    CHAR(80) INIT('*===================             END Of 01420000
+ List                 ==================*');                            01430000
+                                                                        01440000
+ DCL    MSGMAIL  CHAR(80) INIT('*    Mail Sent to Cics Group Team:      01450000
+                                        *');                            01460000
+                                                                        01470000
+ DCL    SPACES   CHAR(6)  INIT('      ');                               01480000
+                                                                        01490000
+ DCL    MSG50    CHAR(80) BASED(MSG50_PTR);                             01500000
+ DCL 1  MSG50D,                                                         01510000
+        3 MSG50FILL1 CHAR(07) INIT('NORMAL '),                          01520000
+        3 MSG50FILL2 CHAR(10) INIT('FILE I/O: '),                       01530000
+        3 MSG50COUNT PIC '999',                                         01540000
+        3 MSG50FILL3 CHAR(60) INIT('');                                 01550000
+ DCL    MSG51    CHAR(80) BASED(MSG51_PTR);                             01560000
+ DCL 1  MSG51D,                                                         01570000
+        3 MSG51FILL1 CHAR(07) INIT('ERROR  '),                          01580000
+        3 MSG51FILL2 CHAR(10) INIT('FILE I/O: '),                       01590000
+        3 MSG51COUNT PIC '999',                                         01600000
+        3 MSG51FILL3 CHAR(60) INIT('');                                 01610000
+ DCL    MSG52    CHAR(80) BASED(MSG52_PTR);                             01620000
+ DCL 1  MSG52D,                                                         01630000
+        3 MSG52FILL1 CHAR(10) INIT('аявеио:   '),                       01640000
+        3 MSG52NAME  CHAR(08),                                          01650000
+        3 MSG52FILL2 CHAR(08) INIT(' RESP2: '),                         01660000
+        3 MSG52RESP2 PIC '99999',                                       01670000
+        3 MSG52DESCR CHAR(20),                                          01680000
+        3 MSG52FILL3 CHAR(31) INIT('');                                 01690000
+ DCL MSG50_PTR  POINTER;                                                01700000
+ DCL MSG51_PTR  POINTER;                                                01710000
+ DCL MSG52_PTR  POINTER;                                                01720000
+                                                                        01730000
+ /* EDIT VARIABLES */                                                   01740000
+ DCL CAPS  CHAR(36) init('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789');       01750000
+ DCL small CHAR(36) init('abcdefghijklmnopqrstuvwxyz0123456789');       01760000
+ DCL NUMBERS CHAR(10) init('0123456789');                               01770000
+ DCL VALID_CICS CHAR(200) INIT('FNDDEV  CICSDEV FNDTST  FNDAORMA        01780000
+ CICSTEST FNDAORRA FNDAORRB FNDAORLA FNDAORLB FNDAORPA DBDCCICS CICSVISA01790000
+ TESTMSA CICS2000 CICSMSA CICSMSB FNDTORD FNDTORR FNDTORP');            01800000
+ DCL VALID_CMD   CHAR(40) INIT('OPEN CLOSE NEW DIST ENAT DISP ENAP');   01810000
+ DCL VALID_GROUP CHAR(20) INIT('ALL LIST FILT');                        01820000
+                                                                        01830000
+ /*==================================================================*/ 01840000
+ /*                                                                  */ 01850000
+ /*          >>>>>>>>>>> MAINLINE CODE <<<<<<<<<<<<<<<               */ 01860000
+ /*                                                                  */ 01870000
+ /*==================================================================*/ 01880000
+                                 /*==================================*/ 01890000
+ Put Edit(MSG00)(SKIP,A);        /*  Msg= blank                      */ 01900000
+ Put Edit(MSG01)(SKIP,A);        /*  Msg="*===EXCI Sample ===*"      */ 01910000
+ Put Edit(MSG02)(SKIP,A);        /*  Msg="*                  *"      */ 01920000
+                                 /*==================================*/ 01930000
+ DO;                                                                    01940000
+   CALL GET_PARAMS;                                                     01950000
+                                                                        01960000
+   IF ( (ca_serv_group = 'ALL') & (ca_serv_command = 'NEW') ) THEN      01970000
+      ABORT = 'YES';                                                    01980000
+   IF ( (ca_serv_group = 'LIST') ! (ca_serv_group = 'FILT') ) THEN      01990000
+      CALL GET_NAMES;                                                   02000000
+                                                                        02010000
+   If ABORT='YES' THEN                                                  02020000
+      BATCH_RETURN_CODE = 16;                                           02030000
+   ELSE                                                                 02040000
+      CALL SECTION_I;                                                   02050000
+ END;                                                                   02060000
+                                                                        02070000
+                                                                        02080000
+ If (ABORT ^= 'YES') Then DO;                                           02090000
+                                                                        02100000
+   MSG50_PTR = ADDR(MSG50D);                                            02110000
+   MSG51_PTR = ADDR(MSG51D);                                            02120000
+   MSG52_PTR = ADDR(MSG52D);                                            02130000
+                                                                        02140000
+   SELECT(ca_serv_command);                                             02150000
+     WHEN('OPEN','CLOS') MSG50FILL2,MSG51FILL2='FILE I/O: ';            02160000
+     WHEN('NEW ') MSG50FILL2,MSG51FILL2,MSG52FILL1= 'PROGRAM : ';       02170000
+     WHEN('DIST','ENAT','DISP','ENAP')                                  02180000
+          MSG50FILL2,MSG51FILL2,MSG52FILL1 = 'TRANS   : ';              02190000
+     OTHERWISE;                                                         02200000
+   END;                                                                 02210000
+   MSG50COUNT = ca_normal_count;  /*==================================*/02220000
+                                                                        02230000
+   Put Edit(MSG50)(SKIP,A);       /*   NORMAL SERV I/O:               */02240000
+                                  /*   ERROR  SERV I/O:               */02250000
+   MSG51COUNT = ca_error_count;   /*                                  */02260000
+   Put Edit(MSG51)(SKIP,A);       /*==================================*/02270000
+                                                                        02280000
+   DCL I PIC '999';                                                     02290000
+   IF (ca_serv_command = 'NEW')  THEN DO;                               02300000
+     IF ca_error_def = 0 then                                           02310000
+       CALL UPD_ADSMS_FILE(ca_names(1));                                02320000
+     DO I = 1 TO ca_error_def  ;                                        02330000
+       MSG52NAME  = ca_error_servname(I);                               02340000
+       MSG52RESP2 = ca_error_resp2(I);                                  02350000
+       MSG52DESCR = ca_error_descr(I);                                  02360000
+       IF MSG52RESP2 = 0 & MSG52DESCR = ' Program Installed'            02370000
+         THEN FLAG_INSTALLED = 1;                                       02380000
+       IF MSG52RESP2 = 999                                              02390000
+         THEN FLAG_INSTALLED = 2;                                       02400000
+       IF MSG52RESP2 = 7                                                02410000
+         THEN FLAG_INSTALLED = 3;                                       02420000
+       IF FLAG_INSTALLED < 3                                            02430000
+          THEN                                                          02440000
+               CALL UPD_ADSMS_FILE(ca_error_servname(i));               02450000
+       Put Edit(MSG52)(SKIP,A);                                         02460000
+     END;                                                               02470000
+     /*                                                                 02480000
+     IF FLAG_INSTALLED = 1 THEN  */                                     02490000
+     CALL SEND_MAIL;                                                    02500000
+                                                                        02510000
+   END;                                                                 02520000
+   ELSE /* Other Commands */                                            02530000
+   DO I = 1 TO ca_error_count;                                          02540000
+     MSG52NAME  = ca_error_servname(I);                                 02550000
+     MSG52RESP2 = ca_error_resp2(I);                                    02560000
+     Put Edit(MSG52)(SKIP,A);     /*=  аявеио: xxxxxx   RESP2: 12345 =*/02570000
+   END;                                                                 02580000
+                                                                        02590000
+   Put Edit(MSG02)(SKIP,A);                                             02600000
+   Put Edit(MSG31)(SKIP,A);      /*  Msg="*==End of Sample===*"      */ 02610000
+                                                                        02620000
+   IF ca_normal_count = 0 THEN                                          02630000
+      BATCH_RETURN_CODE = 8;                                            02640000
+   ELSE                                                                 02650000
+      IF ca_error_count > 0 THEN BATCH_RETURN_CODE = 4;                 02660000
+                                                                        02670000
+ END;                                                                   02680000
+                                                                        02690000
+ /*==================================================================*/ 02700000
+ /*                                                                  */ 02710000
+ /*      >>>>>>>>>>>> END OF MAINLINE CODE <<<<<<<<<<<<<             */ 02720000
+ /*                                                                  */ 02730000
+ /*==================================================================*/ 02740000
+ CALL PLIRETC(BATCH_RETURN_CODE); /* Set external return code        */ 02750000
+ RETURN;                                                                02760000
+                                                                        02770000
+                                                                        02780000
+                                                                        02790000
+                                                                        02800000
+ SECTION_I: PROC;                                                       02810000
+                                /*===================================*/ 02820000
+ Put Edit(MSG03)(SKIP,A);       /* Msg="*  Exec processor *"         */ 02830000
+ Put Edit(MSG04)(SKIP,A);       /* Msg="*  Setting up call*"         */ 02840000
+                                /*                                   */ 02850000
+   EXCI_EXEC_RETURN_CODE_PTR = ADDR(LINK_RETAREA);                      02860000
+                                /*===================================*/ 02870000
+ /*==================================================================*/ 02880000
+ /*                                                                  */ 02890000
+ /*  Perform the EXCI Link request.                                  */ 02900000
+ /*                                                                  */ 02910000
+ /*==================================================================*/ 02920000
+                                                                        02930000
+ SELECT(ca_serv_command);                                               02940000
+   WHEN('DIST','ENAT','DISP','ENAP')                                    02950000
+        TARGET_PROGRAM = 'TRANIOC ';                                    02960000
+   OTHERWISE;                                                           02970000
+ END;                                                                   02980000
+                                                                        02990000
+ EXEC CICS LINK PROGRAM(TARGET_PROGRAM)                                 03000000
+                TRANSID(TARGET_TRANSID)                                 03010000
+                APPLID(TARGET_SYSTEM)                                   03020000
+                COMMAREA(COMMAREA)                                      03030000
+                LENGTH(EXEC_COM_LEN)                                    03040000
+                DATALENGTH(EXEC_DAT_LEN)                                03050000
+                RETCODE(LINK_RETAREA)                                   03060000
+                SYNCONRETURN;                                           03070000
+ /*==================================================================*/ 03080000
+ /*                                                                  */ 03090000
+ /*  Check on how successful the call was.                           */ 03100000
+ /*                                                                  */ 03110000
+ /*==================================================================*/ 03120000
+                                                                        03130000
+ If EXEC_RESP = 0 Then                                                  03140000
+     Do;                                   /*========================*/ 03150000
+     Put Edit(MSG05)(SKIP,A);              /* Msg="* Link Worked *"  */ 03160000
+     Put Edit(MSG06)(SKIP,A);              /* Msg="* Server resp *"  */ 03170000
+     End;                                  /*                        */ 03180000
+ Else                                      /*                        */ 03190000
+     Do;                                   /*                        */ 03200000
+     Put Edit(MSG11)(SKIP,A);              /* Msg="Link failed"      */ 03210000
+     Call GET_RET;                         /* Output Return codes    */ 03220000
+     Put Edit(MSG14)(SKIP,A);              /* Msg="Aborting..."      */ 03230000
+     ABORT = 'YES';                        /*                        */ 03240000
+     End;                                  /*                        */ 03250000
+                                           /*========================*/ 03260000
+ RETURN;                                                                03270000
+ /*==================================================================*/ 03280000
+ /*                                                                  */ 03290000
+ /*        >>>>>>>>> End of SECTION_I processing. <<<<<<<<<<         */ 03300000
+ /*                                                                  */ 03310000
+ /*==================================================================*/ 03320000
+ END SECTION_I;                                                         03330000
+                                                                        03340000
+                                                                        03350000
+                                                                        03360000
+ GET_PARAMS: PROC;                                                      03370000
+ /*==================================================================*/ 03380000
+ /*                                                                  */ 03390000
+ /*  Params: 1. CICS Name,                  char(8)                  */ 03400000
+ /*          2. Command(OPEN/CLOSE/NEW ...) char(4)                  */ 03410000
+ /*          3. Group(ALL,LIST,FILT),       char(4)                  */ 03420000
+ /*                                                                  */ 03430000
+ /*==================================================================*/ 03440000
+                                                                        03450000
+ DCL PARAM_COUNT,J,FIXED BIN(15) INIT(0);                               03460000
+ DCL TOTAL_PARAMS PIC '9' INIT(3);                                      03470000
+ DCL SEARCH_STRING CHAR(19) VAR;                                        03480000
+ DCL SEARCH_STRING_LENGTH PIC '99';                                     03490000
+                                                                        03500000
+ PARAM_LENGTH = MIN(19,LENGTH(PARAM));                                  03510000
+                                                                        03520000
+ SEARCH_STRING = PARAM;                                                 03530000
+ SEARCH_STRING_LENGTH = PARAM_LENGTH;                                   03540000
+                                                                        03550000
+ DO PARAM_COUNT = 1 TO TOTAL_PARAMS;                                    03560000
+    SELECT (PARAM_COUNT);                                               03570000
+      WHEN(1) DO;                                       /* CICS NAME */ 03580000
+        J = INDEX(SEARCH_STRING,',');                                   03590000
+        IF ( (J <= 9) & (J ^= 0) ) THEN DO;                             03600000
+           TARGET_SYSTEM = CAPITALISE(SUBSTR(SEARCH_STRING,1,(J-1)));   03610000
+           IF ( INDEX(VALID_CICS,TARGET_SYSTEM) > 0 ) THEN              03620000
+               MSG_APPLID = TARGET_SYSTEM;                              03630000
+           ELSE CALL PARAM_ERROR(PARAM_COUNT);                          03640000
+        END;                                                            03650000
+        ELSE CALL PARAM_ERROR(PARAM_COUNT);                             03660000
+      END;                                                              03670000
+                                                      /* USER NAME */   03680000
+  /*  WHEN(2) DO;                                                       03690000
+        J = INDEX(SEARCH_STRING,',');                                   03700000
+        IF ( (J <= 9) & (J ^= 0) ) THEN DO;                             03710000
+           TARGET_USERID = CAPITALISE(SUBSTR(SEARCH_STRING,1,(J-1)));   03720000
+           MSG_USERID = TARGET_USERID;                                  03730000
+        END;                                                            03740000
+        ELSE CALL PARAM_ERROR(PARAM_COUNT);                             03750000
+      END;                                                              03760000
+   */                                                                   03770000
+      WHEN(2) DO;                                       /* COMMAND   */ 03780000
+        J = INDEX(SEARCH_STRING,',');                                   03790000
+   /*   IF (J = 5) THEN DO;   */                                        03800000
+           ca_serv_command = CAPITALISE(SUBSTR(SEARCH_STRING,1,(J-1))); 03810000
+           IF ( INDEX(VALID_CMD,ca_serv_command) > 0 ) THEN             03820000
+              MSG_CMD = ca_serv_command;                                03830000
+           ELSE CALL PARAM_ERROR(PARAM_COUNT);                          03840000
+   /*   END;                                                            03850000
+        ELSE CALL PARAM_ERROR(PARAM_COUNT); */                          03860000
+      END;                                                              03870000
+      WHEN(3) DO;                                       /* GROUP     */ 03880000
+        J = LENGTH(SEARCH_STRING);                                      03890000
+        IF (J >= 3) THEN DO;                                            03900000
+           ca_serv_group   = TRIM(CAPITALISE(SEARCH_STRING));           03910000
+           IF ( INDEX(VALID_GROUP,ca_serv_group) ^= 0 ) THEN            03920000
+              MSG_GROUP = ca_serv_group;                                03930000
+           ELSE CALL PARAM_ERROR(PARAM_COUNT);                          03940000
+        END;                                                            03950000
+        ELSE CALL PARAM_ERROR(PARAM_COUNT);                             03960000
+      END;                                                              03970000
+      OTHERWISE DO;                                                     03980000
+      END;                                                              03990000
+    END; /* SELECT */                                                   04000000
+                                                                        04010000
+    IF ABORT = 'YES' THEN LEAVE;                                        04020000
+    ELSE DO;                                                            04030000
+      SEARCH_STRING_LENGTH = SEARCH_STRING_LENGTH - J;                  04040000
+      SEARCH_STRING = SUBSTR(SEARCH_STRING,(J+1),SEARCH_STRING_LENGTH); 04050000
+    END;                                                                04060000
+ END;                                                                   04070000
+                                                                        04080000
+ MSG_PTR = ADDR(MSG_AREA);                                              04090000
+ Put Edit(MSG32)(SKIP,A);                                               04100000
+ Put Edit(MSG02)(SKIP,A);                                               04110000
+                                                                        04120000
+ END GET_PARAMS;                                                        04130000
+                                                                        04140000
+                                                                        04150000
+ PARAM_ERROR: PROC(PARAM_NUMBER);                                       04160000
+ /*==================================================================*/ 04170000
+ /*                                                                  */ 04180000
+ /*                                                                  */ 04190000
+ /*==================================================================*/ 04200000
+                                                                        04210000
+ DCL PARAM_NUMBER PIC '9';                                              04220000
+ DCL 1 PARAM_ERROR_MSG,                                                 04230000
+       3 ERRORFIL CHAR(22) INIT('кахос стгм паяалетяо: '),              04240000
+       3 ERRORPAR CHAR(7);                                              04250000
+                                                                        04260000
+ SELECT(PARAM_NUMBER);                                                  04270000
+   WHEN(1) ERRORPAR = 'CICS   ';                                        04280000
+ /*WHEN(2) ERRORPAR = 'USERID '; */                                     04290000
+   WHEN(2) ERRORPAR = 'COMMAND';                                        04300000
+   WHEN(3) ERRORPAR = 'GROUP  ';                                        04310000
+ /*WHEN(5) ERRORPAR = 'COUNTER'; */                                     04320000
+   OTHERWISE;                                                           04330000
+ END;                                                                   04340000
+ Put Edit(PARAM_ERROR_MSG)(SKIP,A);                                     04350000
+ Put Edit(MSG14)(SKIP,A);              /* Msg="Aborting..."      */     04360000
+ ABORT = 'YES';                                                         04370000
+ RETURN;                                                                04380000
+                                                                        04390000
+ END PARAM_ERROR;                                                       04400000
+                                                                        04410000
+                                                                        04420000
+ GET_NAMES: PROC;                                                       04430000
+ /*==================================================================*/ 04440000
+ /*                                                                  */ 04450000
+ /*  Get File/Pattern Names                                          */ 04460000
+ /*                                                                  */ 04470000
+ /*==================================================================*/ 04480000
+                                                                        04490000
+   DCL NAMEIN    FILE RECORD INPUT   ENV( F RECSIZE(80) BUFFERS(2));    04500000
+   DCL 1  NAMEIN_REC,                                                   04510000
+                 2  IN_NAME     CHAR(8),                                04520000
+                 2  FILLER      CHAR(72);                               04530000
+   DCL NAMEIN_EOF CHAR(1) INIT('F');                                    04540000
+   DCL NAMEIN_COUNT PIC '99' INIT(0);                                   04550000
+   DCL MAX_NAMES  PIC '99' INIT(70);                                    04560000
+   DCL IN_NAME_CAPS CHAR(8) INIT('');                                   04570000
+   DCL VALID_NAME_CHARS CHAR(38);                                       04580000
+   DCL 1 NAME_ERROR_MSG,                                                04590000
+         3 ERRFIL CHAR(34) INIT('лг аподейтои ваяайтгяес сто омола:'),  04600000
+         3 ERRNAM CHAR(8);                                              04610000
+                                                                        04620000
+   VALID_NAME_CHARS = CAPS !! '*';                                      04630000
+                                                                        04640000
+   ON ENDFILE(NAMEIN) NAMEIN_EOF = 'T';                                 04650000
+                                                                        04660000
+   Put Edit(MSG33)(SKIP,A);                                             04670000
+   OPEN FILE(NAMEIN) ;                                                  04680000
+   READ FILE(NAMEIN) INTO(NAMEIN_REC);                                  04690000
+   DO WHILE( (NAMEIN_EOF='F') & (NAMEIN_COUNT<=MAX_NAMES)               04700000
+                              & (ABORT ^= 'YES') );                     04710000
+     NAMEIN_COUNT = NAMEIN_COUNT + 1;                                   04720000
+     IN_NAME_CAPS = TRIM(CAPITALISE(IN_NAME));                          04730000
+     IF ( VERIFY(IN_NAME_CAPS,VALID_NAME_CHARS) = 0 ) THEN DO;          04740000
+        ca_names(NAMEIN_COUNT) = IN_NAME_CAPS;                          04750000
+        Put Edit(IN_NAME_CAPS) (SKIP,A);                                04760000
+        READ FILE(NAMEIN) INTO(NAMEIN_REC);                             04770000
+     END;                                                               04780000
+     ELSE DO;                                                           04790000
+        ERRNAM = IN_NAME_CAPS;                                          04800000
+        Put Edit(NAME_ERROR_MSG)(SKIP,A);                               04810000
+        ABORT = 'YES';                                                  04820000
+        LEAVE;                                                          04830000
+     END;                                                               04840000
+   END;                                                                 04850000
+   CLOSE FILE(NAMEIN);                                                  04860000
+   Put Edit(MSG34)(SKIP,A);                                             04870000
+   Put Edit(MSG02)(SKIP,A);                                             04880000
+   ca_counter = NAMEIN_COUNT;                                           04890000
+                                                                        04900000
+                                                                        04910000
+ END GET_NAMES;                                                         04920000
+                                                                        04930000
+ GET_RET: PROC;                                                         04940000
+ /*==================================================================*/ 04950000
+ /*                                                                  */ 04960000
+ /*  If the EXCI call fails, this section will create the printable  */ 04970000
+ /*  return codes, and messages.                                     */ 04980000
+ /*                                                                  */ 04990000
+ /*==================================================================*/ 05000000
+                                                                        05010000
+    Put Edit('*     Response, Reason, and Abend codes of:',             05020000
+    EXEC_RESP,EXEC_RESP2,SPACES,EXEC_ABCODE)(SKIP,A,F(8),F(8),A,A);     05030000
+    BATCH_RETURN_CODE = EXEC_RESP;                                      05040000
+    If EXEC_MSG_LEN ^= 0      Then     /*  Has a message come back?  */ 05050000
+       Do;                             /*                            */ 05060000
+       Put Edit(MSG13)(SKIP,A);        /* Msg="A message has been.." */ 05070000
+       Put Edit(MSG02)(SKIP,A);        /* Msg="*                  *" */ 05080000
+       LINKMSG = SUBSTR(EXEC_MSG_TEXT,1,EXEC_MSG_LEN);                  05090000
+       Put Edit(LINKMSG)(SKIP,A);      /*   ...and output it.        */ 05100000
+       Put Edit(MSG02)(SKIP,A);        /* Msg="*                  *" */ 05110000
+       End;                            /*============================*/ 05120000
+                                                                        05130000
+ RETURN;                                                                05140000
+ /*==================================================================*/ 05150000
+ /*                                                                  */ 05160000
+ /*      >>>>>>>>>> End of GET_RET processing. <<<<<<<<<<<           */ 05170000
+ /*                                                                  */ 05180000
+ /*==================================================================*/ 05190000
+ END GET_RET;                                                           05200000
+                                                                        05210000
+  /* =======  Func: CAPITALISE  ======= */                              05220000
+  /*   Returns Input String in CAPS     */                              05230000
+  /* ================================== */                              05240000
+  CAPITALISE: PROC(a) returns (var char(08));                           05250000
+                                                                        05260000
+     dcl a     var char(08);                                            05270000
+     return (TRANSLATE(a,CAPS,small));                                  05280000
+                                                                        05290000
+  END CAPITALISE;                                                       05300000
+                                                                        05310000
+  /* =======  Func: TRIM        ======= */                              05320000
+  /*   Returns Input String without     */                              05330000
+  /*       tailing SPACES               */                              05340000
+  /* ================================== */                              05350000
+  TRIM: PROC(a) returns (var char(08));                                 05360000
+                                                                        05370000
+     DCL a     var char(08);                                            05380000
+     DCL SPACE_COUNT FIXED BIN(15,0);                                   05390000
+                                                                        05400000
+     SPACE_COUNT = INDEX(a,' ');                                        05410000
+     IF SPACE_COUNT > 0 THEN                                            05420000
+        return (SUBSTR(a,1,(SPACE_COUNT - 1)));                         05430000
+     ELSE                                                               05440000
+        return (a);                                                     05450000
+                                                                        05460000
+  END TRIM;                                                             05470000
+                                                                        05480000
+ SEND_MAIL: PROC;                                                       05490000
+                                                                        05500000
+ DCL     1  MAILDATA,                                                   05510000
+            2   MAILID  CHAR(60),                                       05520000
+            2   SUBJECT CHAR(60),                                       05530000
+            2   MAILMG  CHAR(30000);                                    05540000
+                                                                        05550000
+ /*==================================================================*/ 05560000
+ /*  Initialise Commarea length and Data length(in bytes).           */ 05570000
+ /*==================================================================*/ 05580000
+                                                                        05590000
+ DCL EXEC_COM_MAIL_LEN            FIXED BIN(31) INIT(30120);            05600000
+ DCL EXEC_DAT_MAIL_LEN            FIXED BIN(31) INIT(30120);            05610000
+                                                                        05620000
+   EXCI_EXEC_RETURN_CODE_PTR = ADDR(LINK_RETAREA);                      05630000
+                                                                        05640000
+ /*==================================================================*/ 05650000
+ /*                                                                  */ 05660000
+ /*  Perform the EXCI Link request.                                  */ 05670000
+ /*                                                                  */ 05680000
+ /*==================================================================*/ 05690000
+                                                                        05700000
+         MAILID   = 'KONTOGOURIS.D@EMPORIKI.GR';                        05710000
+         SUBJECT  = 'PROMOTION FROM SCLM GROUP';                        05720000
+         MAILMG   = 'PROGRAMS NEW COPIED TO CICS ' !! TARGET_SYSTEM !!  05730000
+                    ' '!! CA_NAMES(1);                                  05740000
+         IF FLAG_INSTALLED = 1 THEN                                     05750000
+         MAILMG   = 'PROGRAMS NEW COPIED AND DEFINED TO CICS ' !!       05760000
+                                     TARGET_SYSTEM !!                   05770000
+                                     ' '!! CA_NAMES(1);                 05780000
+         IF FLAG_INSTALLED = 2 THEN                                     05790000
+         MAILMG   = 'PROGRAMS NOT DEFINED TO CICS ' !!                  05800000
+                                     TARGET_SYSTEM !!                   05810000
+                                     ' '!! CA_NAMES(1);                 05820000
+         IF FLAG_INSTALLED = 3 THEN                                     05830000
+         MAILMG   = 'PROGRAM DEFINITIONS NOT FOUND TO CICS ' !!         05840000
+                                     TARGET_SYSTEM !!                   05850000
+                                     ' '!! CA_NAMES(1);                 05860000
+                                                                        05870000
+ EXEC CICS LINK PROGRAM('SOCKMAIL')                                     05880000
+                TRANSID(TARGET_TRANSID)                                 05890000
+                APPLID('CICSTEST')                                      05900000
+                COMMAREA(MAILDATA)                                      05910000
+                LENGTH(EXEC_COM_MAIL_LEN)                               05920000
+                DATALENGTH(EXEC_DAT_MAIL_LEN)                           05930000
+                RETCODE(LINK_RETAREA)                                   05940000
+                SYNCONRETURN;                                           05950000
+                                                                        05960000
+         IF FLAG_INSTALLED > 0 & FLAG_INSTALLED < 3                     05970000
+                               THEN DO;                                 05980000
+         MAILID   = 'KONTIZAS.A@EMPORIKI.GR';                           05990000
+         SUBJECT  = 'PROMOTION FROM SCLM GROUP';                        06000000
+         MAILMG   = 'PROGRAMS DEFINED TO CICS ' !! TARGET_SYSTEM !!     06010000
+                    ' '!! CA_NAMES(1) !!                                06020000
+                    ' .DEFINE TO FCP PLEASE.';                          06030000
+                                                                        06040000
+ EXEC CICS LINK PROGRAM('SOCKMAIL')                                     06050000
+                TRANSID(TARGET_TRANSID)                                 06060000
+                APPLID('CICSTEST')                                      06070000
+                COMMAREA(MAILDATA)                                      06080000
+                LENGTH(EXEC_COM_MAIL_LEN)                               06090000
+                DATALENGTH(EXEC_DAT_MAIL_LEN)                           06100000
+                RETCODE(LINK_RETAREA)                                   06110000
+                SYNCONRETURN;                                           06120000
+         MAILID   = 'KANDANOLEON.O@EMPORIKI.GR';                        06130000
+         SUBJECT  = 'PROMOTION FROM SCLM GROUP';                        06140000
+         MAILMG   = 'PROGRAMS DEFINED TO CICS ' !! TARGET_SYSTEM !!     06150000
+                    ' '!! CA_NAMES(1) !!                                06160000
+                    ' .DEFINE TO FCP PLEASE.';                          06170000
+                                                                        06180000
+ EXEC CICS LINK PROGRAM('SOCKMAIL')                                     06190000
+                TRANSID(TARGET_TRANSID)                                 06200000
+                APPLID('CICSTEST')                                      06210000
+                COMMAREA(MAILDATA)                                      06220000
+                LENGTH(EXEC_COM_MAIL_LEN)                               06230000
+                DATALENGTH(EXEC_DAT_MAIL_LEN)                           06240000
+                RETCODE(LINK_RETAREA)                                   06250000
+                SYNCONRETURN;                                           06260000
+                                    END;                                06270000
+                                                                        06280000
+ /*==================================================================*/ 06290000
+ /*                                                                  */ 06300000
+ /*  Check on how successful the call was.                           */ 06310000
+ /*                                                                  */ 06320000
+ /*==================================================================*/ 06330000
+                                                                        06340000
+ If EXEC_RESP = 0 Then                                                  06350000
+     Do;                                   /*========================*/ 06360000
+     PUT EDIT(MSGMAIL)(SKIP,A);            /* MSG="* MAIL SENT   *"  */ 06370000
+     End;                                  /*                        */ 06380000
+                                           /*========================*/ 06390000
+ RETURN;                                                                06400000
+ /*==================================================================*/ 06410000
+ /*                                                                  */ 06420000
+ /*        >>>>>>>>> End of SECTION_I processing. <<<<<<<<<<         */ 06430000
+ /*                                                                  */ 06440000
+ /*==================================================================*/ 06450000
+ END SEND_MAIL;                                                         06460000
+                                                                        06470000
+ UPD_ADSMS_FILE: PROC(SERV_ID);                                         06480000
+ /*==================================================================*/ 06490000
+ /*                                                                  */ 06500000
+ /*  Update adsms201 vsam file                                       */ 06510000
+ /*                                                                  */ 06520000
+ /*==================================================================*/ 06530000
+                                                                        06540000
+   DCL SERV_ID     CHAR(8);                                             06550000
+   DCL RECORD_FND CHAR(1) INIT('F');                                    06560000
+   DCL FILEIN    FILE RECORD INPUT   ENV( F RECSIZE(101) BUFFERS(2));   06570000
+   DCL 1  FILEIN_REC,                                                   06580000
+                 2  FILEIN_KEY  CHAR(20),                               06590000
+                 2  FILLER1     CHAR(5),                                06600000
+                 2  SERV_PGM    CHAR(8),                                06610000
+                 2  FILLER2     CHAR(68);                               06620000
+   DCL FILEIN_EOF CHAR(1) INIT('F');                                    06630000
+   DCL FILE_REC_IN CHAR(101) BASED(ADDR(FILEIN_REC));                   06640000
+                                                                        06650000
+ DCL 1 KEY_IN  BASED(ADDR(FILEIN_KEY)),                                 06660000
+                     2  IS_SERVICE  CHAR(1),                            06670000
+                     2  FILLER3     CHAR(17),                           06680000
+                     2  TYPE_CICS   CHAR(1),                            06690000
+                     2  FILLER4     CHAR(1);                            06700000
+                                                                        06710000
+   DCL FILEOUT   FILE RECORD DIRECT UPDATE KEYED ENV (VSAM);            06720000
+   DCL 1  FILEOUT_REC,                                                  06730000
+                 2  FILEOUT_KEY CHAR(20),                               06740000
+                 2  FILLER5     CHAR(08),                               06750000
+                 2  TIME_STAMP  CHAR(14),                               06760000
+                 2  FILLER6     CHAR(59);                               06770000
+   DCL 1  FILEOUT_RECC,                                                 06780000
+                 2  FILLER7     CHAR(25),                               06790000
+                 2  SERV_PGM_O  CHAR(08),                               06800000
+                 2  FILLER8     CHAR(68);                               06810000
+   DCL FILE_REC_OUT CHAR(101) BASED(ADDR(FILEOUT_REC));                 06820000
+                                                                        06830000
+   ON ENDFILE(FILEIN) FILEIN_EOF = 'T';                                 06840000
+        ON KEY(FILEOUT) BEGIN;                                          06850000
+              IF ONCODE = 52                                            06860000
+              THEN DO;                                                  06870000
+        READ  FILE(FILEOUT) INTO(FILEOUT_RECC) KEY(FILEIN_KEY);         06880000
+         put edit('Dupr.Reading ADSMS file service pgm')(skip,a);       06890000
+        IF SERV_PGM  ^= SERV_PGM_O                                      06900000
+                THEN DO;                                                06910000
+          put edit('Found ADSMS file service pgm')(skip,a);             06920000
+          REWRITE FILE(FILEOUT) FROM(FILEIN_REC) KEY(FILEIN_KEY);       06930000
+          Put Edit(MSGX1)(SKIP,A);                                      06940000
+                     END;                                               06950000
+                ELSE DO;                                                06960000
+         TYPE_CICS = 'U';   /* Set as Undefined Applid to stop run*/    06970000
+         put edit('Stop Run.Service same as Devlp')(skip,a);            06980000
+                     END;                                               06990000
+                   END ;                                                07000000
+        END ;                                                           07010000
+                                                                        07020000
+   OPEN FILE(FILEIN) ;                                                  07030000
+   OPEN FILE(FILEOUT) ;                                                 07040000
+   READ FILE(FILEIN) INTO(FILEIN_REC);                                  07050000
+   DO WHILE( (FILEIN_EOF='F'));                                         07060000
+     IF IS_SERVICE = 'S' & SERV_PGM = SERV_ID  THEN DO;                 07070000
+                                                                        07080000
+     select (TARGET_SYSTEM);                                            07090000
+       when ('FNDTST')   TYPE_CICS = 'T';                               07100000
+       when ('FNDAORLA') TYPE_CICS = 'L';                               07110000
+       when ('FNDAORMA') TYPE_CICS = 'M';                               07120000
+       when ('FNDAORRA') TYPE_CICS = 'R';                               07130000
+       when ('FNDAORPA') TYPE_CICS = 'P';                               07140000
+       otherwise do;                                                    07150000
+         ErrorMsg= ExciMsg !! TARGET_SYSTEM !! ' CICS SYSTEM INVALID';  07160000
+         put skip data(ErrorMsg);                                       07170000
+         TYPE_CICS = 'U';     /* Undefined Applid */                    07180000
+       end;                                                             07190000
+     end;                                                               07200000
+     IF TYPE_CICS = 'U' THEN LEAVE;                                     07210000
+                                                                        07220000
+        /* CHECK IF RECORD EXISTS AND CHECK IF PROGRAM                  07230000
+           FIELDS FROM INPUT AND OUTPUT ADSMS FILES EXIST    */         07240000
+         put edit('trying to write ADSMS file service pgm')(skip,a);    07250000
+        WRITE FILE(FILEOUT) FROM(FILEIN_REC) KEYFROM(FILEIN_KEY);       07260000
+     IF TYPE_CICS = 'U' THEN LEAVE;  /* stop run if exists in devlp */  07270000
+                                                                        07280000
+        FILEOUT_REC = '';                                               07290000
+        FILEOUT_KEY = 'CDOWNLOADSTATE      ';                           07300000
+        READ    FILE(FILEOUT) INTO(FILEOUT_REC) KEY(FILEOUT_KEY);       07310000
+        TIME_STAMP = '20' !! DATE !! TIME;                              07320000
+        REWRITE FILE(FILEOUT) FROM(FILEOUT_REC) KEY(FILEOUT_KEY);       07330000
+        FILEIN_EOF = 'T';                                               07340000
+        RECORD_FND = 'T';                                               07350000
+        LEAVE;                                                          07360000
+     END;                                                               07370000
+     ELSE                                                               07380000
+        READ FILE(FILEIN) INTO(FILEIN_REC);                             07390000
+     IF TYPE_CICS = 'U' THEN LEAVE;                                     07400000
+   END;                                                                 07410000
+   IF RECORD_FND = 'F' & TYPE_CICS ^='U' THEN                           07420000
+   Put Edit(MSGX2)(SKIP,A);                                             07430000
+   CLOSE FILE(FILEIN);                                                  07440000
+   CLOSE FILE(FILEOUT);                                                 07450000
+                                                                        07460000
+ END UPD_ADSMS_FILE;                                                    07470000
+                                                                        07480000
+ END SERVIOB;                                                           07490000
+

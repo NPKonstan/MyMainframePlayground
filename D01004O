@@ -1,0 +1,26 @@
+      *****************************************************************
+      **                                                             **
+      **           FOUNDATION FOR COOPERATIVE PROCESSING             **
+      **                                                             **
+      **                     COBOL  COPYBOOK                         **
+      **                                                             **
+      **           COPYRIGHT (C) 1996 ANDERSEN CONSULTING.           **
+      **                    ALL RIGHTS RESERVED.                     **
+      **                                                             **
+      *****************************************************************
+      **                                                             **
+      **      COPYBOOK: DD01004O                                     **
+      **                                                             **
+      **  COPYBOOK FOR: Message.DD01004                              **
+      **                                                             **
+      **  GENERATED ON: Sat Oct 24 12:09:56 2009                     **
+      **                                                             **
+      **  SHORT DESCRIPTION:                                         **
+      **                                                             **
+      **            BY: NPK                                          **
+      **                                                             **
+      *****************************************************************
+       02  DD01004O.
+         04  DD-ACCOUNTS                         PIC X(27).
+
+

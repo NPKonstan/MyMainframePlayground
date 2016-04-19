@@ -1,0 +1,45 @@
+/*REXX*/                                                                00010000
+VNode = Sysvar('SYSNODE')                                               00020009
+SAY VNode                                                               00030009
+ RETURN 0                                                               00031009
+ ARG XYZ                                                                00039508
+ "ISPEXEC EDIT DATASET('"XYZ"') MACRO(CHANGE)"                          00039608
+                                                                        00039708
+ /*                                                                     00040005
+ a=outtrap(pinax.);                                                     00059301
+ address "TSO"                                                          00059401
+ "LISTDS ('KONSTAN.PRIVATE.SRC') HISTORY "                              00059502
+ a=outtrap(off);                                                        00059601
+ SAY   'NUMBER OF LINES ARE : ' pinax.0                                 00059703
+ I = PINAX.3                                                            00059802
+ DD=                        SUBSTR(PINAX.I,35,8)                        00059902
+                                                                        00063004
+NUMERIC DIGITS 10                                                       00063103
+  tcb = C2D(STORAGE(21C,4))         /* TCB          PSATOLD  */         00063203
+  tiot= C2D(STORAGE(D2X(tcb+12),4)) /* TIOT         TCBTIO   */         00063303
+  sva = STORAGE(D2X(tiot+36),3)     /* First JFCB   TIOEJFCB */         00063403
+  jfcb=SWAREQ(sva)             /* convert SVA to 31-bit addr */         00063503
+  dsn=STORAGE(D2X(jfcb),44)         /* dsname       JFCBDSNM */         00063603
+  vol=STORAGE(D2X(jfcb+118),6)      /* volser       JFCBVOLS */         00063703
+  SAY 'sva='C2X(sva) 'jfcb='D2X(jfcb) 'dsn='dsn 'vol='vol               00063803
+EXIT                                                                    00063903
+                                                                        00065203
+   SWAREQ: PROCEDURE                                                    00065303
+   IF RIGHT(C2X(ARG(1)),1) \= 'F' THEN       /* SWA=BELOW ?          */ 00065403
+     RETURN C2D(ARG(1))+16                   /* yes, return sva+16   */ 00065503
+   NUMERIC DIGITS 10                         /* allow up to 7FFFFFFF */ 00065603
+   sva=C2D(ARG(1))                           /* convert to decimal   */ 00065703
+   tcb = C2D(STORAGE(21C,4))                 /* TCB         PSATOLD  */ 00065803
+   jscb = C2D(STORAGE(D2X(tcb+180),4))       /* JSCB        TCBJSCB  */ 00065903
+   qmpl = C2D(STORAGE(D2X(jscb+244),4))      /* QMPL        JSCBQMPI */ 00066003
+   qmat = C2D(STORAGE(D2X(qmpl+24),4))       /* QMAT        QMADD    */ 00066103
+     DO WHILE sva>65536                                                 00066203
+       qmat = C2D(STORAGE(D2X(qmat+12),4)) /* next QMAT     QMAT+12  */ 00066303
+       sva=sva-65536                         /* 010006F -> 000006F   */ 00066403
+     END                                                                00066503
+   RETURN C2D(STORAGE(D2X(qmat+sva+1),4))+16                            00066603
+                                                                        00066703
+  */                                                                    00066804
+                                                                        00068003
+ EXIT                                                                   00070001
+

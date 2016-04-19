@@ -1,0 +1,63 @@
+//DDREP04T JOB (ACCTNO),PROGRAMMER,NOTIFY=TSOID,                        JOB05766
+//*        TYPRUN=HOLD,
+//*        USER=P,
+//         CLASS=T,MSGCLASS=X,MSGLEVEL=(1,1)
+//*
+//*     SEPA DIAS DEBIT
+/*JOBPARM SYSAFF=SYP2
+//*
+//  JCLLIB ORDER=(CBG.PROD.PROC,CBG.PROD.PROC)
+//*
+//JOBLIB   DD  DSN=DSN810.SDSNLOAD,DISP=SHR                             00061000
+//         DD  DSN=CBG.TEST.LOAD,DISP=SHR                               00062000
+//         DD  DSN=CBG.PROD.LOAD,DISP=SHR                               00063000
+//         DD  DSN=MVSMS12.LINKLIB,DISP=SHR FOR    MVS-MS ROUTINES      00064000
+//CZX3PPRO EXEC PGM=CZX3PPRO,PARM='DATE=&DATE,UPSI=00000000'            00000900
+//*                                                                     00000900
+//DDREP03A EXEC PGM=IKJEFT01,DYNAMNBR=20
+//SYSPRINT DD SYSOUT=*                                                  00001AA0
+//SYSTSPRT DD SYSOUT=*                                                  00001AA0
+//CEEDUMP  DD SYSOUT=*                                                  00001700
+//SYSUDUMP DD DUMMY                                                     00001800
+//OUTFILE  DD UNIT=(SYSDA),SPACE=(27900,(1000,900),RLSE),
+//             DCB=(SYS2.DSCB,RECFM=FB,LRECL=250),
+//             DSN=DD.T.XS.DDREP04(+1),
+//             DISP=(NEW,CATLG,DELETE)
+//PRT      DD SYSOUT=X,UCS=CBG
+//PRT2     DD SYSOUT=X,UCS=CBG
+//READER   DD *                                                         00002800
+C2009-11-01 2009-12-31                                                  00000148
+/*                                                                      00002900
+//SYSTSIN DD *                                                          00109900
+DSN SYSTEM(DSNT) RETRY(0) TEST(0)                                       00110000
+RUN PROGRAM(DDREP04) PLAN(CBTBATCH)                                     00110100
+END                                                                     00110200
+/*                                                                      00110300
+//STEP1 EXEC PGM=ICEMAN
+//SYSOUT DD SYSOUT=*
+//SORTIN  DD DSN=KONSTAN.PRIVATE.SRC(MYD),DISP=SHR
+//SORTOUT DD DSN=&&TEMP1,DISP=(NEW,PASS)
+//SYSIN DD *
+     OUTREC FIELDS=(1,80,250:X)
+     SORT FIELDS=COPY                                                   00210026
+     RECORD TYPE=FB,LENGTH=250                                          00220023
+/*                                                                      00110300
+//STEP2 EXEC PGM=ICEMAN
+//SYSOUT DD SYSOUT=*
+//SORTIN  DD DSN=KONSTAN.PRIVATE.SRC(MYD2),DISP=SHR
+//SORTOUT DD DSN=&&TEMP2,DISP=(NEW,PASS)
+//SYSIN DD *
+     OUTREC FIELDS=(1,80,250:X)
+     SORT FIELDS=COPY                                                   00210026
+     RECORD TYPE=FB,LENGTH=250                                          00220023
+/*                                                                      00110300
+//SENDNOTE EXEC PGM=IEBGENER
+//SYSIN    DD DUMMY
+//SYSPRINT DD SYSOUT=*
+//SYSUT2   DD SYSOUT=(B,SMTP)
+//SYSUT1   DD DSN=&&TEMP1,DISP=(OLD,DELETE)
+//         DD DSN=DD.T.XS.DDREP04(+1),DISP=OLD
+//         DD DSN=&&TEMP2,DISP=(OLD,DELETE)
+//*
+//CZX3PEPI EXEC PGM=CZX3PEPI,COND=EVEN                                  00003200
+

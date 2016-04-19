@@ -1,0 +1,8 @@
+  PLIPROG: Proc options(main, reentrant);                               00010000
+  Dcl l64a external entry                                               00020001
+  returns(pointer *);                                                   00030001
+  Dcl arg fixed bin(31);                                                00040000
+  Dcl a fixed bin(31);                                                  00050000
+  put skip list( l64a(123));                                            00070001
+  End;                                                                  00080000
+

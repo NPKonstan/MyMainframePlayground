@@ -1,0 +1,35 @@
+HELO MVSHOST
+MAIL FROM:<KONSTAN@SYP2.EMPORIKI.GR>
+RCPT TO:<KONSTANTOPOULOS.N@EMPORIKI.GR>
+DATA
+FROM:     KONSTAN@SYP2.EMPORIKI.GR
+TO:       KONSTANTOPOULOS.N@EMPORIKI.GR
+SUBJECT:  Θα βάλω και μικρά και Μεγάλα και English
+MIME-Version: 1.0
+Content-type: multipart/mixed; boundary="NPK boundary"
+
+PROLOGUE - IGNORED
+
+--NPK boundary
+Content-type: text/html;
+
+<html>
+<head>
+<title>document with attachment</title>
+</head>
+<body>
+This is typed HTML using
+<font color=red>red</font> &amp.
+<font color=blue>blue</font>
+colors to prove this.
+<p><i>(See the attachment ATT.TXT attached)</i></p>
+<hr><p></p>
+</body>
+<hr><p></p>
+</body>
+</html>
+
+--NPK boundary
+Content-disposition: attachment; filename="NIK4.TXT"
+
+

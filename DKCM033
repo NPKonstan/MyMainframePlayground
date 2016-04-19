@@ -1,0 +1,521 @@
+ DKCM033: PROC OPTIONS(MAIN);
+ DCL PLIXOPT CHAR(39) VAR EXT  INIT ('ERRCOUNT(0)');
+ /********************************************************************/
+ /* DKCM033: диабафеи 200аяи ле апамтгсеис пациым епемдусеым (3) */      */
+ /*           вяеысеым (4528), пистысеым (4529)  */
+ /*           йаи емглеяымеи ле тис апояяиьеис том CTDKCM02 */
+ /* AUTHOR   : EVANGELOS KOULIS   */
+ /* CREATION : иамоуаяиос 2009     */
+ /*           B A T C H  P L I - D B 2   */
+ /********************************************************************/
+    TODAY = DATETIME;                /* жYкAнH HM/NIA-ыPA сустглатос */
+ /********************************************************************/
+ DCL CZX3VDAT CHAR(6);  FETCH CZXDATEP ;
+ DCL CZXDATEP ENTRY OPTIONS(INTER,ASM) ;
+ DATE: PROC IRREDUCIBLE RETURNS(CHAR(6)) ;
+       CALL CZXDATEP (CZX3VDAT) ;
+       RETURN (CZX3VDAT) ;
+       END DATE ;
+ /*-------------------------------*/
+ /* EXTERNAL PROCEDURE VALDAY */
+ /*-------------------------------*/
+ DCL VALDAY   ENTRY (CHAR(44))            OPTIONS(INTER,ASM,FETCHABLE);
+
+ % INCLUDE CUAVDCDS ;                  /* яоутима упокоцислоу VALEUR */
+
+ % INCLUDE DAYRTNS;                  /* POYTINEс ANTIсTPOжHс HM/NIAс */
+
+ /********************************************************************/
+ /*-----------------------------------------------------------*/
+ /*               BUILTIN  FUNCTIONS                          */
+ /*-----------------------------------------------------------*/
+ DCL (NULL,ADDR,SUBSTR,DATETIME) BUILTIN;
+
+ DCL Y4MMDD        PIC'(8)9';
+ DCL CURR_DATE     CHAR(10) INIT('');
+
+ DCL TODAY      CHAR(17);
+ DCL  1 SYSDATE  BASED(ADDR(TODAY)),
+             2 SYSY1  CHAR(2),
+             2 SYSY2  CHAR(2),
+             2 SYSMM  CHAR(2),
+             2 SYSDD  CHAR(2),
+             2 SYSHH  PIC'(2)9',
+             2 SYSMI  PIC'(2)9',
+             2 SYSSS  PIC'(2)9',
+             2 SYSMIL PIC'(3)9';
+
+ /*******  DCLGEN  *******/
+ EXEC SQL INCLUDE CTDKCM02;
+ EXEC SQL INCLUDE T60R2TRX;
+ EXEC SQL INCLUDE SQLCA;
+ /************************/
+
+ /************************************/
+ /* пяосдиояислос, пеяицяажг аявеиым */
+ /************************************/
+ DCL  PRINT    FILE RECORD SEQUENTIAL OUTPUT
+      ENV(FB RECSIZE(133) CTLASA);
+
+ DCL    LINE            CHAR (133)   INIT(' ');
+
+ DCL  1  LINE1 BASED(ADDR(LINE)),
+        2  CTLCHR1  CHAR(1)  INIT('1'),
+        2  GRAMMH  CHAR(132)  INIT(' ');
+
+ DCL  1  LNX  BASED(ADDR(LINE)),
+        2  CTLCHR         CHAR(1)      INIT('1'),
+        2  LEKTIKO        CHAR(60)     INIT(' '),
+        2  ARITHMOS       CHAR(16)     INIT(' '),
+        2  FILLME         CHAR(56)     INIT(' ');
+
+ DCL  ANSWR FILE RECORD SEQUENTIAL INPUT ENV(FB RECSIZE(200));
+
+ % INCLUDE RECDBCR;
+
+ /***************************************************************/
+ DCL    ANSWR_CNT       PIC '(9)Z9'       INIT(0);
+ DCL    ANSWR_U_CNT     PIC '(9)Z9'       INIT(0);
+ DCL    ANSWR_S_CNT     PIC '(9)Z9'       INIT(0);
+ DCL    INSCM02_CNT     PIC '(9)Z9'       INIT(0);
+ /***************************************************************/
+
+ % PAGE;
+         CUAHMTS = DAYREV6(DATE());                  /* JCL CZXDATEP */
+         CUATRKWD = 'PRKT';
+         CUAKLEIT = 'VH';          /* VALEUR апо глеяолгмиа: CUAHMTS */
+         CUAOFORM = 'P';
+         CUAEKAE  = 'P';                         /* EYPEсH EPцAсIMHс */
+         CUAEHMER = '0';   IF SYSHH < 07 THEN CUAEHMER = '1';
+         CALL VALDAY(CUAVDCDS);
+         IF CUAAPANT ^= ' ' THEN SIGNAL ERROR;
+
+         Y4MMDD = 19000000 + CUAHMRZP;
+         CURR_DATE = DAYR8SA(Y4MMDD);
+
+ OPEN FILE(ANSWR),FILE(PRINT);
+
+ ON ENDFILE(ANSWR) GOTO TELOS;
+
+ READ_ANSWR:
+        READ FILE(ANSWR) INTO(RECDBCR);
+        ANSWR_CNT = ANSWR_CNT + 1;
+      /*
+        IF HMEKD ^= CUAHMRZP THEN DO;
+          GRAMMH = ' ***ERROR HMEKD ^= SYSDATE:'!!HMEKD!!CUAHMRZP!!
+                                                         ANSWR_CNT;
+          PUT SKIP LIST(GRAMMH);
+          SIGNAL ERROR;
+          END;
+      */
+        IF RECDBCR.STATUS ^= '00' THEN DO;
+             CTLCHR1 = ' ';
+             GRAMMH = 'пациа='!!RECDBCR.PARAST!!',  STATUS='
+                      !!RECDBCR.STATUS;
+             WRITE FILE(PRINT) FROM(LINE1);
+             IF RECDBCR.STATUS ^= '93' THEN DO;
+                 CALL WRITE_REJ;
+                 T60R2TRX.TRANSSTATUSCD = 'R';
+         /*      CALL INSERT_T60R2TRX;*/
+             END;
+             ELSE
+                ANSWR_U_CNT = ANSWR_U_CNT + 1;
+        END;
+        ELSE DO;
+                ANSWR_S_CNT =  ANSWR_S_CNT + 1;
+                T60R2TRX.TRANSSTATUSCD = 'E';
+         /*     CALL INSERT_T60R2TRX;*/
+             END;
+
+        GOTO READ_ANSWR;
+
+ /*******************************************************************/
+ WRITE_REJ: PROC;
+ /*******************************************************************/
+      ANSWR_U_CNT = ANSWR_U_CNT + 1;
+
+      CTDKCM02.COD_CHANNEL   = 1;
+
+      CTDKCM02.KEY_AR_PAGIA  = RECDBCR.PARAST;
+
+      CTDKCM02.COD_TYP_PAGIA = 3;
+
+      CTDKCM02.COD_KATMA     = RECDBCR.XOR_OMILOS;
+
+      CTDKCM02.KEY_D_ARLOG1  = RECDBCR.ARLOG;
+
+      IF RECDBCR.ARLOG > 80000000 THEN
+          CTDKCM02.COD_D_EFARM1  = '70';
+      ELSE
+         IF RECDBCR.ARLOG = 0 THEN
+             CTDKCM02.COD_D_EFARM1  = '  ';
+         ELSE
+             CTDKCM02.COD_D_EFARM1  = '90';
+
+      CTDKCM02.AMT_D_POSO    = RECDBCR.POSON;
+
+      CTDKCM02.COD_DEBCRE    = RECDBCR.KWDXRPIS;
+
+      CTDKCM02.CHR_USER_ID   = 'DKCM033 ';
+
+      CTDKCM02.KEY_TD_ARLOG1 = PRKARLOG;
+      CTDKCM02.KEY_TD_ARLOG2 = PRKAROMO;
+
+      SELECT (RECDBCR.STATUS);
+           WHEN ('01')
+               CTDKCM02.CHR_REJ_DESCR = 'амупаяйтос коц/слос (т/й)';
+               T60R2TRX.TRANSREJECTRSNCD = 'амупаяйтос коц/слос (т/й)';
+           WHEN ('02')
+               CTDKCM02.CHR_REJ_DESCR = 'кахос аяих. коц/слоу (т/й)';
+               T60R2TRX.TRANSREJECTRSNCD = 'кахос аяих. коц/слоу (т/й)';
+           WHEN ('03')
+               CTDKCM02.CHR_REJ_DESCR = 'ови тяевоул. коцслос (т/й)';
+               T60R2TRX.TRANSREJECTRSNCD = 'ови тяевоул. коцслос (т/й)';
+           WHEN ('04')
+               CTDKCM02.CHR_REJ_DESCR = 'вяеыстийо посо (т/й)';
+               T60R2TRX.TRANSREJECTRSNCD = 'вяеыстийо посо (т/й)';
+           WHEN ('05')
+              CTDKCM02.CHR_REJ_DESCR = 'к/слос етеяоу йат/тос (т/й)';
+              T60R2TRX.TRANSREJECTRSNCD = 'к/слос етеяоу йат/тос (т/й)';
+           WHEN ('06')
+               CTDKCM02.CHR_REJ_DESCR = 'посо лгдем (т/й)';
+               T60R2TRX.TRANSREJECTRSNCD = 'посо лгдем (т/й)';
+           WHEN ('07')
+               CTDKCM02.CHR_REJ_DESCR = 'коцаяиаслос йкеистос (т/й)';
+               T60R2TRX.TRANSREJECTRSNCD = 'коцаяиаслос йкеистос (т/й)';
+           WHEN ('08','10')
+               CTDKCM02.CHR_REJ_DESCR = 'лг аподейто йахокийо (т/й)';
+               T60R2TRX.TRANSREJECTRSNCD = 'лг аподейто йахокийо (т/й)';
+           WHEN ('09')
+             CTDKCM02.CHR_REJ_DESCR = 'амупаяйтос йыд. пекатг (т/й)';
+             T60R2TRX.TRANSREJECTRSNCD = 'амупаяйтос йыд. пекатг (т/й)';
+           WHEN ('11')
+                  CTDKCM02.CHR_REJ_DESCR = 'посо ле дейадийа (т/й)';
+                  T60R2TRX.TRANSREJECTRSNCD = 'посо ле дейадийа (т/й)';
+           WHEN ('12')
+              CTDKCM02.CHR_REJ_DESCR = 'посо памы апо то ояио (т/й)';
+              T60R2TRX.TRANSREJECTRSNCD = 'посо памы апо то ояио (т/й)';
+           WHEN ('13')
+               CTDKCM02.CHR_REJ_DESCR = 'VALEUR ейтос ояиым (т/й)';
+               T60R2TRX.TRANSREJECTRSNCD = 'VALEUR ейтос ояиым (т/й)';
+           WHEN ('14')
+              CTDKCM02.CHR_REJ_DESCR = 'аккгс тяапефас коцая. (т/й)';
+              T60R2TRX.TRANSREJECTRSNCD = 'аккгс тяапефас коцая. (т/й)';
+           WHEN ('15')
+               CTDKCM02.CHR_REJ_DESCR = 'лг аподейто йахокийо (т/й)';
+               T60R2TRX.TRANSREJECTRSNCD = 'лг аподейто йахокийо (т/й)';
+           WHEN ('16')
+               CTDKCM02.CHR_REJ_DESCR = 'кахос лояжг посоу (т/й)';
+               T60R2TRX.TRANSREJECTRSNCD = 'кахос лояжг посоу (т/й)';
+           WHEN ('17')
+               CTDKCM02.CHR_REJ_DESCR = 'апыкеиа бибкиаяиоу (т/й)';
+               T60R2TRX.TRANSREJECTRSNCD = 'апыкеиа бибкиаяиоу (т/й)';
+           WHEN ('18')
+               CTDKCM02.CHR_REJ_DESCR = 'коцаяиаслос ле ояоус (т/й)';
+               T60R2TRX.TRANSREJECTRSNCD = 'коцаяиаслос ле ояоус (т/й)';
+           WHEN ('19')
+               CTDKCM02.CHR_REJ_DESCR = 'евеи деслеухеи посо (т/й)';
+               T60R2TRX.TRANSREJECTRSNCD = 'евеи деслеухеи посо (т/й)';
+           WHEN ('20')
+               CTDKCM02.CHR_REJ_DESCR = 'лг епаяйес упокоипо (т/й)';
+               T60R2TRX.TRANSREJECTRSNCD = 'лг епаяйес упокоипо (т/й)';
+           WHEN ('21')
+            CTDKCM02.CHR_REJ_DESCR = 'VALEUR > гл.кгн. молил. (т/й)';
+            T60R2TRX.TRANSREJECTRSNCD = 'VALEUR > гл.кгн. молил. (т/й)';
+           WHEN ('22')
+            CTDKCM02.CHR_REJ_DESCR = 'лг епаяйес упокоипо (л) (т/й)';
+            T60R2TRX.TRANSREJECTRSNCD = 'лг епаяйес упокоипо (л) (т/й)';
+           WHEN ('23')
+               CTDKCM02.CHR_REJ_DESCR = 'кахос молисла (еуяы) (т/й)';
+               T60R2TRX.TRANSREJECTRSNCD = 'кахос молисла (еуяы) (т/й)';
+           WHEN ('24')
+              CTDKCM02.CHR_REJ_DESCR = 'лецако пкгхос еццяаж. (т/й)';
+              T60R2TRX.TRANSREJECTRSNCD = 'лецако пкгхос еццяаж. (т/й)';
+           WHEN ('50')
+            CTDKCM02.CHR_REJ_DESCR = 'амупая.еццяажг пистысгс (п/й)';
+            T60R2TRX.TRANSREJECTRSNCD = 'амупая.еццяажг пистысгс (п/й)';
+           WHEN ('51')
+              CTDKCM02.CHR_REJ_DESCR = 'амупая. ая. коц/слоу (п/й)';
+              T60R2TRX.TRANSREJECTRSNCD = 'амупая. ая. коц/слоу (п/й)';
+           WHEN ('52')
+              CTDKCM02.CHR_REJ_DESCR = 'амупая. ая. олокоцоу (п/й)';
+              T60R2TRX.TRANSREJECTRSNCD = 'амупая. ая. олокоцоу (п/й)';
+           WHEN ('53')
+              CTDKCM02.CHR_REJ_DESCR = 'коцая. аккоу йат/тос (п/й)';
+              T60R2TRX.TRANSREJECTRSNCD = 'коцая. аккоу йат/тос (п/й)';
+           WHEN ('54')
+              CTDKCM02.CHR_REJ_DESCR = 'г п.й. еимаи кгцлемг (п/й)';
+              T60R2TRX.TRANSREJECTRSNCD = 'г п.й. еимаи кгцлемг (п/й)';
+           WHEN ('55')
+              CTDKCM02.CHR_REJ_DESCR = 'кгцлемг молилопоигсг (п/й)';
+              T60R2TRX.TRANSREJECTRSNCD = 'кгцлемг молилопоигсг (п/й)';
+           WHEN ('56')
+              CTDKCM02.CHR_REJ_DESCR = 'деслеулеулемо посо (п/й)';
+              T60R2TRX.TRANSREJECTRSNCD = 'деслеулеулемо посо (п/й)';
+           WHEN ('57')
+              CTDKCM02.CHR_REJ_DESCR = 'еидийои ояои (п/й)';
+              T60R2TRX.TRANSREJECTRSNCD = 'еидийои ояои (п/й)';
+           WHEN ('58')
+              CTDKCM02.CHR_REJ_DESCR = 'кахос посо пистысгс (п/й)';
+              T60R2TRX.TRANSREJECTRSNCD = 'кахос посо пистысгс (п/й)';
+           WHEN ('59')
+              CTDKCM02.CHR_REJ_DESCR = 'REPLACE SEGM.OMOLOG. (п/й)';
+              T60R2TRX.TRANSREJECTRSNCD = 'REPLACE SEGM.OMOLOG. (п/й)';
+           WHEN ('60')
+              CTDKCM02.CHR_REJ_DESCR = 'INSERT MOVEMENT SEGM (п/й)';
+              T60R2TRX.TRANSREJECTRSNCD = 'INSERT MOVEMENT SEGM (п/й)';
+           WHEN ('61')
+              CTDKCM02.CHR_REJ_DESCR = 'GET ROOT FOR REPLACE (п/й)';
+              T60R2TRX.TRANSREJECTRSNCD = 'GET ROOT FOR REPLACE (п/й)';
+           WHEN ('62')
+              CTDKCM02.CHR_REJ_DESCR = 'REPLACE ROOT SEGMENT (п/й)';
+              T60R2TRX.TRANSREJECTRSNCD = 'REPLACE ROOT SEGMENT (п/й)';
+           WHEN ('90')
+            CTDKCM02.CHR_REJ_DESCR = 'амупая.еццяажг пистысгс (т/й)';
+            T60R2TRX.TRANSREJECTRSNCD = 'амупая.еццяажг пистысгс (т/й)';
+           WHEN ('91')
+            CTDKCM02.CHR_REJ_DESCR = 'кахос коц/слос пистысгс (п/й)';
+            T60R2TRX.TRANSREJECTRSNCD = 'кахос коц/слос пистысгс (п/й)';
+           WHEN ('92')
+            CTDKCM02.CHR_REJ_DESCR = 'коц.пист. выяис ецйяисг(п/й)';
+            T60R2TRX.TRANSREJECTRSNCD = 'коц.пист. выяис ецйяисг(п/й)';
+           WHEN ('93')
+            CTDKCM02.CHR_REJ_DESCR = 'амупаяйтг пациа емтокг (п/й)';
+            T60R2TRX.TRANSREJECTRSNCD = 'амупаяйтг пациа емтокг (п/й)';
+           WHEN ('94')
+            CTDKCM02.CHR_REJ_DESCR = 'деслеулемо посо (п/й)';
+            T60R2TRX.TRANSREJECTRSNCD = 'деслеулемо посо (п/й)';
+           WHEN ('95')
+            CTDKCM02.CHR_REJ_DESCR = 'еидийои ояои (п/й)';
+            T60R2TRX.TRANSREJECTRSNCD = 'еидийои ояои (п/й)';
+           WHEN ('96')
+            CTDKCM02.CHR_REJ_DESCR = 'кгцлемг дем амамеыхгйе (п/й)';
+            T60R2TRX.TRANSREJECTRSNCD = 'кгцлемг дем амамеыхгйе (п/й)';
+           WHEN ('97')
+            CTDKCM02.CHR_REJ_DESCR = 'дивыс емдиалесг амамеысг(п/й)';
+            T60R2TRX.TRANSREJECTRSNCD = 'дивыс емдиалесг амамеысг(п/й)';
+           WHEN ('98')
+            CTDKCM02.CHR_REJ_DESCR = 'посо памы апо ояио (п/й)';
+            T60R2TRX.TRANSREJECTRSNCD = 'посо памы апо ояио (п/й)';
+           WHEN ('99')
+            CTDKCM02.CHR_REJ_DESCR = 'кахос стоивеиа п.е.(п/й)';
+            T60R2TRX.TRANSREJECTRSNCD = 'кахос стоивеиа п.е.(п/й)';
+           OTHERWISE
+               CTDKCM02.CHR_REJ_DESCR = '*********************';
+               T60R2TRX.TRANSREJECTRSNCD ='*********************';
+        END;
+        /*
+        CTLCHR1 = ' ';
+        GRAMMH = 'CTDKCM02.COD_KATMA='!!CTDKCM02.COD_KATMA;
+        WRITE FILE(PRINT) FROM(LINE1);
+        CTLCHR1 = ' ';
+        GRAMMH = 'CTDKCM02.KEY_AR_PAGIA='!!CTDKCM02.KEY_AR_PAGIA;
+        WRITE FILE(PRINT) FROM(LINE1);
+        CTLCHR1 = ' ';
+        GRAMMH = 'KEY_D_ARLOG1='!!CTDKCM02.KEY_D_ARLOG1;
+        WRITE FILE(PRINT) FROM(LINE1);
+        CTLCHR1 = ' ';
+        GRAMMH = 'COD_D_EFARM1='!!CTDKCM02.COD_D_EFARM1;
+        WRITE FILE(PRINT) FROM(LINE1);
+        CTLCHR1 = ' ';
+        GRAMMH = 'AMT_D_POSO='!!CTDKCM02.AMT_D_POSO;
+        WRITE FILE(PRINT) FROM(LINE1);
+        CTLCHR1 = ' ';
+        GRAMMH = 'COD_DEBCRE='!!CTDKCM02.COD_DEBCRE;
+        WRITE FILE(PRINT) FROM(LINE1);
+        CTLCHR1 = ' ';
+        GRAMMH = 'CTDKCM02.KEY_TD_ARLOG1='!!CTDKCM02.KEY_TD_ARLOG1;
+        WRITE FILE(PRINT) FROM(LINE1);
+        CTLCHR1 = ' ';
+        GRAMMH = 'CTDKCM02.KEY_TD_ARLOG2='!!CTDKCM02.KEY_TD_ARLOG2;
+        WRITE FILE(PRINT) FROM(LINE1);
+        CTLCHR1 = ' ';
+        GRAMMH = 'CTDKCM02.CHR_REJ_DESCR='!!CTDKCM02.CHR_REJ_DESCR;
+        WRITE FILE(PRINT) FROM(LINE1);
+        */
+        EXEC SQL
+            INSERT INTO CTDKCM02
+                (
+                 COD_CHANNEL,
+                 KEY_AR_PAGIA,
+                 COD_TYP_PAGIA,
+                 COD_KATMA,
+                 KEY_D_ARLOG1,
+                 COD_D_EFARM1,
+                 AMT_D_POSO,
+                 DAT_REJECT,
+                 COD_DEBCRE,
+                 CHR_REJ_DESCR,
+                 CHR_USER_ID,
+                 KEY_TIMESTAMP,
+                 KEY_TD_ARLOG1,
+                 KEY_TD_ARLOG2
+                )
+            VALUES
+                (
+                 :CTDKCM02.COD_CHANNEL,
+                 :CTDKCM02.KEY_AR_PAGIA,
+                 :CTDKCM02.COD_TYP_PAGIA,
+                 :CTDKCM02.COD_KATMA,
+                 :CTDKCM02.KEY_D_ARLOG1,
+                 :CTDKCM02.COD_D_EFARM1,
+                 :CTDKCM02.AMT_D_POSO,
+                 :CURR_DATE,
+                 :CTDKCM02.COD_DEBCRE,
+                 :CTDKCM02.CHR_REJ_DESCR,
+                 :CTDKCM02.CHR_USER_ID,
+                 CURRENT TIMESTAMP,
+                 :CTDKCM02.KEY_TD_ARLOG1,
+                 :CTDKCM02.KEY_TD_ARLOG2
+                );
+
+            IF SQLCODE ^= 0 THEN DO;
+               CTLCHR1 = ' ';
+               GRAMMH = 'ERROR INSERTING INTO CTDKCM02, SQLCODE='!!
+                        SQLCODE;
+               WRITE FILE(PRINT) FROM(LINE1);
+               CALL ERROR_ABEND;
+            END;
+            ELSE  INSCM02_CNT = INSCM02_CNT + 1;
+
+ END WRITE_REJ;
+
+ /*******************************************************************/
+ INSERT_T60R2TRX:PROC;
+ /*******************************************************************/
+
+        T60R2TRX.SOURCESYSTEMID     =
+        T60R2TRX.TRANSID            =
+        T60R2TRX.TRANSDT            =
+        T60R2TRX.TRANSCLEARDT       =
+        T60R2TRX.TRANSTYPECD        =
+        T60R2TRX.TRANSDIRECTIONCD   =
+        T60R2TRX.TRANSAMT           =
+        T60R2TRX.TRANSORGNALCRNCYCD =
+        T60R2TRX.TRANSSTATUSCD      =
+        T60R2TRX.TRANSREGECTRSNCD   =
+        T60R2TRX.TRANSORIGINATORCD  =
+        T60R2TRX.CONTRACTID         =
+        T60R2TRX.TRANSCHANNELID     =
+        T60R2TRX.TRANSCLEARNETWKCD  =
+        T60R2TRX.TRANSCATEGORY      =
+
+        EXEC SQL
+            INSERT INTO T60R2TRX
+                (
+                 EFFDT,
+                 SOURCESYSTEMID,
+                 TRANSID,
+                 TRANSDT,
+                 TRANSTS,
+                 TRANSCLEARDT,
+                 TRANSTYPECD,
+                 TRANSDIRECTIONCD,
+                 TRANSAMT,
+                 TRANSORGNALCRNCYCD,
+                 TRANSSTATUSCD,
+                 TRANSREGECTRSNCD,
+                 TRANSORIGINATORCD,
+                 CONTRACTID
+                 TRANSCHANNELID,
+                 TRANSCLEARNETWKCD,
+                 TRANSCATEGORY
+                )
+            VALUES
+                (
+                 CURRENT DATE,
+                 :T60R2TRX.EFFDT,
+                 :T60R2TRX.SOURCESYSTEMID,
+                 :T60R2TRX.TRANSID,
+                 :T60R2TRX.TRANSDT,
+                 CURRENT TIMESTAMP,
+                 :T60R2TRX.TRANSCLEARDT,
+                 :T60R2TRX.TRANSTYPECD,
+                 :T60R2TRX.TRANSDIRECTIONCD,
+                 :T60R2TRX.TRANSAMT,
+                 :T60R2TRX.TRANSORGNALCRNCYCD,
+                 :T60R2TRX.TRANSSTATUSCD,
+                 :T60R2TRX.TRANSREGECTRSNCD,
+                 :T60R2TRX.TRANSORIGINATORCD,
+                 :T60R2TRX.CONTRACTID
+                 :T60R2TRX.TRANSCHANNELID,
+                 :T60R2TRX.TRANSCLEARNETWKCD,
+                 :T60R2TRX.TRANSCATEGORY
+                );
+            IF SQLCODE ^= 0 THEN DO;
+               CTLCHR1 = ' ';
+               GRAMMH = 'ERROR INSERTING INTO T60R2TRX, SQLCODE='!!
+                        SQLCODE;
+               WRITE FILE(PRINT) FROM(LINE1);
+            END;
+
+ END INSERT_T60R2TR;
+
+ /*=================================================*/
+ ERROR_ABEND: PROC;
+ /*=================================================*/
+ DCL BOOM     DEC FIXED(1,0) INIT(0)  ;
+ DCL ZERO     DEC FIXED(1,0) INIT(0)  ;
+
+       CTLCHR1 = ' ';
+       GRAMMH = 'TO пяOцяалла ха KAмеи CANCEL CANCEL CANCEL';
+       WRITE FILE(PRINT) FROM(LINE1);
+       BOOM = BOOM / ZERO;
+
+ END ERROR_ABEND;
+
+
+ TELOS:
+        CTLCHR1 = ' ';
+        GRAMMH = '===============================================';
+        WRITE FILE(PRINT) FROM(LINE1);
+        CTLCHR1 = ' ';
+        GRAMMH = ' ейтупысг сулжымиас тоу пяоцяаллатос *DKCM033* ';
+        WRITE FILE(PRINT) FROM(LINE1);
+        CTLCHR1 = ' ';
+        GRAMMH = '===============================================';
+        WRITE FILE(PRINT) FROM(LINE1);
+        /*
+        CTLCHR1 = ' ';
+        GRAMMH = ' DATETIME= ' !! DATETIME;
+        WRITE FILE(PRINT) FROM(LINE1);
+        */
+        CTLCHR1 = ' ';
+        GRAMMH = ' глеяолгмиа KAI ыяа яогс : ' !!
+               SYSDD!!'.'!!SYSMM!!'.'!!SYSY1!!SYSY2 !!'-'!!
+               SYSHH!!':'!!SYSMI!!':'!!SYSSS!!
+                 '  еяцасиас : '!! CURR_DATE;
+        WRITE FILE(PRINT) FROM(LINE1);
+
+        CTLCHR1 = ' ';
+        GRAMMH = '-------------------------------------------------'!!
+                 '-------------------------';
+        WRITE FILE(PRINT) FROM(LINE1);
+
+        CTLCHR1 = ' ';
+        GRAMMH = 'апамтгсеис йыдийым 4528 йаи 4529                  ='!!
+        ANSWR_CNT;
+        WRITE FILE(PRINT) FROM(LINE1);
+
+        CTLCHR1 = ' ';
+        GRAMMH = '-------------------------------------------------'!!
+                 '-------------------------';
+        WRITE FILE(PRINT) FROM(LINE1);
+        CTLCHR1 = ' ';
+        GRAMMH = 'епитувеис апамтгсеис йыдийым 4528 йаи 4529        ='!!
+        ANSWR_S_CNT;
+        WRITE FILE(PRINT) FROM(LINE1);
+        CTLCHR1 = ' ';
+        GRAMMH = 'амепитувеис апамтгсеис йыдийым 4528 йаи 4529      ='!!
+        ANSWR_U_CNT;
+        WRITE FILE(PRINT) FROM(LINE1);
+        CTLCHR1 = ' ';
+        GRAMMH = 'еццяажес стом пIмайа апояяиьеым (CTDKCM02)        ='!!
+        INSCM02_CNT;
+        WRITE FILE(PRINT) FROM(LINE1);
+
+        CLOSE FILE(ANSWR),FILE(PRINT);
+
+ END DKCM033;
+
+

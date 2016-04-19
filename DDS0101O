@@ -1,0 +1,343 @@
+      ****************************************************************
+      **                                                            **
+      **           FOUNDATION FOR COOPERATIVE PROCESSING            **
+      **                                                            **
+      **                       COBOL CICS                           **
+      **                   SERVICE MODULE FILE                      **
+      **                                                            **
+      **           COPYRIGHT (C) 1996 ANDERSEN CONSULTING.          **
+      **                    ALL RIGHTS RESERVED.                    **
+      **                                                            **
+      ****************************************************************
+      **                                                            **
+      **  MODULE NAME:       DDS01001                               **
+      **                                                            **
+      **  DATE GENERATED:    Tue Jul 08 12:12:55 2008               **
+      **                                                            **
+      **  BY USER:           NPK                                    **
+      **                                                            **
+      **  DESIGNER:                                                 **
+      **                                                            **
+      **  PROGRAMMER:                                               **
+      **                                                            **
+      **  SHORT DESCRIPTION:амафгтгсг                               *
+      ***************************************************************
+      **  NPK 29-10-2009 GET ONLY LIKE 'GR%'                        *
+      **  NPK 21-02-2010 GET ONLY FLG_CANCEL <> '1'                 *
+      **  NPK 02-09-2010 GET ONLY CHR_ DMF  = 'N'                   *
+      **  NPK 04-04-2012 LIMIT FROM 100 TO 150                      *
+      ****************************************************************
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. DDS01001.
+       ENVIRONMENT DIVISION.
+
+       DATA DIVISION.
+
+       WORKING-STORAGE SECTION.
+      ****************************************************************
+      ** REPOSITORY WORKING STORAGE                                 **
+      ****************************************************************
+
+      *--> WS - VARIABLES
+       01 WS-COUNTER               PIC 9(05)       VALUE ZEROS.
+       01 WS-AR-PAGIA              PIC 9(9)        VALUE ZEROES.
+       01 WS-COD-WEEK-99    PIC 9(2).
+       01 WS-COD-WEEK.
+          05  F1           PIC X(1)   .
+          05  F2           PIC X(1)   .
+
+      *--> LT - VARIABLES
+       01 LTN-MAX-ANSWERS          PIC 9(05)      VALUE 150 .
+       01 LT-SPACE                 PIC X(9)       VALUE SPACES.
+
+      *****************************************************************
+      *  SWITCHES AREA - INDICATORS
+      *****************************************************************
+       01  SWITCHES.
+          05 SW-END-CURSOR            PIC X(1) VALUE '0'.
+              88 END-CURSOR-YES             VALUE '1'.
+              88 END-CURSOR-NO              VALUE '0'.
+       01 NULL-IND.
+          05  F1-NULL-IND  PIC S9(4)   COMP.
+      ** NULL INDICATORS циа том басийо пимайа ***********************
+        01    IND-DKCM01-WEEK-DAY            PIC S9(4)V COMP.
+        01    IND-DKCM01-AVAIL-DAT1          PIC S9(4)V COMP.
+        01    IND-DKCM01-AVAIL-DAT2          PIC S9(4)V COMP.
+        01    IND-DKCM01-AVAIL-DAT3          PIC S9(4)V COMP.
+        01    IND-DKCM01-DEACTIV-PAGIA       PIC S9(4)V COMP.
+      ****************************************************************
+      **     CONSTANTS OF              ERRORS                      **
+      ****************************************************************
+       COPY DTERRORS.
+
+      ****************************************************************
+      **     COPY OF                   AQERROR.                     **
+      ****************************************************************
+       COPY BKERRORP.
+
+
+      ****************************************************************
+      ** INCLUDE TABLES - CURSORS                                   **
+      ****************************************************************
+
+           EXEC SQL  INCLUDE CTDDOR86  END-EXEC.
+
+           EXEC SQL
+              DECLARE CURSOR1 CURSOR FOR
+              SELECT
+               CHR_CR_TOWN       ,
+               CHR_CR_STREET     ,
+               CHR_CR_TK         ,
+               CHR_CR_NUM        ,
+               CHR_C_S_I_I_517   ,
+               CHR_CR_NAME       ,
+               CHR_PRODUCT       ,
+               CHR_CR_ADDR_CNTRY
+              FROM CTDDOR86
+             WHERE
+                   CHR_DMF  = 'N'   AND
+                   FLG_CANCEL <> '1' AND
+                   CHR_C_S_I_I_517    LIKE 'GR%'
+
+                 FETCH FIRST 150 ROWS ONLY
+           END-EXEC.
+
+      ****************************************************************
+      ** WORKING ARQUITECTURA                                       **
+      ****************************************************************
+       COPY ADSIK200.
+       COPY ADSAK001.
+
+       COPY AQSRV001.
+           05  LT-MODULO-SERV-V2         PIC X(8) VALUE 'DDS01001'.
+
+       LINKAGE SECTION.
+      ****************************************************************
+      ** FOUNDATION LINKAGE SECTION                                 **
+      ****************************************************************
+
+      ****************************************************************
+      ** BUSINESS FUNCTION CONTEXT DATA                             **
+      ****************************************************************
+       COPY AQBEBF.
+
+      ****************************************************************
+      ** INPUT MESSAGE PARMBLOCK                                    **
+      ****************************************************************
+       01  SRV-TXN-PB.
+           COPY WAPIMSG.
+
+      ****************************************************************
+      ** REPLY MESSAGE PARMBLOCK                                    **
+      ****************************************************************
+       01  RTAF-TXN-PB.
+           COPY WAPIMSG.
+
+      ****************************************************************
+      ** INPUT MESSAGE DATA                                         **
+      ****************************************************************
+       01  INPUT-TXN.
+           COPY DD01001I.
+
+
+      ****************************************************************
+      ** OUTPUT MESSAGE DATA                                       **
+      ****************************************************************
+       01  OUTPUT-TXN.
+           COPY DD01001O.
+
+
+      ****************************************************************
+      ** USER LINKAGE COPYBOOKS                                     **
+      ****************************************************************
+
+
+
+      ****************************************************************
+      ** USER PROCEDURE DIVISION                                    **
+      ****************************************************************
+       PROCEDURE DIVISION USING
+                                 &AQPROC1(),
+                                 &AQPROC2(),
+                                 &AQPROC3(),
+                                 AQBF-AQBEBF,
+                                 &AQPROC4(),
+                                 SRV-TXN-PB,
+                                 INPUT-TXN,
+                                 RTAF-TXN-PB,
+                                 OUTPUT-TXN.
+
+       0000-MAINLINE.
+      * START CODE PROCEDURE
+
+           PERFORM A1000-HOUSEKEEPING.
+           PERFORM A2000-PROCESS.
+           PERFORM A8000-WRAP-UP.
+
+       A1000-HOUSEKEEPING.
+      *****************************************************************
+      **  A1000-HOUSEKEEPING                                         **
+      *****************************************************************
+      *    DISPLAY 'NPK DDS01001 A1000 13-09-2009 14NEW' .
+           &AQOPCION(NO-ERROSQL) .
+           INITIALIZE WS-COUNTER
+                      OUTPUT-TXN
+           SET END-CURSOR-NO TO TRUE.
+
+       A2000-PROCESS.
+      *****************************************************************
+      **  A2000-PROCESS                                              **
+      *****************************************************************
+      *    DISPLAY 'NPK DDS01001 A2000 NEW'.
+           PERFORM A2100-OPEN-CURSOR.
+      *    DISPLAY 'AFTER A2100 OPEN CURSOR'.
+
+           PERFORM A2200-FETCH-CURSOR.
+
+           PERFORM A2300-WRITE-OUTPUT
+           UNTIL   END-CURSOR-YES .
+
+           PERFORM A2400-CLOSE-CURSOR.
+
+
+       A2100-OPEN-CURSOR.
+      *****************************************************************
+      **  A2100-OPEN-CURSOR                                          **
+      *****************************************************************
+           INITIALIZE           CTDDOR86.
+      *    DISPLAY 'NPK DDS01001 A2100'.
+
+               EXEC SQL
+                   OPEN CURSOR1
+               END-EXEC.
+
+           MOVE SQLSTATE TO SQLSTATE-SIGLO
+           EVALUATE  TRUE
+
+             WHEN  IND-SQL-CORRECTO
+                    CONTINUE
+             WHEN OTHER
+             DISPLAY 'A2100 sqlstate ' SQLSTATE
+             DISPLAY 'A2100 sqlcode  ' SQLCODE
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                MOVE 'A2100-OPEN' TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'кахос сто амоицла CURSOR'
+                TO      ERR-COMMENTS    OF BKERRORP
+                MOVE   'CTDDOR86'
+                TO     ERR-TABLE                   OF BKERRORP
+               &AQERROR(ERROR,LT-ERR-OPEN-CURSOR,BKERRORP)
+           END-EVALUATE.
+            .
+       A2200-FETCH-CURSOR.
+      *****************************************************************
+      **  A2200-FETCH-CURSOR                                         **
+      *****************************************************************
+
+      *    DISPLAY 'NPK DDS01001 A2200'.
+                   EXEC SQL
+                   FETCH CURSOR1 INTO
+                   :CTDDOR86.CHR-CR-TOWN       ,
+                   :CTDDOR86.CHR-CR-STREET     ,
+                   :CTDDOR86.CHR-CR-TK         ,
+                   :CTDDOR86.CHR-CR-NUM        ,
+                   :CTDDOR86.CHR-C-S-I-I-517   ,
+                   :CTDDOR86.CHR-CR-NAME       ,
+                   :CTDDOR86.CHR-PRODUCT       ,
+                   :CTDDOR86.CHR-CR-ADDR-CNTRY
+               END-EXEC.
+
+           MOVE SQLSTATE TO SQLSTATE-SIGLO
+      *    DISPLAY 'DD01  A2200 SQLSTATE' SQLSTATE.
+
+           EVALUATE  TRUE
+
+             WHEN  IND-SQL-CORRECTO
+                    CONTINUE
+             WHEN  IND-NO-ENCONTRADO
+                    SET END-CURSOR-YES TO TRUE
+             WHEN OTHER
+             DISPLAY 'A2200 sqlstate ' SQLSTATE
+             DISPLAY 'A2200 sqlcode  ' SQLCODE
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                MOVE 'A2200-FETCH' TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'кахос FETCHING CURSOR'
+                TO      ERR-COMMENTS    OF BKERRORP
+                MOVE   'CTDDOR86'
+                TO     ERR-TABLE                   OF BKERRORP
+               &AQERROR(ERROR,LT-ERR-FETCH-CURSOR,BKERRORP)
+           END-EVALUATE.
+
+
+       A2300-WRITE-OUTPUT.
+      *****************************************************************
+      **  A2300-WRITE-OUTPUT.                                        **
+      *****************************************************************
+
+      *    DISPLAY 'NPK DDS01001 A2300'.
+           ADD 1 TO WS-COUNTER.
+
+           MOVE CHR-CR-TOWN             OF CTDDOR86
+           TO   DDCREDITORSTOWN         OF DDCREDITORS (WS-COUNTER).
+
+           MOVE CHR-CR-STREET           OF CTDDOR86
+           TO   DDCREDITORSSTREET       OF DDCREDITORS (WS-COUNTER).
+
+           MOVE CHR-CR-TK               OF CTDDOR86
+           TO   DDCREDITORSTT           OF DDCREDITORS (WS-COUNTER).
+
+           MOVE CHR-CR-NUM              OF CTDDOR86
+           TO   DDCREDITORSNUM          OF DDCREDITORS (WS-COUNTER).
+
+           MOVE CHR-C-S-I-I-517         OF CTDDOR86
+           TO   CHR-C-S-I-I-517         OF DDCREDITORS (WS-COUNTER).
+
+           MOVE CHR-CR-NAME             OF CTDDOR86
+           TO   CHR-CR-NAME             OF DDCREDITORS (WS-COUNTER).
+
+      *
+           MOVE CHR-PRODUCT             OF CTDDOR86
+           TO   DDPRODUCT               OF DDCREDITORS (WS-COUNTER).
+      *
+      *    MOVE CHR-CR-ADDR-LINE2       OF CTDDOR86
+      *    TO   CHR-CR-ADDR-LINE2       OF DDCREDITORS (WS-COUNTER).
+      *
+           MOVE CHR-CR-ADDR-CNTRY       OF CTDDOR86
+           TO   CHR-CR-ADDR-CNTRY       OF DDCREDITORS (WS-COUNTER).
+
+      *    IF WS-COUNTER LESS THAN LTN-MAX-ANSWERS
+           PERFORM A2200-FETCH-CURSOR .
+      *    END-IF.
+
+
+       A2400-CLOSE-CURSOR.
+      *****************************************************************
+      **  A2400-CLOSE-CURSOR                                         **
+      *****************************************************************
+      *
+
+               EXEC SQL
+                  CLOSE CURSOR1
+               END-EXEC
+
+           MOVE SQLSTATE TO SQLSTATE-SIGLO
+
+           EVALUATE  TRUE
+
+             WHEN  IND-SQL-CORRECTO
+                    CONTINUE
+             WHEN OTHER
+                MOVE SQLSTATE TO ERR-SQLSTATE OF BKERRORP
+                MOVE 'A2400-CLOSE' TO ERR-PARAGRAPH OF BKERRORP
+                MOVE 'кахос CLOSING  CURSOR'
+                TO      ERR-COMMENTS    OF BKERRORP
+                MOVE   'CTDDOR86'
+                TO     ERR-TABLE                   OF BKERRORP
+               &AQERROR(ERROR,LT-ERR-UNKNOWN-OPE,BKERRORP)
+           END-EVALUATE.
+
+       A8000-WRAP-UP.
+      *****************************************************************
+      **  A8000-WRAP-UP                                              **
+      *****************************************************************
+             MOVE WS-COUNTER TO DTCOUNT OF OUTPUT-TXN.
+

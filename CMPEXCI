@@ -1,0 +1,62 @@
+//KONSTANC JOB (CMPL-FRONT-ENT),NOTIFY=KONSTAN,                         00010000
+//         CLASS=A,MSGCLASS=X,MSGLEVEL=(1,1),                           00020000
+//         COND=(8,LT)                                                  00030000
+//*                                                                     00040000
+/*JOBPARM SYSAFF=SYP2                                                   00050000
+//*                                                                     00290000
+//CBGPLI PROC OPTC=,OPTL=                                               00300000
+//*                                                                     00310000
+//********************************************************************* 00530000
+//* COMPILE STEP                                                        00540000
+//********************************************************************* 00550000
+//*PLI      EXEC PGM=IBMZPLI,PARM='OBJECT,OPTIONS,SOURCE,               00560000
+//*             MACRO,NEST,NOTEST,PP(CICS(DLI),SQL)',                   00570000
+//*             REGION=512K                                             00580000
+//PLI      EXEC PGM=IBMZPLI,PARM='SOURCE,MACRO,NEST,GN,                 00590000
+//             DFT(OVERLAP),&OPTC',                                     00600000
+//             REGION=512K                                              00610000
+//STEPLIB  DD  DSN=IEL.V3R5M0.SIBMZCMP,DISP=SHR                         00620000
+//         DD  DSN=SYS1.CEE.SCEERUN,DISP=SHR                            00630000
+//*        DD DSN=DSN710.DSNT.RUNLIB.LOAD,DISP=SHR                      00640000
+//*        DD DSN=SYS1.DSN710.SDSNEXIT,DISP=SHR                         00650000
+//*        DD DSN=SYS1.DSN710.SDSNLOAD,DISP=SHR                         00660000
+//         DD  DSN=CICSTS22.CICS.SDFHLOAD,DISP=SHR                      00670000
+//         DD  DSN=CBG.TEST.LOAD,DISP=SHR                               00680000
+//         DD  DSN=CBG.PROD.LOAD,DISP=SHR                               00690000
+//*YSLIB   DD  DSN=CBG.TEST.BMSMAP,DISP=SHR                             00700000
+//SYSLIB   DD  DSN=CBG.TEST.PLICOP,DISP=SHR                             00710000
+//         DD  DSN=CBG.PROD.PLICOP,DISP=SHR                             00720000
+//*        DD  DSN=MQS531.SCSQPLIC,DISP=SHR                             00730000
+//         DD DSN=CICSTS22.CICS.SDFHPL1,DISP=SHR                        00740000
+//         DD DSN=CICSTS22.CICS.SDFHMAC,DISP=SHR                        00750000
+//SYSPRINT DD  SYSOUT=*                                                 00760000
+//SYSOUT   DD  SYSOUT=*                                                 00770000
+//SYSIN    DD  DSN=CBG.TEST.SOURCE(DKEXCI),DISP=SHR                     00780000
+//*DBRMLIB  DD DSN=CBG.TEST.DBRMLIB(DKEXCI),DISP=SHR                    00790000
+//SYSLIN   DD  DSN=&&LOADSET,DISP=(MOD,PASS),UNIT=SYSDA,                00800000
+//             SPACE=(CYL,(1,1)),DCB=(LRECL=80,BLKSIZE=3200)            00810000
+//SYSUT1   DD  DSN=&&SYSUT1,UNIT=SYSDA,                                 00820000
+//             SPACE=(1024,(200,50),,CONTIG,ROUND),DCB=BLKSIZE=1024     00830000
+//********************************************************************* 00840000
+//* LINK STEP NPK PROSOXI AMODE(31),                                    00850001
+//********************************************************************* 00860000
+//LKED     EXEC PGM=IEWBLINK,COND=(8,LT,PLI),                           00870000
+//             PARM='AMODE(31),XREF,REUS,COMPAT=PM3,&OPTL',REGION=40M   00880001
+//SYSLIB   DD  DSN=IMST.SDFSRESL,DISP=SHR                               00890000
+//         DD  DSN=CEE.SCEELKED,DISP=SHR                                00900000
+//         DD  DSN=CICSTS22.CICS.SDFHEXCI,DISP=SHR                      00910000
+//*        DD  DSN=SYS1.DSN710.SDSNLOAD,DISP=SHR                        00920000
+//         DD  DSN=CBG.TEST.LOAD,DISP=SHR                               00930000
+//         DD  DSN=CBG.PROD.LOAD,DISP=SHR                               00940000
+//SYSPRINT DD  SYSOUT=*                                                 00950000
+//SYSLIN   DD  DSN=*.PLI.SYSLIN,DISP=(OLD,DELETE)                       00960000
+//*        DD DSN=SYS1.DSN710.SDSNLOAD(DSNELI),DISP=SHR                 00970000
+//         DD  DDNAME=SYSIN                                             00980000
+//SYSLMOD  DD  DSN=CBG.TEST.LOAD(DKEXCI),DISP=SHR                       00990000
+//SYSDEFSD DD  DUMMY                                                    01000000
+//SYSIN    DD  DUMMY                                                    01010000
+//         PEND                                                         01020000
+//*                                                                     01030000
+//IVP     EXEC CBGPLI,REGION=0M,OPTC='XREF,AGGREGATE'                   01040000
+//*                                                                     01050000
+

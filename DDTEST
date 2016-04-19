@@ -1,0 +1,99 @@
+ DDTEST:  PROCEDURE OPTIONS(MAIN);
+ /********************************************************************/
+ /* –—œ√—¡ÃÃ¡ PLI                                                    */
+ /********************************************************************/
+ /*–—œ√—¡ÃÃ¡                                                         */
+ /********************************************************************/
+ /********************************************************************/
+ /* Input :                                                          */
+ /*      AÒ˜ÂﬂÔ                                                     */
+ /*  Output:                                                         */
+ /*                                                                  */
+ /*                                                                  */
+ /********************************************************************/
+ /********************************************************************/
+ /*           PROGRAM NAME: DDTEST     LOAD MODULE: DDTEST           */
+ /********************************************************************/
+ /* 13-03-2009 NPK                                                   */
+ /********************************************************************/
+ DCL PLIXOPT CHAR(39) VAR EXT  INIT ('ERRCOUNT(0)');
+ DCL OUTFILE FILE RECORD OUTPUT  ENV (  FB RECSIZE(080) ) ;
+ DCL R        CHAR(80) ;
+ DCL MYSTRING CHAR(70) ;
+ DCL MYNUM PIC'9999' INIT(0);
+ DCL I     FIXED(3)  INIT(0);
+ DO I = 1 TO 2;
+    CALL HEADER;
+    CALL BODY  ;
+ END;
+  HEADER :PROC;
+  OPEN FILE(OUTFILE);
+  R='//DDARC03  JOB (ACCTNO),PROGRAMMER,NOTIFY=TSOID,USER=P,      ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//         TYPRUN=HOLD,                                      ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//         CLASS=P,MSGCLASS=X,MSGLEVEL=(1,1)                 ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//*                                                          ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//*    ARCHIVE  FDO                                          ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//*                                                          ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='/*JOBPARM SYSAFF=SYP1                                        ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//*                                                          ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//  JCLLIB ORDER=(CBG.PROD.PROC,CBG.PROD.PROC)               ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//*                                                          ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//JOBLIB   DD  DSN=DSN810.DB2P.RUNLIB.LOAD,DISP=SHR          ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//         DD  DSN=DSN810.DB2P.SDSNEXIT,DISP=SHR             ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//         DD  DSN=DSN810.SDSNLOAD,DISP=SHR                  ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//         DD  DSN=CBG.PROD.LOAD,DISP=SHR                    ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//         DD  DSN=CBG.PROD.LOAD,DISP=SHR                    ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//         DD  DSN=MVSMS12.LINKLIB,DISP=SHR ';                           JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//*----------------------------------------------------------';    ----  JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R="//CZX3PPRO EXEC PGM=CZX3PPRO,PARM='DATE=&DATE,UPSI=00000000' ";          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//*----------------------------------------------------------';    ----  JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//DDARC02A EXEC PGM=IKJEFT01,DYNAMNBR=20                     ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//SYSPRINT DD SYSOUT=*                                       ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//SYSTSPRT DD SYSOUT=*                                       ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//CEEDUMP  DD SYSOUT=*                                       ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//SYSUDUMP DD DUMMY                                          ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  END HEADER;
+
+  BODY :PROC;
+  MYNUM = I;
+  R='//FILEINP  DD DSN=DD.P.XS.DDDFDR.G'!!MYNUM!!'V00,DISP=SHR';              JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//PRT      DD SYSOUT=X,UCS=CBG                               ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//READER   DD DSN=CBG.PROD.SYSIN2(DDARC03A),DISP=SHR         ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//SYSTSIN  DD DSN=CBG.PROD.SYSIN2(DDARC03),DISP=SHR          ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//*----------------------------------------------------------';    ----  JO
+  WRITE FILE(OUTFILE) FROM(R);
+  R='//CZX3PEPI EXEC PGM=CZX3PEPI,COND=EVEN                       ';          JO
+  WRITE FILE(OUTFILE) FROM(R);
+
+  CLOSE FILE(OUTFILE);
+  END BODY;
+  DDTEST  END;
+

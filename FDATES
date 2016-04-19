@@ -1,0 +1,30 @@
+/* REXX*/                                                               00019300
+                                                                        00019401
+                                                                        00019501
+    RC = LISTDSI("'CBG.TEST.SOURCE(DK553)'" MEMBER )                    00019602
+ IF RC = 0 THEN DO                                                      00019801
+    SAY SYSVOLUME                                                       00019901
+    SAY SYSDSNAME                                                       00020001
+    SAY 'RACF = ' SYSRACFA                                              00020101
+ END                                                                    00020201
+ ELSE DO                                                                00020301
+    SAY 'RC = ' RC                                                      00020401
+    SAY 'REASON = ' SYSREASON                                           00020501
+    SAY 'MSG1   = ' SYSMSGLVL1                                          00020601
+    SAY 'MSG2   = ' SYSMSGLVL2                                          00020701
+ END                                                                    00020801
+/*                                                                      00020901
+DO I = 1 TO 3 BY 1                                                      00021001
+                                                                        00021101
+                                                                        00021201
+END                                                                     00021301
+                                                                        00021401
+ DKBALMP                                                                00021501
+ DK.P.XS.DKT20EPI(0)                                                    00021601
+ DK.P.XS.TRLOIPFN(0)                                                    00021701
+ DKBHBJCL                                                               00021801
+ DK.P.BU.DBKATMHN(0)                                                    00021901
+                                                                        00022001
+  SAY */                                                                00023001
+ EXIT 0                                                                 00030000
+

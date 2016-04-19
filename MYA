@@ -1,0 +1,9 @@
+HELO MVSHOST
+MAIL FROM:<KONSTAN@SYP2.EMPORIKI.GR>
+RCPT TO:<konstanponstan@yahoo.gr>
+DATA
+FROM:     KONSTAN@SYP2.EMPORIKI.GR
+TO:       KONSTANTOPOULOS.N@EMPORIKI.GR
+SUBJECT:  Θα βάλω και μικρά και Μεγάλα και English
+θα βαλω και κεφαλαία ΚΑΙ ΜΙΚΡΑ
+

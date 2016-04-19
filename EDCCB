@@ -1,0 +1,58 @@
+//********************************************************************
+//* LICENSED MATERIALS - PROPERTY OF IBM.                            *
+//* 5647-A01                                                         *
+//* (C) COPYRIGHT IBM CORP. 1997, 2000                               *
+//*                                                                  *
+//********************************************************************
+//*                                                                  *
+//*  COMPILE AND BIND A C PROGRAM                                    *
+//*                                                                  *
+//*  OS/390 C/C++                                                    *
+//*                                                                  *
+//*  RELEASE LEVEL: 02.10.00  (VERSION.RELEASE.MODIFICATION LEVEL)   *
+//*                                                                  *
+//********************************************************************
+//*
+//EDCCB PROC  INFILE=,                   < INPUT ... REQUIRED
+//   CREGSIZ='48M',                       < COMPILER REGION SIZE
+//   CRUN=,                               < COMPILER RUNTIME OPTIONS
+//   CPARM=,                              < COMPILER OPTIONS
+//   LIBPRFX='SYS1.CEE',                 < PREFIX FOR LIBRARY DSN
+//   LNGPRFX='SYS1.CBC',                 < PREFIX FOR LANGUAGE DSN
+//   BPARM=,                              < BINDER OPTIONS
+//   BREGSIZ='20M',                       < BINDER REGION SIZE
+//   TUNIT='SYSDA',                       < UNIT FOR TEMPORARY FILES
+//   OUTFILE='&&GSET(GO),SPACE=(TRK,(7,7,1)),UNIT=SYSDA,DSNTYPE=LIBRARY
+//             ,DISP=(NEW,PASS)'
+//*-------------------------------------------------------------------
+//*  COMPILE STEP:
+//*-------------------------------------------------------------------
+//COMPILE EXEC PGM=CBCDRVR,REGION=&CREGSIZ,
+//    PARM=('&CRUN/&CPARM')
+//STEPLIB  DD  DSNAME=&LIBPRFX..SCEERUN,DISP=SHR
+//         DD  DSNAME=&LNGPRFX..SCBCCMP,DISP=SHR
+//SYSIN    DD  DSNAME=&INFILE,DISP=SHR
+//SYSLIB   DD  DSNAME=CEE.SCEEH.H,DISP=SHR
+//         DD  DSNAME=CEE.SCEEH.SYS.H,DISP=SHR
+//SYSLIN   DD  DSNAME=&&LOADSET,UNIT=&TUNIT.,
+//             DISP=(MOD,PASS),SPACE=(TRK,(3,3)),
+//             DCB=(RECFM=FB,LRECL=80,BLKSIZE=3200)
+//SYSPRINT DD  SYSOUT=*
+//SYSOUT   DD  SYSOUT=*
+//SYSCPRT  DD  SYSOUT=*
+//*
+//*-------------------------------------------------------------------
+//*  BIND STEP:
+//*-------------------------------------------------------------------
+//BIND   EXEC PGM=IEWL,REGION=&BREGSIZ,COND=(4,LT,COMPILE),
+//   PARM='AMODE=31,MAP,RENT,DYNAM=DLL,CASE=MIXED,COMPAT=CURR,&BPARM'
+//STEPLIB  DD  DSN=&LIBPRFX..SCEERUN,DISP=SHR
+//SYSLIB   DD  DSN=CEE.SCEELKEX,DISP=SHR
+//         DD  DSN=CEE.SCEELKED,DISP=SHR
+//SYSPRINT DD  SYSOUT=*
+//SYSLIN   DD  DSNAME=*.COMPILE.SYSLIN,DISP=(OLD,DELETE)
+//         DD  DDNAME=SYSIN
+//SYSLMOD  DD  DSNAME=&OUTFILE
+//SYSDEFSD DD  DUMMY
+//SYSIN    DD  DUMMY
+

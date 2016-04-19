@@ -1,0 +1,12 @@
+//EXCI    JOB (accounting_information),CLASS=A,TIME=1440,               00010000
+//        USER=userid,PASSWORD=pswd,REGION=100M                         00020000
+//*===============================================================*     00030000
+//*    JCL to execute an external CICS interface client program   *     00040000
+//*===============================================================*     00050000
+//          EXEC  PGM=pgmname                                           00060000
+//STEPLIB   DD    DSN=CICSTS22.CICS.EXCI.LOADLIB,DISP=SHR               00070000
+//          DD    DSN=CICSTS22.CICS.SDFHEXCI,DSIP=SHR                   00080000
+//SYSPRINT  DD    SYSOUT=A                                              00090000
+//SYSMDUMP  DD    DSN=SYS1.SYSMDP00,VOL=SER=volid,SPACE=(CYL,(1,1)),    00100000
+                    DISP=OLD,UNIT=3390                                  00110000
+

@@ -1,0 +1,202 @@
+ /*********************************************************************/
+ /* ауто то пяоцяалла дглиоуяцеи 6-ьгжио йахокийо йатахесеым          */
+ /* паиямеи сам INPUT :                                               */
+ /*                                                                   */
+ /*  т20KATHOF     FIXED(5,0) = 4-ьгжио йахокийо (пакио)              */
+ /*  T20EPAGELMA   CHAR (2)   = йыдийос епаццеклатос                  */
+ /*  T20FN         CHAR (1)   = жусийо-молийо пяосыпо ('u'-'N')       */
+ /*                                                                   */
+ /* йаи епистяежеи                                                    */
+ /*     KATHOLR   FIXED(7)  6-ьгжио йахокийо йатахесеым               */
+ /*********************************************************************/
+ /* H коцийг тоу пяоцяаллатос еимаи амтицяажг тоу  DK342              */
+ /*********************************************************************/
+ /* мпй 27-01-2003                                                    */
+ /* мпй 31-03-2004 пяосхгйг йахокийым 5114 - 5150                     */
+ /*********************************************************************/
+ DKR4TO6 : PROC(T20KATHOF,T20EPAGELMA,T20FN) OPTIONS(FETCHABLE)
+                                        RETURNS(FIXED(7));
+
+   DCL T20KATHOF     FIXED DEC (5,0)   ;
+   DCL T20EPAGELMA   CHAR  (2)   ;
+   DCL T20FN         CHAR  (1)   ;
+
+   DCL T20KATHO      PIC'(4)9' INIT(0);
+   DCL KATHOLR       FIXED(7)    INIT(0)   ;
+
+   DCL 1  NEWKATOL  PIC'(6)9'   INIT(0)   ;
+   DCL 1  NEWKATOR  BASED(ADDR(NEWKATOL)) ,
+        2 NEWKAT1      PIC '(04)9'        ,
+        2 NEWKAT2      PIC '(02)9'        ;
+
+   DCL    ADDR      BUILTIN ;
+
+   T20KATHO = T20KATHOF; /* MAKE THE FIXED PIC */
+
+   NEWKAT1  = T20KATHO ;
+   NEWKAT2  = 99 ;
+
+   IF  T20KATHO=5060 ! T20KATHO=5080 ! T20KATHO=5150 !
+       T20KATHO=5116             THEN DO ;
+       IF  T20FN = 'u' THEN DO ;
+           NEWKAT2  = 01 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA <= '34'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '92' & T20EPAGELMA <= '99'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '82' & T20EPAGELMA <  '84'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '39' & T20EPAGELMA <= '42'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '45' & T20EPAGELMA <= '81'   THEN DO ;
+           NEWKAT2  = 03 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '35' & T20EPAGELMA <= '38'   THEN DO ;
+           NEWKAT2  = 04 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA = '43'  THEN DO ;
+           NEWKAT2  = 04 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '85' & T20EPAGELMA <= '86'   THEN DO ;
+           NEWKAT2  = 05 ;
+           GOTO  CONT ;
+       END ;
+
+       IF  (T20EPAGELMA = '84' !
+           T20EPAGELMA = '90' ! T20EPAGELMA = '91')   THEN DO ;
+           NEWKAT2  = 05 ;
+           GOTO  CONT ;
+       END ;
+
+       IF  T20EPAGELMA >= '88' & T20EPAGELMA <= '89'   THEN DO ;
+           NEWKAT2  = 06 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA  = '87'   THEN DO ;
+           NEWKAT2  = 07 ;
+           GOTO  CONT ;
+       END ;
+       GOTO  CONT ;
+   END ;
+
+   IF  T20KATHO=5068 ! T20KATHO=5078 ! T20KATHO=5300 !
+       T20KATHO=5122                                   THEN DO ;
+       NEWKAT2  = 01 ;
+       GOTO  CONT ;
+   END ;
+
+   /*START пяосхгйг меым йахокийым 5114 йаи 5150   31-03-2004  */
+   IF  T20KATHO=5114 ! T20KATHO=5150                   THEN DO ;
+       NEWKAT2  = 01 ;
+       GOTO  CONT ;
+   END ;
+   /*END   пяосхгйг меым йахокийым 5114 йаи 5150   31-03-2004  */
+
+   IF  T20KATHO=5090   THEN DO ;
+       IF  T20EPAGELMA >= '85' & T20EPAGELMA <= '86'   THEN DO ;
+           NEWKAT2  = 05 ;
+           GOTO  CONT ;
+       END ;
+
+       /*** AkkAcH   21.01.98    r.A.  ***/
+       IF  (T20EPAGELMA = '84' !
+           T20EPAGELMA = '90' ! T20EPAGELMA = '91')   THEN DO ;
+           NEWKAT2  = 05 ;
+           GOTO  CONT ;
+       END ;
+       /***                            ***/
+
+       IF  T20EPAGELMA >= '88' & T20EPAGELMA <= '89'   THEN DO ;
+           NEWKAT2  = 06 ;
+           GOTO  CONT ;
+       END ;
+       GOTO  CONT ;
+   END ;
+
+   IF  T20KATHO=5100   THEN DO ;
+       IF  T20FN = 'u' THEN DO ;
+           NEWKAT2  = 01 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA <= '34'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '92' & T20EPAGELMA <= '99'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '82' & T20EPAGELMA <  '84'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '39' & T20EPAGELMA <= '42'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       GOTO  CONT ;
+   END ;
+
+   IF  T20KATHO=5114 ! T20KATHO=5115 !    /* T20KATHO=5116 ! 16.09.99 */
+       T20KATHO=5117                   THEN DO ;
+       NEWKAT2  = 01 ;
+       GOTO  CONT ;
+   END ;
+
+   IF  T20KATHO=5120 ! T20KATHO=5121   THEN DO ;
+       IF  T20FN = 'u' THEN DO ;
+           NEWKAT2  = 01 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA <= '34'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '92' & T20EPAGELMA <= '99'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '82' & T20EPAGELMA <  '84'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '39' & T20EPAGELMA <= '42'   THEN DO ;
+           NEWKAT2  = 02 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '45' & T20EPAGELMA <= '81'   THEN DO ;
+           NEWKAT2  = 03 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA >= '35' & T20EPAGELMA <= '38'   THEN DO ;
+           NEWKAT2  = 04 ;
+           GOTO  CONT ;
+       END ;
+       IF  T20EPAGELMA = '43'  THEN DO ;
+           NEWKAT2  = 04 ;
+           GOTO  CONT ;
+       END ;
+       GOTO  CONT ;
+   END ;
+
+ CONT :
+
+ KATHOLR = NEWKATOL  ;  /* MAKE THE PIC FIXED */
+
+ RETURN ( KATHOLR  );
+
+ END  DKR4TO6          ;
+

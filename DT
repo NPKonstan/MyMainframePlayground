@@ -1,0 +1,1802 @@
+#include <math.h>
+#include <string.h>
+#include <stdio.h>
+/* #include <conio.h> DEN YPARXEI STO Z/OS */
+
+#define ALPHA_LEN    15
+#define PIREOS_LEN   13
+
+#define ABNAMRO_LEN  12
+#define CITIBANK_LEN 16
+#define NATIONAL_LEN 11
+#define ING_LEN      16
+#define ASPIS_LEN    16
+
+#define ERGASIA1_LEN 14
+#define ERGASIA2_LEN 15
+
+#define EUROBANK_LEN 16
+#define EGNATIA_LEN  15
+#define CHANION_LEN  9
+
+#define CYPRUS_LEN  16
+#define ELLENIC_LEN 10
+
+#define GENIKI1_LEN 11
+#define GENIKI2_LEN 12
+
+#define ATTIKIS_LEN 8
+
+#define CCF_LEN 14
+
+#define SOSIETE_GENERAL_LEN 12
+
+#define PROBANK_LEN 13
+#define PANELLINIA_LEN 16
+
+#define NOVABANK_FROM_LEN 4
+#define NOVABANK_TO_LEN   10
+
+#define HYPOVEREINSBANK_LEN 12
+
+#define AMERICABANK_LEN 12
+
+
+
+/*	struct WESMAPNAME        *pWesMap,*/
+int DTAlphaBankCheck( char * );
+int DTNationalBankCheck( char *  );
+int DTPeireosBankCheck( char *  );
+int DTTelesisBankCheck( char *  );
+
+
+int DTEuroBankCheck( char * ,struct WESMAPNAME        *pWesMap  );
+int DTEuroBankCheck1( char *  );
+int DTEuroBankCheck2( char *  ,struct WESMAPNAME        *pWesMap);
+
+
+int DTAspisBankCheck( char *  );
+int DTAbnAmroBankCheck( char *  );
+int DTCitiBankCheck( char *  );
+int DTIngBankCheck( char * );
+int DTErgasiasBankCheck( char * );
+int DTEgnatiaBankCheck( char *  );
+int DTEmborikiBankCheck( char *  );
+int DTChanionBankCheck( char *  );
+int DTCyprusBankCheck( char *  );
+int DTEllenicBankCheck( char *  );
+int DTGenikiBankCheck( char *  );
+int DTAttikisBankCheck( char *  );
+int DTCCFBankCheck( char *  );
+
+int DTSosieteGeneralBankCheck( char *  );
+int DTProBankCheck( char *  );
+int DTHVBBankCheck( char *  );
+int DTPanelliniaBankCheck( char *  );
+int DTNovaBankCheck( char *  );
+int DTAmericaBankCheck( char *  );
+
+
+
+
+/*int DTCheck(char *, char *,struct WESMAPNAME *  );*/
+
+typedef struct _table{
+char bankð4ö;
+char accð17ö;
+}table;
+
+/*
+table MyTableðö={
+{"011","00048463545"},
+{"011","00040022029"},
+{"011","00044032905"},
+{"011","00040114819"},
+{"011","00048463545"},
+{"011","00044029952"},
+{"011","00047025307"},
+{"011","00050500068"},
+{"011","00047026549"},
+{"011","00047128383"},
+{"084","0000005035279793"},
+{"084","0000005046529550"},
+{"084","0000005025297491"},
+{"084","0000005043160330"},
+{"084","0000005010701060"},
+{"084","0000005014819120"},
+{"084","0000005041084656"},
+{"060","000503157015"},
+{"060","000000441317"},
+{"060","000200727001"},
+{"060","000000392626"},
+{"060","000040725006"},
+{"060","000000462799"},
+{"060","000102640009"},
+{"060","000600990001"},
+{"060","000000330647"},
+{"017","5701012392261"},
+{"017","5408009949817"},
+{"026","0210001507766033"},
+{"026","1370000739931628"},
+
+};
+*/
+
+int DTCheck(char * BankCode,char * accnum,
+            struct WESMAPNAME *pWesMap){
+	int rc;
+	if(]strcmp(BankCode,"011"))
+			rc =  DTNationalBankCheck(accnum);
+	else
+		if(]strcmp(BankCode,"014"))
+			rc =  DTAlphaBankCheck(accnum);
+    else
+		if(]strcmp(BankCode,"017"))
+			rc =  DTPeireosBankCheck(accnum);
+    else
+		if(]strcmp(BankCode,"025"))
+			rc =  DTTelesisBankCheck(accnum);
+    else
+		if(]strcmp(BankCode,"026"))
+			rc =  DTEuroBankCheck(accnum,pWesMap);
+    else
+		if(]strcmp(BankCode,"047"))
+			rc =  DTAspisBankCheck(accnum);
+    else
+		if(]strcmp(BankCode,"060"))
+			rc =  DTAbnAmroBankCheck(accnum);
+    else
+		if(]strcmp(BankCode,"084"))
+			rc =  DTCitiBankCheck(accnum);
+   else
+		if(]strcmp(BankCode,"078"))
+			rc =  DTIngBankCheck(accnum);
+   else
+		if(]strcmp(BankCode,"028"))
+			rc =  DTEgnatiaBankCheck(accnum);
+   else
+		if(]strcmp(BankCode,"012"))
+			rc =  DTEmborikiBankCheck(accnum);
+   else
+	   	if(]strcmp(BankCode,"069"))
+			rc =  DTChanionBankCheck(accnum);
+   else
+	   	if(]strcmp(BankCode,"073"))
+			rc =  DTCyprusBankCheck(accnum);
+   else
+	   	if(]strcmp(BankCode,"032"))
+			rc =  DTEllenicBankCheck(accnum);
+   else
+	   	if(]strcmp(BankCode,"015"))
+			rc =  DTGenikiBankCheck(accnum);
+   else
+	   	if(]strcmp(BankCode,"016"))
+			rc =  DTAttikisBankCheck(accnum);
+   else
+	   	if(]strcmp(BankCode,"068"))
+			rc =  DTCCFBankCheck(accnum);
+   else
+	   	if(]strcmp(BankCode,"067"))
+			rc =  DTSosieteGeneralBankCheck(accnum);
+   else
+	   	if(]strcmp(BankCode,"054"))
+			rc =  DTProBankCheck(accnum);
+   else
+	   	if(]strcmp(BankCode,"072"))
+			rc =  DTHVBBankCheck(accnum);
+   else
+	   	if(]strcmp(BankCode,"049"))
+			rc =  DTPanelliniaBankCheck(accnum);
+   else
+	   	if(]strcmp(BankCode,"038"))
+			rc =  DTNovaBankCheck(accnum);
+   else
+	   	if(]strcmp(BankCode,"081"))
+			rc =  DTAmericaBankCheck(accnum);
+
+   else
+
+	   rc=1;
+
+   return rc;
+
+}
+/********************************************************************** ********
+************/
+/*End of DTCheck function*/
+/*******************************************************************************
+************/
+/********************************************************************** ********
+************/
+
+int DTAlphaBankCheck(char *accnum){
+
+
+	int numðALPHA_LENö;
+	int j;
+	int sum=0;
+	int rem=0;
+	int cd=0;
+	int i =0;
+
+
+	if (strlen(accnum)]=ALPHA_LEN)
+		return 1;
+	if(]strncmp(accnum,"0000000000000000",ALPHA_LEN))
+		return 1;
+
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < ALPHA_LEN; j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < ALPHA_LEN; j++)
+             numðjö = (accnumðjö - '0');
+
+		 for (j= ALPHA_LEN - 2,i=1;j>=0;j--,i++)
+			 sum=sum + (numðjö*(int)pow(2.0,(double)i));
+
+		 rem =sum%11;
+		 cd = 11-rem;
+		if(cd>9)
+			cd = 0;
+		if (cd == numðALPHA_LEN-1ö )
+			return 0;
+		else
+			return DTAlphaBankCheckSpecial(accnum);                              for Spec
+ial ControlDigit
+
+
+
+}
+
+int DTAlphaBankCheckSpecial(char *accnum){
+
+	int numðALPHA_LENö;
+	int j;
+	int sum=0;
+	int rem=0;
+	int rem1=0;
+	int rem3=0;
+	int cd=0;
+	int i =0;
+	int f =0;
+	int SpecialCd =0;
+
+
+         for (j = 0; j < ALPHA_LEN; j++)
+             numðjö = (accnumðjö - '0');
+
+		 for (j= ALPHA_LEN - 2,i=1;j>=0;j--,i++)
+			 sum=sum + (numðjö*(int)pow(2.0,(double)i));
+
+		 rem =sum%11;
+		 cd = 11-rem;
+		if(cd>9)
+			cd = 0;
+
+		
+		rem1=cd /5;
+		f=cd +(5 - rem1*10) ;
+
+		if(f>0 && f<10)
+			SpecialCd = f;
+		else
+			if (f>10)
+			 SpecialCd= 10 % f;
+	        else
+			 if (f<0)
+				 SpecialCd = -f;
+
+		if (SpecialCd == numðALPHA_LEN-1ö )
+			return 0; /*Account Is OK*/
+		else
+			return 1;/*Account Is Not OK */
+
+}
+
+int DTPeireosBankCheck(char *accnum){
+
+	int numðPIREOS_LENö;
+	int multipliesðö={2,3,4,5,6,7,2,3,4,5,6,7 };
+	int j;
+	int sum=0;
+	int rem=0;
+	int cd=0;
+	int i =0;
+
+
+	if (strlen(accnum)]=PIREOS_LEN)
+		return 1;
+	if(]strncmp(accnum,"0000000000000000",PIREOS_LEN))
+		return 1;
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < PIREOS_LEN; j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < PIREOS_LEN; j++)
+             numðjö = (accnumðjö - '0');
+
+
+		 for (j= PIREOS_LEN - 2,i=0;j>=0;j--,i++)
+			 sum=sum + multipliesðiö*numðjö;
+
+		 rem =sum%11;
+		 cd = 11-rem;
+		if(cd>9)
+			cd = cd-10;
+
+		if (cd == numðPIREOS_LEN-1ö )
+			return 0;
+		else
+			return 1;
+
+
+
+}
+
+int DTTelesisBankCheck( char *  accnum)
+{
+	return 0;/**/
+}
+
+int DTEuroBankCheck( char *  accnum,struct WESMAPNAME        *pWesMap)
+{
+
+    if ((strlen(accnum)==ERGASIA1_LEN)]]
+		(strlen(accnum)==ERGASIA2_LEN)]]
+		(strlen(accnum)==EUROBANK_LEN)
+		)
+    {
+
+	if ( strlen(accnum) == ERGASIA1_LEN ]] strlen(accnum) == ERGASIA2_LEN)
+sias
+	  return DTErgasiasBankCheck(accnum);
+	else/*if Eurobank */
+		if (strncmp(accnum,"0000",4)) /*if Old Eurobank type Account*/
+		return DTEuroBankCheck1(accnum);
+	else
+	    return DTEuroBankCheck2(accnum,pWesMap);                           count
+
+	}
+	else
+			return 1;
+}
+int DTEuroBankCheck1( char *  accnum)
+{
+
+	int numðEUROBANK_LENö;
+	double constan1 = 4073800000.0;
+	double constan2 = 100000000000.0 ;
+
+	char katmað4ö;
+	char accð12ö;
+
+	long lkatma=0L;
+	double lacc =0.0;
+
+	int j;
+	double sum=0.0;
+	int rem=0;
+	int cd=0;
+	int i =0;
+	if (strlen(accnum)]=EUROBANK_LEN)
+		return 1;
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < EUROBANK_LEN; j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < EUROBANK_LEN; j++)
+             numðjö = (accnumðjö - '0');
+
+
+
+memset(katma,'\0',sizeof(katma));
+memset(acc,'\0',sizeof(acc));
+
+strncpy(katma,accnum,sizeof(katma));
+katmaðsizeof(katma)-1ö='\0';
+
+strncpy(acc,accnum+3,sizeof(acc));
+accðsizeof(acc)-1ö='\0';
+
+sum= atof(katma) + constan1;
+rem=(int)fmod((double)sum, (double)97);
+
+sum = (rem * constan2 + atof(acc))*100;
+
+cd =  97 - (int)fmod((double)sum, (double)97);
+
+
+		if (cd == ( 10*numð14ö + numð15ö ))
+			return 0;
+		else
+			return 1;
+
+	
+}
+int DTEuroBankCheck2( char *  accnum,struct WESMAPNAME  *pWesMap)
+{
+
+	int numð20ö;
+
+	int multipliers1ðö={4,8,5,10,9,7,3,6};
+
+	int multipliers2ðö={1,2,4,8,5,10,9,7,3,6};
+
+	char katmað4ö;
+	char accð12ö;
+
+	long lkatma=0L;
+	double lacc =0.0;
+
+	int j;
+
+	int sum=0;
+	int rem=0;
+	int cd=0;
+	int i =0;
+
+	char buffð5ö;
+	char codBranchð5ö;
+
+	char NewEurobankAccð21ö;
+
+	memset(buff,'0',sizeof(buff)-1);
+	buffð4ö='\0';
+
+	memset(codBranch,'\0',sizeof(codBranch));	
+    itoa(CodBranchIbanData,codBranch,10);
+
+    i=strlen(codBranch)-1;
+
+	for ( j=4-1;i>=0;)
+		 buffðj--ö=codBranchði--ö;
+
+
+	memset(NewEurobankAcc,'\0',sizeof(NewEurobankAcc));
+
+ first digits
+	strcpy(NewEurobankAcc,"0026");
+	strncat(NewEurobankAcc,buff,4);
+	strncat(NewEurobankAcc,accnum+4,12);
+
+
+
+
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < 20; j++){
+             if ((NewEurobankAccðjö < '0') ]] (NewEurobankAccðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < 20; j++)
+             numðjö = (NewEurobankAccðjö - '0');
+
+
+		 for (i=0; i<= 7;i++)
+			 sum=sum + (numðiö*multipliers1ðiö);
+
+		 cd = sum % 11;
+
+
+		if (cd>1)
+			cd = 11 - cd;
+
+		if (cd ]= numð8ö)
+			return 1;
+
+	  sum=0;
+	  cd=0;
+	  for (i=0; i<= 9;i++)
+			 sum=sum + (numð10 + iö*multipliers2ðiö);
+
+
+
+		 cd = sum % 11;
+
+
+		if (cd>1)
+			cd = 11 - cd;
+
+		if (cd ]= numð9ö)
+			return 1;
+		else
+			return 0;
+
+	
+}
+
+int DTAbnAmroBankCheck( char *  accnum)
+{
+
+
+	int numðABNAMRO_LENö;
+	int multipliersðö={1,2,3,4,5,6,7,8,9,10,1,2};
+
+	int j;
+	int sum=0;
+	int rem=0;
+	int cd=0;
+	int i =0;
+
+
+	if (strlen(accnum)]=ABNAMRO_LEN)
+		return 1;
+	if(]strncmp(accnum,"0000000000000000",ABNAMRO_LEN))
+		return 1;
+
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < ABNAMRO_LEN; j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < ABNAMRO_LEN; j++)
+             numðjö = (accnumðjö - '0');
+
+		 for (j= ABNAMRO_LEN-1 ,i=0;j>=0;j--,i++)
+			 sum=sum + (numðjö*multipliersðiö);
+
+		 cd = sum % 11;
+
+		 if (cd == 0 )
+			 return 0;
+		 else
+			 return 1;
+
+
+}
+
+int DTCitiBankCheck( char * accnum ){
+
+
+	int numðCITIBANK_LENö;
+	int multipliersðö={	4,3,2,7,6,5,4,3,2};
+
+	int j;
+	int sum=0;
+	int rem=0;
+	int cd=0;
+	int i =0;
+
+
+	if (strlen(accnum)]=CITIBANK_LEN)
+		return 1;
+	if(]strncmp(accnum,"0000000000000000",CITIBANK_LEN))
+		return 1;
+
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < CITIBANK_LEN; j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < CITIBANK_LEN; j++)
+             numðjö = (accnumðjö - '0');
+
+		 for (j= 6 ,i=0;j<15;j++,i++)
+			 sum=sum + (numðjö*multipliersðiö);
+
+		 cd = 11 - (sum % 11);
+
+		 if (cd==10)
+			 cd = 7;
+		 else
+			 if(cd==11)
+				 cd = 8;
+
+
+	if (cd == numðCITIBANK_LEN -1ö )                                       t??? de?
+			return 0;
+	else
+			return 1;
+
+	
+	}
+int DTNationalBankCheck( char * accnum ){
+
+
+	int numðNATIONAL_LENö;
+	int multipliersðö={	2,3,4,5,6,7,2,3,4};
+
+	int j;
+	int sum=0;
+	int rem=0;
+	int cd=0;
+	int i =0;
+
+
+	if (strlen(accnum)]=NATIONAL_LEN)
+		return 1;
+	if(]strncmp(accnum,"0000000000000000",NATIONAL_LEN))
+		return 1;
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < NATIONAL_LEN; j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < NATIONAL_LEN; j++)
+             numðjö = (accnumðjö - '0');
+
+		 for (j= 8 ,i=0;j>2;j--,i++)
+			 sum=sum + (numðjö*multipliersðiö);
+
+
+		 cd = 11 - (sum % 11);
+
+		 if (cd>9)
+			 cd = 0;
+
+
+	if (cd == numðNATIONAL_LEN -2ö )                                        ??e? 2
+		
+	{
+			return DTNationalBankSecondDigit(accnum);
+	
+	}
+		
+	else
+			return 1;
+
+	
+	}
+int DTNationalBankSecondDigit( char *  accnum)
+{
+	int numðNATIONAL_LENö;
+	char num1ð15+1ö;
+	int j;
+	int sum=0;
+	int rem=0;
+	int cd=0;
+	int i =0;
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < NATIONAL_LEN; j++)
+             numðjö = (accnumðjö - '0');
+
+
+num1ð0ö=	accnumð1ö;
+num1ð1ö=	accnumð3ö;
+num1ð2ö=	accnumð5ö;
+num1ð3ö=	accnumð7ö;
+num1ð4ö=	accnumð9ö;
+num1ð5ö=	'\0';
+
+j=atoi(num1);
+memset(num1,'\0',sizeof(num1));
+itoa(j*2,num1,10);
+
+i = 0;
+while(num1ðiö]='\0')
+sum = sum + ( num1ði++ö -'0');
+
+for(i=0;i<10;i=i+2)
+sum = sum + (accnumðiö-'0');
+
+ cd = 10 - (sum % 10);
+
+ if (cd==10)
+	cd=0;
+
+	if (cd == numðNATIONAL_LEN -1ö )                                       e? 2
+		
+			return 0;
+	else
+			return 1;
+
+
+}
+
+int DTIngBankCheck( char * accnum)  {
+
+	int numðING_LENö;
+	int multipliersðö={7,6,5,4,3,2};
+
+	int j;
+	int sum=0;
+	int rem=0;
+	int cd=0;
+	int i =0;
+
+
+	if (strlen(accnum)]=ING_LEN)
+		return 1;
+	if(]strncmp(accnum,"0000000000000000",ING_LEN))
+		return 1;
+
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < ING_LEN; j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Check first digit of account                          */
+/*  Valid account digits are 5-9                          */
+/**********************************************************/
+			if(
+			   accnumð0ö=='0' ]]
+			   accnumð0ö=='1' ]]
+			   accnumð0ö=='2' ]]
+			   accnumð0ö=='3' ]]
+			   accnumð0ö=='4'
+			   )
+			   return 1;
+
+/**********************************************************/
+/*  Check Account currency type = EUR                     */
+/*  Valid account currency type is     978                */
+/**********************************************************/
+			 if(strncmp(accnum+13,"978",3) )
+				 return 1;
+
+/**********************************************************/
+/*  Check Account Type                                    */
+/*  Valid account types are 001,065,157,158               */
+/**********************************************************/
+			 if(
+				(strncmp(accnum+7,"001",3)) &&
+				 (strncmp(accnum+7,"065",3)) &&
+	             (strncmp(accnum+7,"157",3)) &&
+				 (strncmp(accnum+7,"158",3))
+				)
+				return 1;
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < ING_LEN; j++)
+             numðjö = (accnumðjö - '0');
+
+/**********************************************************/
+/*  Calculate Control Digit                               */
+/**********************************************************/
+
+		 for (j= 5 ;j>=0;j--)
+			 sum=sum + (numðjö*multipliersðjö);
+
+		 cd = sum % 11;
+
+		 cd = 11 - cd;
+		
+		 if(cd==10)
+			 cd = 0;
+
+		 if (cd==11)
+			 cd = 1;
+
+		 if (cd == numð6ö )
+			 return 0;
+		 else
+			 return 1;
+
+
+
+
+}
+
+int DTAspisBankCheck( char *  accnum){
+
+	int numðASPIS_LENö;
+	int multipliersðö={	2048,1024,512,256,128,64,32,16,8,4,2};
+
+	int j;
+	int sum=0;
+	int rem=0;
+	int cd=0;
+	int i =0;
+
+
+	if (strlen(accnum)]=ASPIS_LEN)
+		return 1;
+	
+	if(]strncmp(accnum,"0000000000000000",ASPIS_LEN))
+		return 1;
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < ASPIS_LEN; j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < ASPIS_LEN; j++)
+             numðjö = (accnumðjö - '0');
+
+/**********************************************************/
+/*  Calculate Control Digit                               */
+/**********************************************************/
+
+ 		 for (j=4 ,i=0;j<15;j++,i++)
+
+			 sum=sum + (numðjö*multipliersðiö);
+
+		 cd = sum % 11;
+	
+		 if(cd==10)
+			 cd = 0;
+
+
+		 if (cd == numð15ö )
+			 return 0;
+		 else
+			 return 1;
+	
+}
+
+int DTErgasiasBankCheck( char * accnum)
+{
+	int numð15ö;
+	int multipliers1ðö={1,2,1,2,1,2,1,2};
+	int multipliers2ðö={2,1,2,1,2};
+	int j;
+	int sum=0;
+	int cd1=0;
+	int cd2=0;
+                   int temp=0;
+	int i =0;
+
+	if ( ]((strlen(accnum)==ERGASIA1_LEN )]](strlen(accnum)==ERGASIA2_LEN)))
+		return 1;
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < strlen(accnum); j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+			 if (strlen(accnum)==ERGASIA1_LEN )
+			 {
+                 numð0ö =  '0';                                         branch h
+as 2 digits or 14 digits totaly
+				 for (j = 0; j < strlen(accnum); j++)
+						numðj+1ö = (accnumðjö - '0');
+
+			 }
+             else
+			 {
+				 for (j = 0; j < strlen(accnum); j++)
+				 numðjö = (accnumðjö - '0');
+
+			 }
+/**********************************************************/
+/*  Calculate Control Digit 1                             */
+/**********************************************************/
+		 sum=0;
+		 temp=0;
+
+		 for (j= 7 ;j>=0;j--)
+		 {
+			 temp=numðjö*multipliers1ðjö;
+			 if(temp>=10)
+			 {
+				 int myint1 = 0;
+				 int myint2 = 0;
+
+			     myint1=temp % 10;
+				 myint2=temp / 10;
+				 temp=myint1 +myint2;
+			 }
+
+			 sum=sum+temp;
+		 }
+		
+		 for(i=1;i<=10;i++)
+		 {
+		  if(sum >= (10*(i-1)) && sum < (10*i) )
+		  {
+			  cd1= 10*i - sum;
+			  break;
+		  }
+		 }
+
+		 if ((sum % 10)== 0 ]]
+			  sum == 0        )
+			 cd1=0;
+
+/**********************************************************/
+/*  Calculate Control Digit 2                             */
+/**********************************************************/
+		 sum=0;
+		 temp=0;
+
+		 for (j= 12 ;j>=8;j--)
+		 {
+			 temp=numðjö*multipliers2ðj-8ö;
+
+			 sum=sum+temp;
+		 }
+		
+		 for(i=1;i<=10;i++)
+		 {
+		  if(sum >= (10*(i-1)) && sum < (10*i) )
+		  {
+			  cd2= 10*i - sum;
+			  break;
+		  }
+		 }
+
+		 if ((cd2 % 10)==0)
+			 cd2=0;
+
+/**********************************************************/
+/*  Check if both Control Digits are OK                   */
+/**********************************************************/
+
+
+
+ 	if (cd2 == numð14ö && cd1 == numð13ö)
+
+			return 0;
+	else
+			return 1;
+
+
+
+}
+
+int CheckEurobank(int CodBranch,char * acc)
+{
+	int multipliers1ðö={4,8,5,10,9,7,3,6};
+}
+
+
+int DTEgnatiaBankCheck(char *accnum){
+
+	int numðEGNATIA_LENö;
+	int multipliesðö={3,5,6,1,4,8,9,2,7,4,9,5,2,3};
+	int j;
+	int sum=0;
+	int rem=0;
+	int cd=0;
+	int i =0;
+	int d =0;
+
+
+	if (strlen(accnum)]=EGNATIA_LEN)
+		return 1;
+	if(]strncmp(accnum,"0000000000000000",EGNATIA_LEN))
+		return 1;
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < EGNATIA_LEN; j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < EGNATIA_LEN; j++)
+             numðjö = (accnumðjö - '0');
+
+
+		 for (j= 0,i=0;j < EGNATIA_LEN-1;j++,i++)
+			 sum=sum + multipliesðiö*numðjö;
+
+		 rem = sum%11;
+		 d   = 11-rem;
+
+		 if((d>0) && (d<10))
+		 	cd = d;
+
+		 if((d == 10) ]] (d == 11))
+			 cd = 0;
+
+		 if (cd == numðEGNATIA_LEN-1ö )
+		 	return 0;
+		 else
+		  	return 1;
+
+
+}
+
+
+
+int DTEmborikiBankCheck(char *accnum)
+{
+#define   LENGTH  8
+
+        int          numð7ö={2,7,6,5,4,3,2};
+        char         arlogarðLENGTHö;
+        char         *cad;
+        int           sum,i,cdigit,k,y;
+        const        double el=11.0;
+
+         sum=0;
+         cad=accnum;
+
+         while (isspace(*cad))
+                 cad++;
+     if(]*cad) return 0;
+     if (strlen(cad) ]= LENGTH)
+        return 1;
+
+        for (i=0 ; i<LENGTH ; i++,cad++)
+             {
+              arlogarðiö=*cad;
+             }
+
+          cdigit=arlogarði-1ö-48;
+          arlogarði-1ö='\0';
+
+          for(i=0; arlogarðiö]='\0' ; i++)
+      sum = sum + (arlogarðiö-48) * numðiö ;
+
+      if (sum==0) return k=1;
+
+      y=(int)fmod((double)sum,el);
+
+
+           y=11-y;
+
+           if ((y==10) ]]
+               (y==11))
+             {
+               y=y-10;
+             }
+
+          if (cdigit==y) {return k=0;
+          } else {return k=1;
+          }
+
+}
+
+
+int DTChanionBankCheck(char *accnum){
+
+	int numðCHANION_LENö;
+	int j;
+	int sum=0;
+	int rem=0;
+	int cd=0;
+	int i =0;
+	int d =0;
+
+
+	if (strlen(accnum)]=CHANION_LEN)
+		return 1;
+	if(]strncmp(accnum,"0000000000000000",CHANION_LEN))
+		return 1;
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < CHANION_LEN; j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+         if (strlen(accnum) == CHANION_LEN)
+		 {
+			if (accnumð0ö ]= '0' &&
+				accnumð0ö ]= '1')
+			{
+	     		return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		 }
+		 else
+			 return 0;
+}
+int DTCyprusBankCheck( char *accnum  ){
+
+	int numðCYPRUS_LEN-3ö;
+	int multipliesðö={0,2,4,7,8,5,1,1,2,4,5,1,0};                          óå 0 êáé
+	int j;										                               	
+	int sum1=0;									
+	int sum2=0;
+	int sum=0;
+	int cd=0;
+	int i =0;
+	int d =0;
+	char numlogð14ö;
+	long numlog1;
+
+	if (strlen(accnum)]=CYPRUS_LEN)
+		return 1;
+	if(]strncmp(accnum,"0000000000000000",CYPRUS_LEN))
+		return 1;
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 3; j < CYPRUS_LEN; j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 3; j < CYPRUS_LEN; j++)
+             numðj-3ö = (accnumðjö - '0');
+
+
+		 for (j = 3; j < CYPRUS_LEN; j++)
+             numlogðj-3ö = (accnumðjö);
+
+		 numlogð13ö='\0';
+
+		 numlog1=atol(numlog);
+
+		 if (numlog1 >= 75 &&
+			 numlog1 <= 877612)
+		 {
+			return 0;
+		 }
+
+
+
+		 for (i=0;i < CYPRUS_LEN-3;i++)
+		 {
+			 sum1=sum1 + (multipliesðiö*numðiö)%10;
+			 sum2=sum2 +(int)( (multipliesðiö*numðiö)/10);
+		
+
+		 }
+
+		 sum = sum1+sum2;
+
+		 cd   = sum%10;
+
+		if (cd ]= 0)
+		 {
+		     cd = 10 - cd;
+		 }
+
+
+
+		 if (cd == numðCYPRUS_LEN-4ö )
+		 	return 0;
+		 else
+		  	return 1;
+
+
+}
+int DTEllenicBankCheck( char *accnum  ){
+
+	int numðELLENIC_LENö;
+	int multipliesðö={2,1,2,1,2,1,2,1,2};
+	int j;										
+									
+	int sum=0;
+	int cd=0;
+	int i =0;
+	int d =0;
+
+
+	if (strlen(accnum)]=ELLENIC_LEN)
+		return 1;
+	if(]strncmp(accnum,"0000000000",ELLENIC_LEN))
+		return 1;
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < ELLENIC_LEN; j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < ELLENIC_LEN; j++)
+             numðjö = (accnumðjö - '0');
+
+
+		 for (i=0;i < ELLENIC_LEN-1;i++)
+		 {
+			 if(multipliesðiö*numðiö>9)
+			 		 sum = sum + (multipliesðiö*numðiö)%10 +
+					             (int)( (multipliesðiö*numðiö)/10);
+			 else
+					 sum = sum + multipliesðiö*numðiö;
+
+		 }
+
+		 cd   = sum%10;
+
+		 if (cd ]= 0)
+		 {
+		     cd = 10 - cd;
+		 }
+
+
+		 if (cd == numðELLENIC_LEN-1ö )
+		 	return 0;
+		 else
+		  	return 1;
+
+
+
+}
+
+int DTGenikiBankCheck( char *  accnum){
+
+	int numðGENIKI2_LENö;
+	int multipliersðö={6,5,4,3,2,7,6,5,4,3,2};
+
+	int j;
+	int sum=0;
+	int rem=0;
+	int cd=0;
+	int i =0;
+
+
+	if (strlen(accnum)]=GENIKI1_LEN && strlen(accnum)]=GENIKI2_LEN)
+		return 1;
+	
+	if(]strncmp(accnum,"0000000000000000",GENIKI1_LEN) ]]
+                  ]strncmp(accnum,"0000000000000000",GENIKI2_LEN))
+		return 1;
+
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	if (strlen(accnum) == GENIKI1_LEN)
+		 {
+			if (strncmp(accnum,"98",2))
+				return 1;
+
+ 			for (j = 0; j < GENIKI1_LEN; j++)
+			{
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;
+			}
+			/**********************************************************/
+			/*  Create Numeric Array                                  */
+			/**********************************************************/
+			   for (j = 0; j < GENIKI1_LEN; j++)
+			   {
+				  numðj+1ö = (accnumðjö - '0');
+			   }
+
+		 }
+		 else if (strlen(accnum) == GENIKI2_LEN)
+				{
+ 					for (j = 0; j < GENIKI2_LEN; j++)
+					{
+					 if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+						return 1;
+					}
+					/**********************************************************/
+					/*  Create Numeric Array                                  */
+					/**********************************************************/
+					 for (j = 0; j < GENIKI2_LEN; j++)
+					 {
+						 numðjö = (accnumðjö - '0');
+					 }
+				}
+				else
+				{
+					 return 1;
+				}
+/**********************************************************/
+/*  Calculate Control Digit                               */
+/**********************************************************/
+
+		 if (strlen(accnum) == GENIKI1_LEN)
+		 {
+			if (strncmp(accnum,"98",2))
+				return 1;
+
+ 			for (j= 1,i=1;j < GENIKI1_LEN;j++,i++)
+					 sum=sum + multipliersðiö*numðjö;
+		 }
+		 else if (strlen(accnum) == GENIKI2_LEN)
+				{
+ 					for (j= 0,i=0;j < GENIKI1_LEN;j++,i++)
+					sum=sum + multipliersðiö*numðjö;
+				}
+				else
+				{
+					 return 1;
+				}
+
+
+		 rem = sum%11;
+
+		 cd = 11-rem;
+	
+		 if(cd==10 ]] cd==11)
+			 cd = 0;
+
+
+		 if (cd == numðGENIKI1_LENö)
+			 return 0;
+		 else
+			 return 1;
+	
+}
+
+
+int DTAttikisBankCheck(char *accnum)
+{
+#define   LENGTH  8
+
+        int          numð7ö={2,7,6,5,4,3,2};
+        char         arlogarðLENGTHö;
+        char         *cad;
+        int           sum,i,cdigit,k,y;
+        const        double el=11.0;
+
+         sum=0;
+         cad=accnum;
+
+         while (isspace(*cad))
+                 cad++;
+
+     if(]*cad) return 0;
+     if (strlen(cad) ]= LENGTH)
+        return 1;
+
+        for (i=0 ; i<LENGTH ; i++,cad++)
+             {
+              arlogarðiö=*cad;
+             }
+
+          cdigit=arlogarði-1ö-48;
+          arlogarði-1ö='\0';
+
+          for(i=0; arlogarðiö]='\0' ; i++)
+      sum = sum + (arlogarðiö-48) * numðiö ;
+
+      if (sum==0) return k=1;
+
+      y=(int)fmod((double)sum,el);
+           y=11-y;
+
+           if ((y==10) ]]
+               (y==11))
+             {
+               y=y-10;
+             }
+
+          if (cdigit==y) {return k=0;
+          } else {return k=1;
+          }
+
+}
+int DTCCFBankCheck( char *accnum  ){
+
+	int numðCCF_LENö;
+	int multipliesðö={8192,4096,2048,1024,512,256,128,64,32,16,8,4,2};
+	int j;										
+									
+	int sum=0;
+	int cd=0;
+	int i =0;
+	int d =0;
+
+
+	if (strlen(accnum)]=CCF_LEN)
+		return 1;
+	if(]strncmp(accnum,"00000000000000",CCF_LEN))
+		return 1;
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < CCF_LEN; j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < CCF_LEN; j++)
+             numðjö = (accnumðjö - '0');
+
+
+		 for (i=0;i < CCF_LEN-1;i++)
+		 {
+			  sum = sum + multipliesðiö*numðiö;
+		 }
+
+		 cd   = sum%11;
+
+		 if (cd ]= 0)
+		 {
+		     cd = 11 - cd;
+			 if (cd ==10 ]] cd ==11)
+				   cd = 0;
+
+		 }
+
+
+		 if (cd == numðCCF_LEN-1ö )
+		 	return 0;
+		 else
+		  	return 1;
+
+
+
+}
+int DTSosieteGeneralBankCheck( char *accnum  ){
+
+	int numðSOSIETE_GENERAL_LENö;
+	int j;										
+									
+	int sum1=0;
+	int sum2=0;
+	int x ,y,t,z;
+
+	int cd=0;
+	int i =0;
+	int d =0;
+
+
+	if (strlen(accnum)]=SOSIETE_GENERAL_LEN)
+		return 1;
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < SOSIETE_GENERAL_LEN; j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < SOSIETE_GENERAL_LEN; j++)
+             numðjö = (accnumðjö - '0');
+
+
+		 sum1 = numð0ö +
+			    numð2ö +
+				numð4ö +
+				numð6ö +
+				numð8ö +
+				numð10ö;
+
+		 if(sum1 >= 10 )
+			x = (sum1/10)  + (sum1 % 10);
+		 else
+			 x = sum1;
+
+
+
+		 sum2 = 2*numð1ö +
+			    2*numð3ö +
+				2*numð5ö +
+				2*numð7ö +
+				2*numð9ö;
+
+		if(sum2 >= 10 )
+			t = (sum2/10)  + (sum2 % 10);
+		 else
+			 t = sum2;
+
+	 	if(t >= 10 )
+	         y = (t/10)  + (t % 10);
+		 else
+			 y = t;
+
+		 z = x + y ;
+
+
+		if(z > 10)
+			cd = 20 - z;
+		else
+			cd = 10 - z;
+
+
+		 if (cd == numðSOSIETE_GENERAL_LEN-1ö )
+		 	return 0;
+		 else
+		  	return 1;
+
+
+
+}
+int DTProBankCheck( char *accnum  ){
+
+	int numðPROBANK_LENö;
+	int j;										
+									
+	int sum1=0;
+	int sum2=0;
+	int x ,y,t,z;
+
+	int cd=0;
+	int i =0;
+	int d =0;
+
+
+	if (strlen(accnum)]=PROBANK_LEN)
+		return 1;
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < PROBANK_LEN; j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < PROBANK_LEN; j++)
+             numðjö = (accnumðjö - '0');
+
+
+		 sum1 = numð0ö*4096  +
+			    numð1ö*2048  +
+				numð2ö*1024  +
+				numð3ö*512   +
+				numð4ö*256   +
+				numð5ö*128   +
+				numð6ö*64    +
+				numð7ö*32    +
+				numð8ö*16    +
+				numð9ö*8     +
+				numð10ö*4    +
+				numð11ö*2    ;
+
+
+	
+			x =  (sum1 % 11);
+			cd= 11 - x ;
+
+			if(cd >9 )
+				cd = 0;
+		
+
+		 if (cd == numðPROBANK_LEN-1ö )
+		 	return 0;
+		 else
+		  	return 1;
+
+}
+int DTHVBBankCheck( char *accnum  ){
+
+int numðHYPOVEREINSBANK_LENö;
+	int multipliesðö={6,5,4,3,2};
+	int j;
+	int sum=0;
+	int rem=0;
+	int cd=0;
+	int i =0;
+
+
+	if (strlen(accnum)]=HYPOVEREINSBANK_LEN)
+		return 1;
+	if(]strncmp(accnum,"000000000000",HYPOVEREINSBANK_LEN))
+		return 1;
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < HYPOVEREINSBANK_LEN; j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < HYPOVEREINSBANK_LEN; j++)
+             numðjö = (accnumðjö - '0');
+
+
+		 for (j = 0; j<5; j++)
+			 sum=sum + multipliesðjö*numðjö;
+
+		 rem =sum%11;
+		
+		 if (rem == 0 ]] rem == 1)
+			 return 1;
+
+		 cd = 11-rem;
+		
+		if (cd == numð5ö )
+			return 0;
+		else
+			return 1;
+
+	
+}
+
+int DTPanelliniaBankCheck( char *  accnum)
+{
+	int numðPANELLINIA_LENö;
+	int multipliersðö={6,5,4,3,2,7,6,5,4,3,2};
+
+	int j;
+	int sum=0;
+	int rem=0;
+	int cd=0;
+	int i =0;
+
+
+	if (strlen(accnum)]=PANELLINIA_LEN)
+		return 1;
+
+	if(]strncmp(accnum,"0000000000000000",PANELLINIA_LEN))
+		return 1;
+
+
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < PANELLINIA_LEN; j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 4; j < PANELLINIA_LEN; j++)
+             numðj-4ö = (accnumðjö - '0');
+
+		 for (j=0 ; j< PANELLINIA_LEN-5 ;j++)
+			 sum=sum + (numðjö*multipliersðjö);
+
+		 cd = 11 - (sum % 11);
+
+		 if (cd > 9)
+			 cd = cd-3;
+
+		 if (cd == numðPANELLINIA_LEN-5ö )
+			 return 0;
+		 else
+			 return 1;
+
+
+}
+int DTNovaBankCheck( char *accnum  ){
+
+	int numð10ö={0,0,0,0,0,0,0,0,0,0};
+	int multipliesðö={2,1,2,1,2,1,2,1,2,1};
+	int j;										
+									
+	int sum=0;
+	int cd=0;
+	int i =0;
+	int d =0;
+
+
+	if (strlen(accnum) < NOVABANK_FROM_LEN ]] strlen(accnum) > NOVABANK_TO_LEN)
+		return 1;
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < strlen(accnum); j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < strlen(accnum); j++)
+             numð10-strlen(accnum)+jö = (accnumðjö - '0');
+
+
+		 for (i=0;i < NOVABANK_TO_LEN;i++)
+		 {
+			 if(multipliesðiö*numðiö>9)
+			 		 sum = sum + (multipliesðiö*numðiö)%10 ;
+			 else
+					 sum = sum + multipliesðiö*numðiö;
+
+		 }
+
+		 cd   = sum%10;
+
+		 if (cd == 0 )
+		 	return 0;
+		 else
+		  	return 1;
+
+
+
+}
+int DTAmericaBankCheck( char *accnum  ){
+
+	int numð12ö={0,0,0,0,0,0,0,0,0,0,0,0};
+	int multipliesðö={2,1,2,1,2,1,2,1,2,1,2};
+	int j;										
+									
+	int sum=0;
+	int cd=0;
+	int i =0;
+	int d =0;
+	int rem = 0;
+
+
+	if (strlen(accnum) ]= AMERICABANK_LEN)
+		return 1;
+	if(]strncmp(accnum,"000000000000",AMERICABANK_LEN))
+		return 1;
+
+/**********************************************************/
+/*  Check all digits in order to be numeric               */
+/**********************************************************/
+	for (j = 0; j < strlen(accnum); j++){
+             if ((accnumðjö < '0') ]] (accnumðjö > '9'))
+				 return 1;}
+
+/**********************************************************/
+/*  Create Numeric Array                                  */
+/**********************************************************/
+         for (j = 0; j < strlen(accnum); j++)
+             numðjö = (accnumðjö - '0');
+
+
+		 for (i=0;i < AMERICABANK_LEN;i++)
+		 {
+			
+					 sum = sum + multipliesðiö*numðiö;
+
+		 }
+
+		 rem   = sum%10;
+		 if(rem == 0)
+			 cd = 0;
+		 else
+			 cd = 10-rem;
+		 if (cd == numð11ö )
+		 	return 0;
+		 else
+		  	return 1;
+
+
+
+}
+

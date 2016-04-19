@@ -1,0 +1,59 @@
+      *****************************************************************
+      **                                                             **
+      **           FOUNDATION FOR COOPERATIVE PROCESSING             **
+      **                                                             **
+      **                     COBOL  COPYBOOK                         **
+      **                                                             **
+      **           COPYRIGHT (C) 1996 ANDERSEN CONSULTING.           **
+      **                    ALL RIGHTS RESERVED.                     **
+      **                                                             **
+      *****************************************************************
+      **                                                             **
+      **      COPYBOOK: DD01003O                                     **
+      **                                                             **
+      **  COPYBOOK FOR: Message.DD01003                              **
+      **                                                             **
+      **  GENERATED ON: Sat Oct 24 12:09:56 2009                     **
+      **                                                             **
+      **  SHORT DESCRIPTION:                                         **
+      **                                                             **
+      **            BY: NPK                                          **
+      **                                                             **
+      *****************************************************************
+       02  DD01003O.
+         04  DTCOUNT                             PIC 9(5).
+         04  AMT-LIMIT
+                            OCCURS 50 TIMES      PIC 9(13).
+         04  CHR-DB-ACC-IBAN
+                            OCCURS 50 TIMES      PIC X(34).
+         04  DDENERGEIES
+                            OCCURS 50 TIMES      PIC 9(2).
+           88  ARNISI-XREOSIS                      VALUE 1.
+           88  METAVOLI-LOGAR                      VALUE 2.
+           88  METAVOLI-ORIOU                      VALUE 4.
+           88  ANAKLISI-ANATHESIS                  VALUE 3.
+           88  REJ-ARNISI-XREOSIS                  VALUE 5.
+           88  REJ-ANAKLISI-ANATHESIS              VALUE 6.
+         04  CHR-MANDAT-ID
+                            OCCURS 50 TIMES      PIC X(35).
+         04  CHR-C-S-I-I-517
+                            OCCURS 50 TIMES      PIC X(35).
+         04  CHR-CR-NAME
+                            OCCURS 50 TIMES      PIC X(70).
+         04  COD-PERSONA                         PIC 9(9).
+         04  COD-BRANCH
+                            OCCURS 50 TIMES      PIC X(4).
+         04  DDATETO
+                            OCCURS 50 TIMES      PIC X(10).
+         04  DDATEFROM
+                            OCCURS 50 TIMES      PIC X(10).
+         04  FLG-STATUS-PROCESS
+                            OCCURS 50 TIMES      PIC X(2).
+         04  DAT-TRX-FROM
+                            OCCURS 50 TIMES      PIC X(10).
+         04  COD-BRANCH-DIK
+                            OCCURS 50 TIMES      PIC X(4).
+         04  DEC-GROUP-TYPE
+                            OCCURS 50 TIMES      PIC 9(3).
+
+
